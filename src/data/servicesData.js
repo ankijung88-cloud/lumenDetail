@@ -262,14 +262,14 @@ export const PRICING_DATA = {
     }
   ],
   singleServices: [
-    { name: '본넷(후드) 집중 수성 광택 (단품)', originalPrice: '16만 ~ 26만원', priceRange: '8만 ~ 13만원', discount: '50% OFF' },
-    { name: '도어(문짝 1판) 흠집 & 스월 케어', originalPrice: '10만 ~ 18만원', priceRange: '5만 ~ 9만원', discount: '50% OFF' },
-    { name: '앞/뒤 범퍼(1개소) 코너 쓸림 광택', originalPrice: '14만 ~ 24만원', priceRange: '7만 ~ 12만원', discount: '50% OFF' },
-    { name: '앞/뒤 휀다(1판) 및 필러 집중 케어', originalPrice: '10만 ~ 16만원', priceRange: '5만 ~ 8만원', discount: '50% OFF' },
-    { name: '트렁크 리드 / 루프 상판 집중 케어', originalPrice: '14만 ~ 24만원', priceRange: '7만 ~ 12만원', discount: '50% OFF' },
-    { name: '전면 유리 유막제거 + 초발수 코팅', originalPrice: '12만 ~ 18만원', priceRange: '6만 ~ 9만원', discount: '50% OFF' },
-    { name: '실내 스팀 딥크리닝 (단품)', originalPrice: '36만 ~ 60만원', priceRange: '18만 ~ 30만원', discount: '50% OFF' },
-    { name: '헤드라이트 황변 클리닝 (양쪽 1세트)', originalPrice: '16만 ~ 24만원', priceRange: '8만 ~ 12만원', discount: '50% OFF' }
+    { name: '본넷(후드) 집중 수성 광택 (단품)', originalPrice: '8만 ~ 13만원', priceRange: '4만 ~ 6.5만원', discount: '50% OFF' },
+    { name: '도어(문짝 1판) 흠집 & 스월 케어', originalPrice: '5만 ~ 9만원', priceRange: '2.5만 ~ 4.5만원', discount: '50% OFF' },
+    { name: '앞/뒤 범퍼(1개소) 코너 쓸림 광택', originalPrice: '7만 ~ 12만원', priceRange: '3.5만 ~ 6만원', discount: '50% OFF' },
+    { name: '앞/뒤 휀다(1판) 및 필러 집중 케어', originalPrice: '5만 ~ 8만원', priceRange: '2.5만 ~ 4만원', discount: '50% OFF' },
+    { name: '트렁크 리드 / 루프 상판 집중 케어', originalPrice: '7만 ~ 12만원', priceRange: '3.5만 ~ 6만원', discount: '50% OFF' },
+    { name: '전면 유리 유막제거 + 초발수 코팅', originalPrice: '6만 ~ 9만원', priceRange: '3만 ~ 4.5만원', discount: '50% OFF' },
+    { name: '실내 스팀 딥크리닝 (단품)', originalPrice: '18만 ~ 30만원', priceRange: '9만 ~ 15만원', discount: '50% OFF' },
+    { name: '헤드라이트 황변 클리닝 (양쪽 1세트)', originalPrice: '8만 ~ 12만원', priceRange: '4만 ~ 6만원', discount: '50% OFF' }
   ],
   travelZones: {
     hub: '인천 청라국제도시',
