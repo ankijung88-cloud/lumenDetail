@@ -1,0 +1,564 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
+import html2canvas from 'html2canvas';
+import { getCardProfile, saveCardProfile } from '../utils/storage';
+import { 
+  CreditCard, Sparkles, Download, Printer, Save, RefreshCw, 
+  ChevronLeft, Phone, Mail, MapPin, QrCode, Check, ShieldCheck, 
+  RotateCcw, Eye, Palette, Car, Award
+} from 'lucide-react';
+
+export const BusinessCardMaker = ({ onBackToAdmin }) => {
+  const [profile, setProfile] = useState(getCardProfile());
+  const [activeSide, setActiveSide] = useState('both'); // 'front' | 'back' | 'both'
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const frontRef = useRef(null);
+  const backRef = useRef(null);
+
+  useEffect(() => {
+    setProfile(getCardProfile());
+  }, []);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setProfile(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveProfile = () => {
+    saveCardProfile(profile);
+    alert('명함 정보가 브라우저에 안전하게 저장되었습니다.');
+  };
+
+  const handleReset = () => {
+    if (window.confirm('명함 설정을 초기 기본값으로 되돌리시겠습니까?')) {
+      const defaultProf = {
+        shopName: '루멘 프리미엄 디테일링',
+        englishName: 'LUMEN DETAILING SERVICE',
+        ownerName: '홍길동 대표',
+        title: '출장 디테일링 & 광택 전문가',
+        phone: '010-1234-5678',
+        email: 'lumendetail@gmail.com',
+        location: '수도권 전지역 출장 (서울/경기/인천)',
+        services: '수성듀얼광택 · 9H유리막코팅 · 실내크리닝 · 유막제거',
+        instagram: '@lumen_detailing',
+        bankAccount: '국민은행 123456-04-123456 (루멘)',
+        qrType: 'url',
+        qrCustomText: window.location.origin,
+        theme: 'carbon-dark',
+        accentTag: '100% 예약제 맞춤 1:1 출장 시공'
+      };
+      setProfile(defaultProf);
+      saveCardProfile(defaultProf);
+    }
+  };
+
+  // 이미지 다운로드 (앞면/뒷면)
+  const handleDownloadImage = async (type) => {
+    setIsDownloading(true);
+    try {
+      if (type === 'front' || type === 'both') {
+        if (frontRef.current) {
+          const canvas = await html2canvas(frontRef.current, { scale: 3, useCORS: true, backgroundColor: null });
+          const dataUrl = canvas.toDataURL('image/png');
+          const link = document.createElement('a');
+          link.download = `${profile.shopName}_명함_앞면.png`;
+          link.href = dataUrl;
+          link.click();
+        }
+      }
+
+      if (type === 'back' || type === 'both') {
+        if (backRef.current) {
+          const canvas = await html2canvas(backRef.current, { scale: 3, useCORS: true, backgroundColor: null });
+          const dataUrl = canvas.toDataURL('image/png');
+          const link = document.createElement('a');
+          link.download = `${profile.shopName}_명함_뒷면.png`;
+          link.href = dataUrl;
+          link.click();
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      alert('이미지 생성 중 오류가 발생했습니다.');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  // 테마별 스타일 정의
+  const getThemeStyles = () => {
+    switch (profile.theme) {
+      case 'gold-luxury':
+        return {
+          cardBg: 'bg-gradient-to-br from-[#1c1917] via-[#141210] to-[#0c0a09]',
+          border: 'border border-amber-500/40 shadow-[0_0_20px_rgba(234,179,8,0.15)]',
+          accentText: 'text-amber-400',
+          accentBg: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+          gradientText: 'text-gradient-gold',
+          iconColor: 'text-amber-400',
+          pattern: 'radial-gradient(ellipse at top right, rgba(234, 179, 8, 0.15), transparent 70%)'
+        };
+      case 'neon-blue':
+        return {
+          cardBg: 'bg-gradient-to-br from-[#081528] via-[#050b17] to-[#02050b]',
+          border: 'border border-sky-400/50 shadow-[0_0_20px_rgba(56,189,248,0.2)]',
+          accentText: 'text-sky-400',
+          accentBg: 'bg-sky-500/20 text-sky-300 border-sky-400/30',
+          gradientText: 'text-gradient',
+          iconColor: 'text-sky-400',
+          pattern: 'radial-gradient(ellipse at bottom left, rgba(56, 189, 248, 0.2), transparent 70%)'
+        };
+      case 'clean-silver':
+        return {
+          cardBg: 'bg-gradient-to-br from-[#1e2430] via-[#121722] to-[#0a0d14]',
+          border: 'border border-slate-400/40 shadow-[0_0_15px_rgba(203,213,225,0.1)]',
+          accentText: 'text-slate-200',
+          accentBg: 'bg-slate-700/50 text-white border-slate-500/30',
+          gradientText: 'bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent',
+          iconColor: 'text-slate-300',
+          pattern: 'radial-gradient(ellipse at center, rgba(255, 255, 255, 0.08), transparent 70%)'
+        };
+      case 'carbon-dark':
+      default:
+        return {
+          cardBg: 'bg-gradient-to-br from-[#0f172a] via-[#090e17] to-[#04060a]',
+          border: 'border border-cyan-500/40 shadow-[0_0_25px_rgba(6,182,212,0.18)]',
+          accentText: 'text-cyan-400',
+          accentBg: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
+          gradientText: 'text-gradient',
+          iconColor: 'text-cyan-400',
+          pattern: 'radial-gradient(circle at 80% 20%, rgba(6, 182, 212, 0.18), transparent 60%)'
+        };
+    }
+  };
+
+  const themeStyle = getThemeStyles();
+
+  return (
+    <div className="min-h-screen bg-[#07090e] text-slate-100 pt-24 pb-20 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto space-y-8">
+        
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
+          <div>
+            <button
+              onClick={onBackToAdmin}
+              className="inline-flex items-center gap-1 text-xs font-semibold text-cyan-400 hover:text-cyan-300 mb-2 transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <span>관리자 대시보드로 돌아가기</span>
+            </button>
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                <CreditCard className="w-6 h-6" />
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-white">출장차량관리 전용 디지털 명함 제작기</h1>
+                <p className="text-xs text-slate-400 mt-0.5">실시간 QR코드 생성, 프리미엄 럭셔리 테마, 이미지 저장 및 A4 인쇄 지원</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={handleSaveProfile}
+              className="px-3.5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition-all shadow-md"
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span>설정값 저장</span>
+            </button>
+
+            <button
+              onClick={() => handleDownloadImage('both')}
+              disabled={isDownloading}
+              className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white border border-white/10 text-xs font-bold flex items-center gap-1.5 transition-all"
+            >
+              <Download className="w-3.5 h-3.5 text-cyan-400" />
+              <span>{isDownloading ? '생성 중...' : '앞/뒷면 PNG 저장'}</span>
+            </button>
+
+            <button
+              onClick={() => window.print()}
+              className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white border border-white/10 text-xs font-bold flex items-center gap-1.5 transition-all"
+            >
+              <Printer className="w-3.5 h-3.5 text-amber-400" />
+              <span>A4 인쇄</span>
+            </button>
+
+            <button
+              onClick={handleReset}
+              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+              title="기본값 초기화"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          {/* Left Form: Edit Fields (5 Cols) */}
+          <div className="lg:col-span-5 space-y-6">
+            <div className="glass-card p-6 rounded-3xl border border-white/10 space-y-5">
+              
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <div className="flex items-center gap-2">
+                  <Palette className="w-4 h-4 text-cyan-400" />
+                  <h3 className="text-sm font-bold text-white">명함 스타일 & 테마 선택</h3>
+                </div>
+              </div>
+
+              {/* Theme Selector */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {[
+                  { id: 'carbon-dark', name: '카본 다크', color: 'bg-[#0b0f17] border-cyan-500' },
+                  { id: 'gold-luxury', name: '골드 럭셔리', color: 'bg-[#1c1917] border-amber-500' },
+                  { id: 'neon-blue', name: '네온 블루', color: 'bg-[#081528] border-sky-400' },
+                  { id: 'clean-silver', name: '실버 메탈', color: 'bg-[#1e2430] border-slate-400' },
+                ].map((th) => (
+                  <button
+                    key={th.id}
+                    onClick={() => setProfile(prev => ({ ...prev, theme: th.id }))}
+                    className={`p-2.5 rounded-xl text-center text-xs font-bold border transition-all ${
+                      profile.theme === th.id
+                        ? `${th.color} text-white ring-2 ring-cyan-400`
+                        : 'bg-slate-900 border-white/10 text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    {th.name}
+                  </button>
+                ))}
+              </div>
+
+              <div className="border-t border-white/10 pt-4 space-y-4">
+                
+                {/* Shop Name & Eng */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">상호명 (브랜드)</label>
+                    <input
+                      type="text"
+                      name="shopName"
+                      value={profile.shopName}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-xs text-white focus:outline-none focus:border-cyan-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">영문 상호명</label>
+                    <input
+                      type="text"
+                      name="englishName"
+                      value={profile.englishName}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-xs text-white focus:outline-none focus:border-cyan-400"
+                    />
+                  </div>
+                </div>
+
+                {/* Owner Name & Title */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">대표자명 (성함)</label>
+                    <input
+                      type="text"
+                      name="ownerName"
+                      value={profile.ownerName}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-xs text-white focus:outline-none focus:border-cyan-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">직함 / 소개 문구</label>
+                    <input
+                      type="text"
+                      name="title"
+                      value={profile.title}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-xs text-white focus:outline-none focus:border-cyan-400"
+                    />
+                  </div>
+                </div>
+
+                {/* Phone & Email */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">대표 연락처</label>
+                    <input
+                      type="text"
+                      name="phone"
+                      value={profile.phone}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-xs text-white focus:outline-none focus:border-cyan-400 font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">이메일</label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={profile.email}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-xs text-white focus:outline-none focus:border-cyan-400"
+                    />
+                  </div>
+                </div>
+
+                {/* Location & Services */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">출장 가능 지역</label>
+                  <input
+                    type="text"
+                    name="location"
+                    value={profile.location}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-xs text-white focus:outline-none focus:border-cyan-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">주요 전문 시공 품목</label>
+                  <input
+                    type="text"
+                    name="services"
+                    value={profile.services}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-xs text-white focus:outline-none focus:border-cyan-400"
+                  />
+                </div>
+
+                {/* Bank & Instagram */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">입금 계좌번호 (뒷면용)</label>
+                    <input
+                      type="text"
+                      name="bankAccount"
+                      value={profile.bankAccount}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-xs text-white focus:outline-none focus:border-cyan-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">인스타그램 / SNS</label>
+                    <input
+                      type="text"
+                      name="instagram"
+                      value={profile.instagram}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-xs text-white focus:outline-none focus:border-cyan-400"
+                    />
+                  </div>
+                </div>
+
+                {/* QR Text */}
+                <div>
+                  <label className="text-xs font-semibold text-slate-300 mb-1 flex items-center justify-between">
+                    <span>QR코드 연결 링크 (URL 또는 카톡아이디)</span>
+                    <span className="text-[10px] text-cyan-400">카메라로 스캔 시 즉시 연결</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="qrCustomText"
+                    value={profile.qrCustomText}
+                    onChange={handleChange}
+                    placeholder="https://..."
+                    className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-xs text-white focus:outline-none focus:border-cyan-400 font-mono"
+                  />
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+
+          {/* Right Live Preview: 90x50mm Standard Card (7 Cols) */}
+          <div className="lg:col-span-7 space-y-6">
+            
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Eye className="w-4 h-4 text-cyan-400" />
+                <h3 className="text-sm font-bold text-white">실시간 명함 프리뷰 (표준 규격: 90mm × 50mm)</h3>
+              </div>
+
+              <div className="flex items-center gap-1.5 bg-slate-900 p-1 rounded-xl border border-white/10 text-xs">
+                <button
+                  onClick={() => setActiveSide('both')}
+                  className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
+                    activeSide === 'both' ? 'bg-cyan-500 text-slate-950' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  앞/뒷면 동시보기
+                </button>
+                <button
+                  onClick={() => setActiveSide('front')}
+                  className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
+                    activeSide === 'front' ? 'bg-cyan-500 text-slate-950' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  앞면만
+                </button>
+                <button
+                  onClick={() => setActiveSide('back')}
+                  className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
+                    activeSide === 'back' ? 'bg-cyan-500 text-slate-950' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  뒷면만
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-8 flex flex-col items-center">
+              
+              {/* FRONT CARD PREVIEW */}
+              {(activeSide === 'both' || activeSide === 'front') && (
+                <div className="w-full max-w-[500px] flex flex-col items-center">
+                  <span className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">
+                    ▲ 명함 앞면 (Front Side)
+                  </span>
+
+                  <div
+                    ref={frontRef}
+                    className={`w-full aspect-[9/5] rounded-2xl p-6 sm:p-7 relative overflow-hidden flex flex-col justify-between select-none ${themeStyle.cardBg} ${themeStyle.border}`}
+                    style={{ backgroundImage: themeStyle.pattern }}
+                  >
+                    {/* Top Branding */}
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <div className={`p-1.5 rounded-lg bg-white/10 ${themeStyle.iconColor}`}>
+                            <Sparkles className="w-4 h-4" />
+                          </div>
+                          <span className={`font-black text-lg tracking-wider ${themeStyle.gradientText}`}>
+                            {profile.shopName}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-400 font-mono tracking-widest uppercase">
+                          {profile.englishName}
+                        </p>
+                      </div>
+
+                      <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${themeStyle.accentBg}`}>
+                        {profile.accentTag}
+                      </span>
+                    </div>
+
+                    {/* Middle Info: Owner & Contact */}
+                    <div className="my-auto py-2">
+                      <div className="flex items-baseline gap-2">
+                        <h4 className="text-xl sm:text-2xl font-black text-white">{profile.ownerName}</h4>
+                        <span className={`text-xs font-semibold ${themeStyle.accentText}`}>{profile.title}</span>
+                      </div>
+                      <p className="text-xs sm:text-sm font-bold text-slate-200 font-mono mt-1 tracking-wide">
+                        {profile.phone}
+                      </p>
+                    </div>
+
+                    {/* Bottom Features & Location */}
+                    <div className="border-t border-white/10 pt-2.5 flex items-center justify-between text-[11px] text-slate-300">
+                      <div className="flex items-center gap-1">
+                        <MapPin className={`w-3.5 h-3.5 ${themeStyle.iconColor} shrink-0`} />
+                        <span className="truncate max-w-[280px]">{profile.location}</span>
+                      </div>
+                      <span className={`text-[10px] font-mono ${themeStyle.accentText}`}>1:1 맞춤 출장</span>
+                    </div>
+
+                  </div>
+                </div>
+              )}
+
+              {/* BACK CARD PREVIEW */}
+              {(activeSide === 'both' || activeSide === 'back') && (
+                <div className="w-full max-w-[500px] flex flex-col items-center">
+                  <span className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">
+                    ▲ 명함 뒷면 (Back Side)
+                  </span>
+
+                  <div
+                    ref={backRef}
+                    className={`w-full aspect-[9/5] rounded-2xl p-6 sm:p-7 relative overflow-hidden flex flex-col justify-between select-none ${themeStyle.cardBg} ${themeStyle.border}`}
+                    style={{ backgroundImage: themeStyle.pattern }}
+                  >
+                    {/* Top Services */}
+                    <div>
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <Car className={`w-4 h-4 ${themeStyle.iconColor}`} />
+                        <span className="text-xs font-bold text-white">PROFESSIONAL SERVICES</span>
+                      </div>
+                      <p className="text-xs font-semibold text-cyan-300 leading-relaxed bg-black/40 p-2 rounded-xl border border-white/5">
+                        {profile.services}
+                      </p>
+                    </div>
+
+                    {/* Middle: Details & QR Code */}
+                    <div className="flex items-center justify-between gap-4 my-1">
+                      <div className="space-y-1 text-[11px] text-slate-300">
+                        {profile.email && (
+                          <div className="flex items-center gap-1.5">
+                            <Mail className="w-3 h-3 text-slate-400 shrink-0" />
+                            <span>{profile.email}</span>
+                          </div>
+                        )}
+                        {profile.instagram && (
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-pink-400 text-xs">Insta</span>
+                            <span>{profile.instagram}</span>
+                          </div>
+                        )}
+                        {profile.bankAccount && (
+                          <div className="flex items-center gap-1.5 text-slate-400 text-[10px]">
+                            <span>입금:</span>
+                            <span className="font-mono text-slate-300">{profile.bankAccount}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* QR Code Container */}
+                      <div className="p-2 bg-white rounded-xl shadow-lg shrink-0 flex flex-col items-center">
+                        <QRCodeSVG
+                          value={profile.qrCustomText || window.location.origin}
+                          size={64}
+                          level="M"
+                          includeMargin={false}
+                        />
+                        <span className="text-[8px] font-bold text-slate-900 mt-1 font-mono">예약 바로가기</span>
+                      </div>
+                    </div>
+
+                    {/* Bottom Guarantee */}
+                    <div className="border-t border-white/10 pt-2 flex items-center justify-between text-[10px] text-slate-400">
+                      <div className="flex items-center gap-1">
+                        <ShieldCheck className={`w-3.5 h-3.5 ${themeStyle.iconColor}`} />
+                        <span>정품 정량 케미컬 100% 수성광택 시공보증</span>
+                      </div>
+                      <span className="font-mono text-slate-500">LUMEN</span>
+                    </div>
+
+                  </div>
+                </div>
+              )}
+
+            </div>
+
+            {/* Print Guide Message */}
+            <div className="p-4 rounded-2xl bg-slate-900/60 border border-white/5 text-xs text-slate-400 space-y-1">
+              <p className="text-cyan-300 font-bold flex items-center gap-1">
+                <Printer className="w-3.5 h-3.5" />
+                <span>명함 인쇄 팁 (Print Tip)</span>
+              </p>
+              <p>
+                상단의 <strong>[A4 인쇄]</strong> 버튼을 누르시면 표준 인쇄 크기로 바로 출력하거나 PDF로 저장할 수 있습니다. 
+                고화질 명함 전문 인쇄소에 전달하시려면 <strong>[앞/뒷면 PNG 저장]</strong>으로 300DPI급 이미지를 다운로드받으세요.
+              </p>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  );
+};
