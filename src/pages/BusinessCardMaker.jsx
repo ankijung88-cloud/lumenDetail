@@ -79,16 +79,21 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
         scale: 4, // 4배 초고화질 (300DPI급)
         useCORS: true,
         allowTaint: true,
-        backgroundColor: theme.solidBg, // 투명도 뭉개짐 방지: 테마 고유의 솔리드 배경색 적용
+        backgroundColor: theme.solidBg, // 테마 고유의 솔리드 배경색 적용으로 투명도 및 색상 왜곡 방지
         logging: false,
         onclone: (clonedDoc, clonedElement) => {
-          // html2canvas가 지원하지 못하는 텍스트 클리핑(-webkit-text-fill-color: transparent)을 솔리드 고선명 컬러로 자동 보정
+          clonedElement.style.borderRadius = '16px';
+          clonedElement.style.border = `2px solid ${theme.borderColor}`;
+          clonedElement.style.backgroundColor = theme.solidBg;
+          clonedElement.style.backgroundImage = `${theme.pattern}, ${theme.gradientBg}`;
+          
+          // html2canvas가 지원하지 못하는 텍스트 클리핑을 고선명 솔리드 컬러로 강제 보정
           const textGradients = clonedElement.querySelectorAll('.text-gradient, .text-gradient-gold');
           textGradients.forEach(el => {
             el.style.background = 'none';
             el.style.webkitBackgroundClip = 'unset';
             el.style.webkitTextFillColor = 'initial';
-            el.style.color = profile.theme === 'gold-luxury' ? '#f59e0b' : '#38bdf8';
+            el.style.color = theme.accentColor;
             el.style.fontWeight = '900';
           });
         }
@@ -135,53 +140,65 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
     }
   };
 
-  // 테마별 스타일 정의 (솔리드 베이스 컬러 포함)
+  // 테마별 스타일 정의 (솔리드 베이스 컬러 및 그라디언트 완벽 지원)
   const getThemeStyles = () => {
     switch (profile.theme) {
       case 'gold-luxury':
         return {
           solidBg: '#141210',
+          gradientBg: 'linear-gradient(135deg, #1c1917 0%, #141210 50%, #0c0a09 100%)',
           cardBg: 'bg-gradient-to-br from-[#1c1917] via-[#141210] to-[#0c0a09]',
-          border: 'border border-amber-500/50 shadow-[0_0_20px_rgba(234,179,8,0.2)]',
+          border: 'border border-amber-500/60 shadow-[0_0_25px_rgba(234,179,8,0.25)]',
+          borderColor: 'rgba(234, 179, 8, 0.7)',
           accentText: 'text-amber-400',
+          accentColor: '#fbbf24',
           accentBg: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
-          gradientText: 'text-gradient-gold',
+          gradientText: 'text-amber-400',
           iconColor: 'text-amber-400',
-          pattern: 'radial-gradient(ellipse at top right, rgba(234, 179, 8, 0.15), transparent 70%)'
+          pattern: 'radial-gradient(ellipse at top right, rgba(234, 179, 8, 0.2), transparent 70%)'
         };
       case 'neon-blue':
         return {
           solidBg: '#050b17',
+          gradientBg: 'linear-gradient(135deg, #081528 0%, #050b17 50%, #02050b 100%)',
           cardBg: 'bg-gradient-to-br from-[#081528] via-[#050b17] to-[#02050b]',
-          border: 'border border-sky-400/60 shadow-[0_0_20px_rgba(56,189,248,0.25)]',
+          border: 'border border-sky-400/70 shadow-[0_0_25px_rgba(56,189,248,0.3)]',
+          borderColor: 'rgba(56, 189, 248, 0.8)',
           accentText: 'text-sky-400',
+          accentColor: '#38bdf8',
           accentBg: 'bg-sky-500/20 text-sky-300 border-sky-400/40',
-          gradientText: 'text-gradient',
+          gradientText: 'text-sky-400',
           iconColor: 'text-sky-400',
-          pattern: 'radial-gradient(ellipse at bottom left, rgba(56, 189, 248, 0.2), transparent 70%)'
+          pattern: 'radial-gradient(ellipse at bottom left, rgba(56, 189, 248, 0.25), transparent 70%)'
         };
       case 'clean-silver':
         return {
           solidBg: '#121722',
+          gradientBg: 'linear-gradient(135deg, #1e2430 0%, #121722 50%, #0a0d14 100%)',
           cardBg: 'bg-gradient-to-br from-[#1e2430] via-[#121722] to-[#0a0d14]',
-          border: 'border border-slate-400/50 shadow-[0_0_15px_rgba(203,213,225,0.15)]',
+          border: 'border border-slate-400/60 shadow-[0_0_20px_rgba(203,213,225,0.2)]',
+          borderColor: 'rgba(203, 213, 225, 0.7)',
           accentText: 'text-slate-100',
+          accentColor: '#f1f5f9',
           accentBg: 'bg-slate-700/60 text-white border-slate-400/40',
-          gradientText: 'text-gradient',
+          gradientText: 'text-slate-100',
           iconColor: 'text-slate-200',
-          pattern: 'radial-gradient(ellipse at center, rgba(255, 255, 255, 0.08), transparent 70%)'
+          pattern: 'radial-gradient(ellipse at center, rgba(255, 255, 255, 0.1), transparent 70%)'
         };
       case 'carbon-dark':
       default:
         return {
           solidBg: '#090e17',
+          gradientBg: 'linear-gradient(135deg, #0f172a 0%, #090e17 50%, #04060a 100%)',
           cardBg: 'bg-gradient-to-br from-[#0f172a] via-[#090e17] to-[#04060a]',
-          border: 'border border-cyan-500/50 shadow-[0_0_25px_rgba(6,182,212,0.25)]',
+          border: 'border border-cyan-500/60 shadow-[0_0_25px_rgba(6,182,212,0.3)]',
+          borderColor: 'rgba(6, 182, 212, 0.7)',
           accentText: 'text-cyan-400',
+          accentColor: '#22d3ee',
           accentBg: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40',
-          gradientText: 'text-gradient',
+          gradientText: 'text-cyan-400',
           iconColor: 'text-cyan-400',
-          pattern: 'radial-gradient(circle at 80% 20%, rgba(6, 182, 212, 0.2), transparent 60%)'
+          pattern: 'radial-gradient(circle at 80% 20%, rgba(6, 182, 212, 0.22), transparent 60%)'
         };
     }
   };
@@ -534,7 +551,10 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
                   <div
                     ref={frontRef}
                     className={`w-full aspect-[9/5] rounded-2xl p-6 sm:p-7 relative overflow-hidden flex flex-col justify-between select-none ${themeStyle.cardBg} ${themeStyle.border}`}
-                    style={{ backgroundImage: themeStyle.pattern }}
+                    style={{ 
+                      backgroundColor: themeStyle.solidBg,
+                      backgroundImage: `${themeStyle.pattern}, ${themeStyle.gradientBg}` 
+                    }}
                   >
                     {/* Top Branding */}
                     <div className="flex items-start justify-between">
@@ -543,16 +563,16 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
                           <div className={`p-1.5 rounded-lg bg-white/10 ${themeStyle.iconColor}`}>
                             <Sparkles className="w-4 h-4" />
                           </div>
-                          <span className={`font-black text-lg tracking-wider ${themeStyle.gradientText}`}>
+                          <span className={`font-black text-lg sm:text-xl tracking-wider text-white ${themeStyle.gradientText}`}>
                             {profile.shopName}
                           </span>
                         </div>
-                        <p className="text-[10px] text-slate-400 font-mono tracking-widest uppercase">
+                        <p className="text-[10px] text-slate-400 font-mono tracking-widest uppercase font-bold">
                           {profile.englishName}
                         </p>
                       </div>
 
-                      <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${themeStyle.accentBg}`}>
+                      <span className={`text-xs font-bold px-3 py-1 rounded-full border ${themeStyle.accentBg}`}>
                         {profile.accentTag}
                       </span>
                     </div>
@@ -560,21 +580,21 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
                     {/* Middle Info: Owner & Contact */}
                     <div className="my-auto py-2">
                       <div className="flex items-baseline gap-2">
-                        <h4 className="text-xl sm:text-2xl font-black text-white">{profile.ownerName}</h4>
-                        <span className={`text-xs font-semibold ${themeStyle.accentText}`}>{profile.title}</span>
+                        <h4 className="text-2xl sm:text-3xl font-black text-white tracking-tight">{profile.ownerName}</h4>
+                        <span className={`text-xs sm:text-sm font-bold ${themeStyle.accentText}`}>{profile.title}</span>
                       </div>
-                      <p className="text-xs sm:text-sm font-bold text-slate-200 font-mono mt-1 tracking-wide">
+                      <p className="text-sm sm:text-base font-extrabold text-white font-mono mt-1 tracking-wider">
                         {profile.phone}
                       </p>
                     </div>
 
                     {/* Bottom Features & Location */}
-                    <div className="border-t border-white/10 pt-2.5 flex items-center justify-between text-[11px] text-slate-300">
-                      <div className="flex items-center gap-1">
+                    <div className="border-t border-white/10 pt-2.5 flex items-center justify-between text-xs text-slate-200">
+                      <div className="flex items-center gap-1.5">
                         <MapPin className={`w-3.5 h-3.5 ${themeStyle.iconColor} shrink-0`} />
-                        <span className="truncate max-w-[280px]">{profile.location}</span>
+                        <span className="truncate max-w-[280px] font-medium">{profile.location}</span>
                       </div>
-                      <span className={`text-[10.5px] font-sans font-bold tracking-normal ${themeStyle.accentText}`}>
+                      <span className={`text-xs font-sans font-bold tracking-normal ${themeStyle.accentText}`}>
                         1:1 맞춤 출장
                       </span>
                     </div>
@@ -613,25 +633,30 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
                   <div
                     ref={backRef}
                     className={`w-full aspect-[9/5] rounded-2xl p-6 sm:p-7 relative overflow-hidden flex flex-col justify-between select-none ${themeStyle.cardBg} ${themeStyle.border}`}
-                    style={{ backgroundImage: themeStyle.pattern }}
+                    style={{ 
+                      backgroundColor: themeStyle.solidBg,
+                      backgroundImage: `${themeStyle.pattern}, ${themeStyle.gradientBg}` 
+                    }}
                   >
                     {/* Top Services */}
                     <div>
                       <div className="flex items-center gap-1.5 mb-2">
                         <Car className={`w-4 h-4 ${themeStyle.iconColor}`} />
-                        <span className="text-xs font-bold text-white">PROFESSIONAL SERVICES</span>
+                        <span className="text-xs font-bold text-white tracking-wider">PROFESSIONAL SERVICES</span>
                       </div>
-                      <p className="text-xs font-semibold text-cyan-300 leading-relaxed bg-black/40 p-2 rounded-xl border border-white/5">
-                        {profile.services}
-                      </p>
+                      <div className="bg-black/60 p-2.5 rounded-xl border border-white/10">
+                        <p className="text-xs font-bold text-cyan-300 leading-relaxed">
+                          {profile.services}
+                        </p>
+                      </div>
                     </div>
 
                     {/* Middle: Details & QR Code */}
                     <div className="flex items-center justify-between gap-4 my-1">
-                      <div className="space-y-1 text-[11px] text-slate-300">
+                      <div className="space-y-1 text-xs text-slate-200 font-medium">
                         {profile.email && (
                           <div className="flex items-center gap-1.5">
-                            <Mail className="w-3 h-3 text-slate-400 shrink-0" />
+                            <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                             <span>{profile.email}</span>
                           </div>
                         )}
@@ -642,9 +667,9 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
                           </div>
                         )}
                         {profile.bankAccount && (
-                          <div className="flex items-center gap-1.5 text-slate-400 text-[10px]">
-                            <span>입금:</span>
-                            <span className="font-mono text-slate-300">{profile.bankAccount}</span>
+                          <div className="flex items-center gap-1.5 text-[11px] text-slate-300">
+                            <span className="text-slate-400">입금:</span>
+                            <span className="font-mono text-white font-bold">{profile.bankAccount}</span>
                           </div>
                         )}
                       </div>
@@ -662,12 +687,12 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
                     </div>
 
                     {/* Bottom Guarantee */}
-                    <div className="border-t border-white/10 pt-2 flex items-center justify-between text-[10px] text-slate-400">
+                    <div className="border-t border-white/10 pt-2 flex items-center justify-between text-[11px] text-slate-300">
                       <div className="flex items-center gap-1">
                         <ShieldCheck className={`w-3.5 h-3.5 ${themeStyle.iconColor}`} />
                         <span>정품 정량 케미컬 100% 수성광택 시공보증</span>
                       </div>
-                      <span className="font-mono text-slate-500">LUMEN</span>
+                      <span className="font-mono font-bold text-slate-400">LUMEN</span>
                     </div>
 
                   </div>
