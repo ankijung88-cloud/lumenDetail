@@ -6,14 +6,15 @@ export const PriceTable = ({ onSelectPackage }) => {
   const [selectedCategory, setSelectedCategory] = useState('mid');
 
   const formatPrice = (num) => {
-    return (num / 10000).toLocaleString() + '만원';
+    const val = num / 10000;
+    return (Number.isInteger(val) ? val.toLocaleString() : val.toFixed(1)) + '만원';
   };
 
   return (
     <section id="pricing" className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       
       {/* Section Header */}
-      <div className="text-center max-w-3xl mx-auto mb-12">
+      <div className="text-center max-w-3xl mx-auto mb-10">
         <span className="text-xs uppercase tracking-widest text-cyan-400 font-bold px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-500/20">
           Transparent Pricing
         </span>
@@ -23,6 +24,16 @@ export const PriceTable = ({ onSelectPackage }) => {
         <p className="text-slate-400 text-sm sm:text-base">
           현장에서 부당한 추가금을 요구하지 않습니다. 차종 크기에 따른 정직한 정찰제 가격을 확인해 보세요.
         </p>
+      </div>
+
+      {/* 30% Promotion Banner */}
+      <div className="max-w-3xl mx-auto mb-10 text-center">
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-gradient-to-r from-rose-500/20 via-amber-500/20 to-cyan-500/20 border border-rose-500/40 text-rose-300 shadow-[0_0_30px_rgba(244,63,94,0.2)]">
+          <Flame className="w-4 h-4 text-rose-400 shrink-0 animate-pulse" />
+          <span className="text-xs sm:text-sm font-extrabold text-white">
+            🔥 [시즌 한정 파격 특가] 전 패키지 정찰가 기준 <span className="text-rose-400 font-black underline decoration-rose-400 decoration-2 underline-offset-4">30% 특별 할인</span> 진행 중!
+          </span>
+        </div>
       </div>
 
       {/* Vehicle Category Selector Tabs */}
@@ -56,6 +67,7 @@ export const PriceTable = ({ onSelectPackage }) => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16 items-stretch">
         {PRICING_DATA.packages.map((pkg) => {
           const currentPrice = pkg.prices[selectedCategory];
+          const discountedPrice = Math.round(currentPrice * 0.7);
           const isRec = pkg.recommended;
 
           return (
@@ -85,12 +97,22 @@ export const PriceTable = ({ onSelectPackage }) => {
                 </div>
                 <p className="text-xs text-slate-400 min-h-[32px]">{pkg.desc}</p>
 
-                {/* Price Display */}
-                <div className="my-6 py-4 border-y border-white/10 flex items-baseline gap-2">
-                  <span className="text-3xl sm:text-4xl font-extrabold text-white font-mono">
-                    {formatPrice(currentPrice)}
-                  </span>
-                  <span className="text-xs text-slate-400">/ 1대 기준 (VAT 포함)</span>
+                {/* Price Display with 30% OFF */}
+                <div className="my-6 py-4 border-y border-white/10 flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-slate-500 line-through font-mono font-bold">
+                      {formatPrice(currentPrice)}
+                    </span>
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/40">
+                      30% OFF
+                    </span>
+                  </div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl sm:text-4xl font-extrabold text-cyan-300 font-mono tracking-tight">
+                      {formatPrice(discountedPrice)}
+                    </span>
+                    <span className="text-xs text-slate-400">/ 1대 기준 (VAT 포함)</span>
+                  </div>
                 </div>
 
                 {/* Included items */}
@@ -109,7 +131,7 @@ export const PriceTable = ({ onSelectPackage }) => {
 
               {/* Action Button */}
               <button
-                onClick={() => onSelectPackage(pkg.name, currentPrice)}
+                onClick={() => onSelectPackage(pkg.name, discountedPrice)}
                 className={`w-full py-3.5 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all ${
                   isRec
                     ? 'bg-cyan-400 hover:bg-cyan-300 text-slate-950 shadow-lg shadow-cyan-400/30 hover:scale-[1.02]'
