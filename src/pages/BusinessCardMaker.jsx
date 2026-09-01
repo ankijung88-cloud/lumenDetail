@@ -1,17 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
+import { QRCodeSVG, QRCodeCanvas } from 'qrcode.react';
 import html2canvas from 'html2canvas';
 import { getCardProfile, saveCardProfile } from '../utils/storage';
 import { 
   CreditCard, Sparkles, Download, Printer, Save, RefreshCw, 
   ChevronLeft, Phone, Mail, MapPin, QrCode, Check, ShieldCheck, 
-  RotateCcw, Eye, Palette, Car, Award
+  RotateCcw, Eye, Palette, Car, Award, Image
 } from 'lucide-react';
 
 export const BusinessCardMaker = ({ onBackToAdmin }) => {
   const [profile, setProfile] = useState(getCardProfile());
   const [activeSide, setActiveSide] = useState('both'); // 'front' | 'back' | 'both'
   const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadMsg, setDownloadMsg] = useState('');
 
   const frontRef = useRef(null);
   const backRef = useRef(null);
@@ -53,7 +54,23 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
     }
   };
 
-  // 이미지 다운로드 (앞면/뒷면)
+  // QR코드 단독 고해상도 다운로드
+  const handleDownloadQR = () => {
+    const canvas = document.getElementById('qr-download-canvas');
+    if (canvas) {
+      const pngUrl = canvas.toDataURL('image/png');
+      const downloadLink = document.createElement('a');
+      downloadLink.href = pngUrl;
+      downloadLink.download = `${profile.shopName || '루멘디테일'}_QR코드.png`;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+      setDownloadMsg('QR코드 이미지가 다운로드되었습니다.');
+      setTimeout(() => setDownloadMsg(''), 3000);
+    }
+  };
+
+  // 명함 이미지 개별 / 일괄 다운로드 (앞면 / 뒷면 / 양면)
   const handleDownloadImage = async (type) => {
     setIsDownloading(true);
     try {
@@ -78,6 +95,14 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
           link.click();
         }
       }
+
+      const msg = type === 'front' 
+        ? '앞면 명함 이미지가 다운로드되었습니다.' 
+        : type === 'back' 
+        ? '뒷면 명함 이미지가 다운로드되었습니다.' 
+        : '앞/뒷면 명함 이미지가 모두 다운로드되었습니다.';
+      setDownloadMsg(msg);
+      setTimeout(() => setDownloadMsg(''), 3000);
     } catch (err) {
       console.error(err);
       alert('이미지 생성 중 오류가 발생했습니다.');
@@ -169,13 +194,45 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
               <span>설정값 저장</span>
             </button>
 
+            <div className="h-5 w-[1px] bg-white/10 mx-1 hidden sm:block" />
+
+            <button
+              onClick={() => handleDownloadImage('front')}
+              disabled={isDownloading}
+              className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-white/10 text-xs font-semibold flex items-center gap-1.5 transition-all"
+              title="명함 앞면만 이미지로 다운로드"
+            >
+              <Image className="w-3.5 h-3.5 text-cyan-400" />
+              <span>앞면 PNG</span>
+            </button>
+
+            <button
+              onClick={() => handleDownloadImage('back')}
+              disabled={isDownloading}
+              className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-white/10 text-xs font-semibold flex items-center gap-1.5 transition-all"
+              title="명함 뒷면만 이미지로 다운로드"
+            >
+              <Image className="w-3.5 h-3.5 text-cyan-400" />
+              <span>뒷면 PNG</span>
+            </button>
+
+            <button
+              onClick={handleDownloadQR}
+              className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-white/10 text-xs font-semibold flex items-center gap-1.5 transition-all"
+              title="QR코드만 고해상도 단독 이미지로 다운로드"
+            >
+              <QrCode className="w-3.5 h-3.5 text-cyan-400" />
+              <span>QR코드 PNG</span>
+            </button>
+
             <button
               onClick={() => handleDownloadImage('both')}
               disabled={isDownloading}
-              className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white border border-white/10 text-xs font-bold flex items-center gap-1.5 transition-all"
+              className="px-3.5 py-2 rounded-xl bg-cyan-950/80 hover:bg-cyan-900/80 text-cyan-300 border border-cyan-500/30 text-xs font-bold flex items-center gap-1.5 transition-all"
+              title="앞면과 뒷면 이미지를 둘 다 다운로드"
             >
-              <Download className="w-3.5 h-3.5 text-cyan-400" />
-              <span>{isDownloading ? '생성 중...' : '앞/뒷면 PNG 저장'}</span>
+              <Download className="w-3.5 h-3.5" />
+              <span>{isDownloading ? '생성 중...' : '앞/뒷면 일괄저장'}</span>
             </button>
 
             <button
@@ -195,6 +252,14 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
             </button>
           </div>
         </div>
+
+        {/* Download Feedback Notification */}
+        {downloadMsg && (
+          <div className="p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center gap-2 animate-fadeIn">
+            <Check className="w-4 h-4" />
+            <span>{downloadMsg}</span>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
@@ -354,10 +419,19 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
 
                 {/* QR Text */}
                 <div>
-                  <label className="text-xs font-semibold text-slate-300 mb-1 flex items-center justify-between">
-                    <span>QR코드 연결 링크 (URL 또는 카톡아이디)</span>
-                    <span className="text-[10px] text-cyan-400">카메라로 스캔 시 즉시 연결</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-semibold text-slate-300">
+                      QR코드 연결 링크 (URL 또는 카톡아이디)
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleDownloadQR}
+                      className="text-[11px] font-bold text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition-colors"
+                    >
+                      <QrCode className="w-3 h-3" />
+                      <span>QR코드 다운로드</span>
+                    </button>
+                  </div>
                   <input
                     type="text"
                     name="qrCustomText"
@@ -414,10 +488,20 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
               
               {/* FRONT CARD PREVIEW */}
               {(activeSide === 'both' || activeSide === 'front') && (
-                <div className="w-full max-w-[500px] flex flex-col items-center">
-                  <span className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">
-                    ▲ 명함 앞면 (Front Side)
-                  </span>
+                <div className="w-full max-w-[500px] flex flex-col items-center space-y-3">
+                  <div className="w-full flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                      ▲ 명함 앞면 (Front Side)
+                    </span>
+                    <button
+                      onClick={() => handleDownloadImage('front')}
+                      disabled={isDownloading}
+                      className="text-xs text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1 transition-colors"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>앞면 이미지 다운로드</span>
+                    </button>
+                  </div>
 
                   <div
                     ref={frontRef}
@@ -471,10 +555,30 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
 
               {/* BACK CARD PREVIEW */}
               {(activeSide === 'both' || activeSide === 'back') && (
-                <div className="w-full max-w-[500px] flex flex-col items-center">
-                  <span className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">
-                    ▲ 명함 뒷면 (Back Side)
-                  </span>
+                <div className="w-full max-w-[500px] flex flex-col items-center space-y-3">
+                  <div className="w-full flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                      ▲ 명함 뒷면 (Back Side)
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={handleDownloadQR}
+                        className="text-xs text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 transition-colors"
+                      >
+                        <QrCode className="w-3.5 h-3.5" />
+                        <span>QR코드 다운로드</span>
+                      </button>
+                      <span className="text-slate-600">|</span>
+                      <button
+                        onClick={() => handleDownloadImage('back')}
+                        disabled={isDownloading}
+                        className="text-xs text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1 transition-colors"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>뒷면 이미지 다운로드</span>
+                      </button>
+                    </div>
+                  </div>
 
                   <div
                     ref={backRef}
@@ -542,15 +646,27 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
 
             </div>
 
+            {/* Hidden High-Resolution QR Canvas for Direct Download */}
+            <div className="hidden" aria-hidden="true">
+              <QRCodeCanvas
+                id="qr-download-canvas"
+                value={profile.qrCustomText || window.location.origin}
+                size={512}
+                level="H"
+                includeMargin={true}
+              />
+            </div>
+
             {/* Print Guide Message */}
             <div className="p-4 rounded-2xl bg-slate-900/60 border border-white/5 text-xs text-slate-400 space-y-1">
               <p className="text-cyan-300 font-bold flex items-center gap-1">
                 <Printer className="w-3.5 h-3.5" />
-                <span>명함 인쇄 팁 (Print Tip)</span>
+                <span>명함 다운로드 & 인쇄 안내</span>
               </p>
               <p>
-                상단의 <strong>[A4 인쇄]</strong> 버튼을 누르시면 표준 인쇄 크기로 바로 출력하거나 PDF로 저장할 수 있습니다. 
-                고화질 명함 전문 인쇄소에 전달하시려면 <strong>[앞/뒷면 PNG 저장]</strong>으로 300DPI급 이미지를 다운로드받으세요.
+                - <strong>[앞면 PNG] / [뒷면 PNG]</strong> : 명함 앞면 또는 뒷면만 개별 고화질(300DPI급) 이미지로 저장합니다.<br />
+                - <strong>[QR코드 PNG]</strong> : 명함에 삽입된 QR코드만 512x512 고해상도 이미지로 단독 다운로드합니다.<br />
+                - <strong>[A4 인쇄]</strong> : A4 한 장에 10장의 명함을 자동 정렬하여 즉시 출력합니다.
               </p>
             </div>
 
