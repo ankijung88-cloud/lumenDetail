@@ -78,21 +78,21 @@ export const Hero = ({ onBookClick, onExploreClick }) => {
 
           <div className="glass-card p-4 rounded-xl border border-white/5 flex items-start gap-3">
             <div className="p-2.5 rounded-lg bg-emerald-500/10 text-emerald-400 shrink-0">
-              <Shield className="w-5 h-5" />
+              <CheckCircle className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-white">1년 시공 품질보증</h4>
-              <p className="text-xs text-slate-400 mt-0.5">정품 정량 시공 보증서 발급</p>
+              <h4 className="text-sm font-bold text-white">원하는 부분별 시공</h4>
+              <p className="text-xs text-slate-400 mt-0.5">필요한 부위만 쏙쏙 선택 가능</p>
             </div>
           </div>
 
           <div className="glass-card p-4 rounded-xl border border-white/5 flex items-start gap-3">
             <div className="p-2.5 rounded-lg bg-amber-500/10 text-amber-400 shrink-0">
-              <Star className="w-5 h-5" />
+              <Award className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-white">1일 1대 정성 시공</h4>
-              <p className="text-xs text-slate-400 mt-0.5">오직 내 차에만 집중하는 1:1 케어</p>
+              <h4 className="text-sm font-bold text-white">부담없는 차량관리</h4>
+              <p className="text-xs text-slate-400 mt-0.5">합리적인 비용의 실속형 1:1 케어</p>
             </div>
           </div>
 
