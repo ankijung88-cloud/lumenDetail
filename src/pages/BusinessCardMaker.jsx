@@ -161,8 +161,8 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
   const themeStyle = getThemeStyles();
 
   return (
-    <div className="min-h-screen bg-[#07090e] text-slate-100 pt-24 pb-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="min-h-screen bg-[#07090e] text-slate-100 pt-24 pb-20 px-4 sm:px-6 lg:px-8 print:p-0 print:bg-white">
+      <div className="max-w-7xl mx-auto space-y-8 no-print">
         
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
@@ -666,7 +666,7 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
               <p>
                 - <strong>[앞면 PNG] / [뒷면 PNG]</strong> : 명함 앞면 또는 뒷면만 개별 고화질(300DPI급) 이미지로 저장합니다.<br />
                 - <strong>[QR코드 PNG]</strong> : 명함에 삽입된 QR코드만 512x512 고해상도 이미지로 단독 다운로드합니다.<br />
-                - <strong>[A4 인쇄]</strong> : A4 한 장에 10장의 명함을 자동 정렬하여 즉시 출력합니다.
+                - <strong>[A4 인쇄]</strong> : A4 한 장에 <strong>앞면 5매(좌측) + 뒷면 5매(우측) 총 10매</strong>가 표준 규격(90×50mm)으로 인쇄됩니다.
               </p>
             </div>
 
@@ -675,6 +675,123 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
         </div>
 
       </div>
+
+      {/* ========================================================================= */}
+      {/* A4 10-Card Print Imposition Sheet (5 Front Cards + 5 Back Cards)         */}
+      {/* Hidden on screen, perfectly visible and formatted when window.print()     */}
+      {/* ========================================================================= */}
+      <div className="print-only hidden">
+        <div className="print-card-grid">
+          {[0, 1, 2, 3, 4].map((idx) => (
+            <React.Fragment key={idx}>
+              {/* Left Column: Front Card (1 of 5) */}
+              <div className="print-card-item">
+                <div 
+                  className={`w-full h-full p-3.5 relative overflow-hidden flex flex-col justify-between select-none ${themeStyle.cardBg}`}
+                  style={{ backgroundImage: themeStyle.pattern }}
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <div className={`p-1 rounded bg-white/10 ${themeStyle.iconColor}`}>
+                          <Sparkles className="w-3 h-3" />
+                        </div>
+                        <span className={`font-black text-sm tracking-wider ${themeStyle.gradientText}`}>
+                          {profile.shopName}
+                        </span>
+                      </div>
+                      <p className="text-[7.5px] text-slate-400 font-mono tracking-widest uppercase mt-0.5">
+                        {profile.englishName}
+                      </p>
+                    </div>
+                    <span className={`text-[7.5px] font-bold px-1.5 py-0.5 rounded-full border ${themeStyle.accentBg}`}>
+                      {profile.accentTag}
+                    </span>
+                  </div>
+
+                  <div className="my-auto py-1">
+                    <div className="flex items-baseline gap-1.5">
+                      <h4 className="text-sm font-black text-white">{profile.ownerName}</h4>
+                      <span className={`text-[9px] font-bold ${themeStyle.accentText}`}>{profile.title}</span>
+                    </div>
+                    <p className="text-[10px] font-bold text-slate-200 font-mono mt-0.5 tracking-wide">
+                      {profile.phone}
+                    </p>
+                  </div>
+
+                  <div className="border-t border-white/10 pt-1 flex items-center justify-between text-[8px] text-slate-300">
+                    <div className="flex items-center gap-1">
+                      <MapPin className={`w-2.5 h-2.5 ${themeStyle.iconColor} shrink-0`} />
+                      <span className="truncate max-w-[180px]">{profile.location}</span>
+                    </div>
+                    <span className={`text-[7.5px] font-mono ${themeStyle.accentText}`}>1:1 맞춤 출장</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Back Card (1 of 5) */}
+              <div className="print-card-item">
+                <div 
+                  className={`w-full h-full p-3.5 relative overflow-hidden flex flex-col justify-between select-none ${themeStyle.cardBg}`}
+                  style={{ backgroundImage: themeStyle.pattern }}
+                >
+                  <div>
+                    <div className="flex items-center gap-1 mb-1">
+                      <Car className={`w-3 h-3 ${themeStyle.iconColor}`} />
+                      <span className="text-[8.5px] font-bold text-white tracking-wider">PROFESSIONAL SERVICES</span>
+                    </div>
+                    <p className="text-[7.5px] font-semibold text-cyan-300 leading-tight bg-black/40 p-1.5 rounded border border-white/5">
+                      {profile.services}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2 my-0.5">
+                    <div className="space-y-0.5 text-[8px] text-slate-300">
+                      {profile.email && (
+                        <div className="flex items-center gap-1">
+                          <Mail className="w-2.5 h-2.5 text-slate-400 shrink-0" />
+                          <span>{profile.email}</span>
+                        </div>
+                      )}
+                      {profile.instagram && (
+                        <div className="flex items-center gap-1">
+                          <span className="font-bold text-pink-400 text-[8px]">Insta</span>
+                          <span>{profile.instagram}</span>
+                        </div>
+                      )}
+                      {profile.bankAccount && (
+                        <div className="flex items-center gap-1 text-[7.5px] text-slate-400">
+                          <span>입금:</span>
+                          <span className="font-mono text-slate-300">{profile.bankAccount}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="p-1 bg-white rounded shadow shrink-0 flex flex-col items-center">
+                      <QRCodeSVG
+                        value={profile.qrCustomText || window.location.origin}
+                        size={38}
+                        level="M"
+                        includeMargin={false}
+                      />
+                      <span className="text-[6.5px] font-bold text-slate-900 mt-0.5 font-mono">예약 바로가기</span>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-white/10 pt-1 flex items-center justify-between text-[7.5px] text-slate-400">
+                    <div className="flex items-center gap-1">
+                      <ShieldCheck className={`w-2.5 h-2.5 ${themeStyle.iconColor}`} />
+                      <span>100% 수성광택 시공보증</span>
+                    </div>
+                    <span className="font-mono text-slate-500">LUMEN</span>
+                  </div>
+                </div>
+              </div>
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+
     </div>
   );
 };

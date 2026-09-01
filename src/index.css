@@ -119,21 +119,54 @@ img, svg, video, canvas {
 
 /* Print utilities for business card */
 @media print {
-  body {
+  @page {
+    size: A4 portrait;
+    margin: 10mm 12mm;
+  }
+
+  html, body {
     background: #ffffff !important;
     color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
-  .no-print {
+
+  .no-print, header, nav, footer, button {
     display: none !important;
   }
+
   .print-only {
     display: block !important;
+    width: 100% !important;
+    margin: 0 auto !important;
   }
-  .print-card-page {
-    page-break-after: always;
-    margin: 0;
-    padding: 10mm;
-    width: 210mm;
-    height: 297mm;
+
+  .print-card-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 90mm) !important;
+    grid-auto-rows: 50mm !important;
+    gap: 3.5mm 5mm !important;
+    justify-content: center !important;
+    align-content: start !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+    page-break-inside: avoid !important;
+  }
+
+  .print-card-item {
+    width: 90mm !important;
+    height: 50mm !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    border: 0.4px dashed rgba(148, 163, 184, 0.6) !important;
+    border-radius: 3mm !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 }
