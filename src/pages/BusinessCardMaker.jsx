@@ -72,28 +72,63 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
     }
   };
 
-  // 명함 이미지 개별 / 일괄 다운로드 (앞면 / 뒷면 / 양면)
-  const handleDownloadImage = async (type) => {
-    setIsDownloading(true);
+  // 표준 규격(900x500, 90mm x 50mm) 무손실 PNG 렌더링 함수
+  const renderCardToPng = async (element) => {
+    if (!element) return null;
+    const theme = getThemeStyles();
+    
+    // 숨김 상태 처리 복원 준비
+    const parentHidden = element.closest('.hidden');
+    if (parentHidden) parentHidden.classList.remove('hidden');
+
     try {
-      const theme = getThemeStyles();
-      const exportOptions = {
-        scale: 1, // 900x500 표준 명함 규격(90mm × 50mm) 1:1 실물 사이즈로 정확히 저장
+      const capturedCanvas = await html2canvas(element, {
+        scale: 3,
         useCORS: true,
         allowTaint: true,
         backgroundColor: theme.solidBg,
         logging: false,
-        width: 900,
-        height: 500,
-        windowWidth: 900,
-        windowHeight: 500,
-      };
+        onclone: (clonedDoc, clonedEl) => {
+          clonedEl.style.borderRadius = '24px';
+          clonedEl.style.border = `2.5px solid ${theme.borderColor}`;
+          clonedEl.style.backgroundColor = theme.solidBg;
+          clonedEl.style.backgroundImage = `${theme.pattern}, ${theme.gradientBg}`;
+          
+          const textGradients = clonedEl.querySelectorAll('.text-gradient, .text-gradient-gold');
+          textGradients.forEach(el => {
+            el.style.background = 'none';
+            el.style.webkitBackgroundClip = 'unset';
+            el.style.webkitTextFillColor = 'initial';
+            el.style.color = theme.accentColor;
+            el.style.fontWeight = '900';
+          });
+        }
+      });
 
+      // 대한민국 표준 명함 규격 90mm × 50mm (900px × 500px, 9:5 비율) 고정 캔버스 생성
+      const finalCanvas = document.createElement('canvas');
+      finalCanvas.width = 900;
+      finalCanvas.height = 500;
+      const ctx = finalCanvas.getContext('2d');
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.fillStyle = theme.solidBg;
+      ctx.fillRect(0, 0, 900, 500);
+      ctx.drawImage(capturedCanvas, 0, 0, 900, 500);
+
+      return finalCanvas.toDataURL('image/png', 1.0);
+    } finally {
+      if (parentHidden) parentHidden.classList.add('hidden');
+    }
+  };
+
+  // 명함 이미지 개별 / 일괄 다운로드 (앞면 / 뒷면 / 양면)
+  const handleDownloadImage = async (type) => {
+    setIsDownloading(true);
+    try {
       if (type === 'front' || type === 'both') {
-        const target = frontExportRef.current || frontRef.current;
-        if (target) {
-          const canvas = await html2canvas(target, exportOptions);
-          const dataUrl = canvas.toDataURL('image/png', 1.0);
+        const dataUrl = await renderCardToPng(frontRef.current);
+        if (dataUrl) {
           const link = document.createElement('a');
           link.download = `${profile.shopName || '루멘디테일'}_명함_앞면.png`;
           link.href = dataUrl;
@@ -104,10 +139,8 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
       }
 
       if (type === 'back' || type === 'both') {
-        const target = backExportRef.current || backRef.current;
-        if (target) {
-          const canvas = await html2canvas(target, exportOptions);
-          const dataUrl = canvas.toDataURL('image/png', 1.0);
+        const dataUrl = await renderCardToPng(backRef.current);
+        if (dataUrl) {
           const link = document.createElement('a');
           link.download = `${profile.shopName || '루멘디테일'}_명함_뒷면.png`;
           link.href = dataUrl;
@@ -118,10 +151,10 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
       }
 
       const msg = type === 'front' 
-        ? '앞면 명함 고화질 이미지가 다운로드되었습니다.' 
+        ? '앞면 명함 표준 규격(90x50mm) 이미지가 다운로드되었습니다.' 
         : type === 'back' 
-        ? '뒷면 명함 고화질 이미지가 다운로드되었습니다.' 
-        : '앞/뒷면 명함 고화질 이미지가 모두 다운로드되었습니다.';
+        ? '뒷면 명함 표준 규격(90x50mm) 이미지가 다운로드되었습니다.' 
+        : '앞/뒷면 명함 표준 규격(90x50mm) 이미지가 모두 다운로드되었습니다.';
       setDownloadMsg(msg);
       setTimeout(() => setDownloadMsg(''), 3000);
     } catch (err) {
@@ -852,171 +885,6 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
               </div>
             </React.Fragment>
           ))}
-        </div>
-      </div>
-
-      {/* ========================================================================= */}
-      {/* Dedicated Pixel-Perfect Export Cards (900px × 500px, 90mm × 50mm Standard) */}
-      {/* Positioned off-screen, guaranteed 1:1 business card size & pure dark colors*/}
-      {/* ========================================================================= */}
-      <div 
-        style={{ 
-          position: 'fixed', 
-          top: 0, 
-          left: '-9999px', 
-          width: '900px', 
-          pointerEvents: 'none', 
-          zIndex: -1 
-        }}
-        aria-hidden="true"
-      >
-        {/* Front Export Card (900px × 500px) */}
-        <div
-          ref={frontExportRef}
-          style={{
-            width: '900px',
-            height: '500px',
-            boxSizing: 'border-box',
-            backgroundColor: themeStyle.solidBg,
-            backgroundImage: `${themeStyle.pattern}, ${themeStyle.gradientBg}`,
-            border: `2.5px solid ${themeStyle.borderColor}`,
-            borderRadius: '24px',
-            padding: '38px 46px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-            color: '#ffffff',
-            boxShadow: '0 0 40px rgba(6,182,212,0.3)',
-            overflow: 'hidden'
-          }}
-        >
-          {/* Top Branding */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ padding: '8px', borderRadius: '10px', background: 'rgba(255,255,255,0.1)', color: themeStyle.accentColor, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Sparkles style={{ width: '24px', height: '24px' }} />
-                </div>
-                <span style={{ fontSize: '28px', fontWeight: '900', letterSpacing: '0.05em', color: '#ffffff' }}>
-                  {profile.shopName}
-                </span>
-              </div>
-              <p style={{ fontSize: '13px', fontWeight: '700', color: '#94a3b8', letterSpacing: '0.2em', textTransform: 'uppercase', marginTop: '5px', fontFamily: 'monospace' }}>
-                {profile.englishName}
-              </p>
-            </div>
-            <span style={{ fontSize: '13.5px', fontWeight: '700', padding: '6px 16px', borderRadius: '9999px', background: 'rgba(6,182,212,0.2)', border: `2px solid ${themeStyle.borderColor}`, color: themeStyle.accentColor }}>
-              {profile.accentTag}
-            </span>
-          </div>
-
-          {/* Middle Info */}
-          <div style={{ margin: 'auto 0', padding: '6px 0' }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '14px' }}>
-              <h4 style={{ fontSize: '44px', fontWeight: '900', color: '#ffffff', letterSpacing: '-0.02em', margin: 0 }}>
-                {profile.ownerName}
-              </h4>
-              <span style={{ fontSize: '20px', fontWeight: '700', color: themeStyle.accentColor }}>
-                {profile.title}
-              </span>
-            </div>
-            <p style={{ fontSize: '26px', fontWeight: '800', color: '#ffffff', letterSpacing: '0.05em', marginTop: '8px', fontFamily: 'monospace' }}>
-              {profile.phone}
-            </p>
-          </div>
-
-          {/* Bottom Footer */}
-          <div style={{ borderTop: '1.5px solid rgba(255,255,255,0.12)', paddingTop: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '15px', color: '#cbd5e1' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <MapPin style={{ width: '20px', height: '20px', color: themeStyle.accentColor, flexShrink: 0 }} />
-              <span style={{ fontWeight: '500' }}>{profile.location}</span>
-            </div>
-            <span style={{ fontSize: '15px', fontWeight: '800', color: themeStyle.accentColor }}>
-              1:1 맞춤 출장
-            </span>
-          </div>
-        </div>
-
-        {/* Back Export Card (900px × 500px) */}
-        <div
-          ref={backExportRef}
-          style={{
-            width: '900px',
-            height: '500px',
-            marginTop: '40px',
-            boxSizing: 'border-box',
-            backgroundColor: themeStyle.solidBg,
-            backgroundImage: `${themeStyle.pattern}, ${themeStyle.gradientBg}`,
-            border: `2.5px solid ${themeStyle.borderColor}`,
-            borderRadius: '24px',
-            padding: '38px 46px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-            color: '#ffffff',
-            boxShadow: '0 0 40px rgba(6,182,212,0.3)',
-            overflow: 'hidden'
-          }}
-        >
-          {/* Top Services */}
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-              <Car style={{ width: '22px', height: '22px', color: themeStyle.accentColor }} />
-              <span style={{ fontSize: '17px', fontWeight: '800', color: '#ffffff', letterSpacing: '0.08em' }}>PROFESSIONAL SERVICES</span>
-            </div>
-            <div style={{ background: 'rgba(0, 0, 0, 0.75)', border: '1.5px solid rgba(255,255,255,0.12)', padding: '12px 18px', borderRadius: '14px' }}>
-              <p style={{ fontSize: '18px', fontWeight: '800', color: '#67e8f9', margin: 0, lineHeight: '1.4' }}>
-                {profile.services}
-              </p>
-            </div>
-          </div>
-
-          {/* Middle Contacts & QR */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', margin: '6px 0' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '16px', color: '#e2e8f0' }}>
-              {profile.email && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Mail style={{ width: '18px', height: '18px', color: '#94a3b8' }} />
-                  <span>{profile.email}</span>
-                </div>
-              )}
-              {profile.instagram && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontWeight: '800', color: '#f472b6', fontSize: '16px' }}>Insta</span>
-                  <span>{profile.instagram}</span>
-                </div>
-              )}
-              {profile.bankAccount && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px', color: '#cbd5e1' }}>
-                  <span style={{ color: '#94a3b8' }}>입금:</span>
-                  <span style={{ fontFamily: 'monospace', color: '#ffffff', fontWeight: '800' }}>{profile.bankAccount}</span>
-                </div>
-              )}
-            </div>
-
-            <div style={{ background: '#ffffff', borderRadius: '16px', padding: '10px 14px', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '0 6px 20px rgba(0,0,0,0.5)', flexShrink: 0 }}>
-              <QRCodeSVG
-                value={profile.qrCustomText || window.location.origin}
-                size={85}
-                level="M"
-                includeMargin={false}
-              />
-              <span style={{ fontSize: '11px', fontWeight: '900', color: '#090e17', marginTop: '4px', fontFamily: 'system-ui, sans-serif' }}>
-                예약 바로가기
-              </span>
-            </div>
-          </div>
-
-          {/* Bottom Footer */}
-          <div style={{ borderTop: '1.5px solid rgba(255,255,255,0.12)', paddingTop: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '14.5px', color: '#94a3b8' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <ShieldCheck style={{ width: '20px', height: '20px', color: themeStyle.accentColor }} />
-              <span style={{ fontWeight: '600' }}>정품 정량 케미컬 100% 수성광택 시공보증</span>
-            </div>
-            <span style={{ fontFamily: 'monospace', fontWeight: '800', color: '#64748b' }}>LUMEN</span>
-          </div>
         </div>
       </div>
 
