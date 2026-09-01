@@ -46,7 +46,7 @@ export const Navbar = ({ currentTab, setCurrentTab }) => {
               <span className="font-extrabold text-xl tracking-wider text-white font-sans">LUMEN</span>
               <span className="text-xs px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400 font-semibold border border-cyan-500/30">DETAIL</span>
             </div>
-            <p className="text-[10px] text-slate-400 font-medium tracking-tight">프리미엄 1:1 출장 자동차 광택케어</p>
+            <p className="text-[10px] text-slate-400 font-medium tracking-tight">1:1 맞춤 출장 자동차 광택케어</p>
           </div>
         </div>
 

@@ -12,7 +12,7 @@ const INITIAL_BOOKINGS = [
     customerName: '김민준',
     phone: '010-3849-2918',
     carModel: '제네시스 G80 (2024년형)',
-    serviceName: '프리미엄 광택 + 9H 유리막 코팅',
+    serviceName: '3스텝 광택 + 9H 유리막 코팅',
     location: '서울 강남구 역삼동 741-2 지하 2층 주차장 B구역',
     preferredDate: '2026-09-03',
     preferredTime: '10:00',
@@ -162,7 +162,7 @@ export const getCardProfile = () => {
     }
   }
   return {
-    shopName: '루멘 프리미엄 디테일링',
+    shopName: '루멘 디테일링',
     englishName: 'LUMEN DETAILING SERVICE',
     ownerName: '홍길동 대표',
     title: '출장 디테일링 & 광택 전문가',

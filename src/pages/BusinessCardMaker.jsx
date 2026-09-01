@@ -33,7 +33,7 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
   const handleReset = () => {
     if (window.confirm('명함 설정을 초기 기본값으로 되돌리시겠습니까?')) {
       const defaultProf = {
-        shopName: '루멘 프리미엄 디테일링',
+        shopName: '루멘 디테일링',
         englishName: 'LUMEN DETAILING SERVICE',
         ownerName: '홍길동 대표',
         title: '출장 디테일링 & 광택 전문가',
@@ -155,7 +155,7 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
               </div>
               <div>
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-white">출장차량관리 전용 디지털 명함 제작기</h1>
-                <p className="text-xs text-slate-400 mt-0.5">실시간 QR코드 생성, 프리미엄 럭셔리 테마, 이미지 저장 및 A4 인쇄 지원</p>
+                <p className="text-xs text-slate-400 mt-0.5">실시간 QR코드 생성, 럭셔리 테마, 이미지 저장 및 A4 인쇄 지원</p>
               </div>
             </div>
           </div>

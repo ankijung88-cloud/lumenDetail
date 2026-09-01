@@ -21,7 +21,7 @@ export const BookingForm = ({ preselectedService, preselectedPrice }) => {
     carModel: '',
     carColor: '',
     carYear: '',
-    serviceName: preselectedService || '프리미엄 3스텝 광택 + 9H 유리막 코팅',
+    serviceName: preselectedService || '3스텝 광택 + 9H 세라믹 코팅',
     travelZone: 'zone1',
     location: '',
     preferredDate: '',
@@ -155,7 +155,7 @@ export const BookingForm = ({ preselectedService, preselectedPrice }) => {
         carModel: '',
         carColor: '',
         carYear: '',
-        serviceName: '프리미엄 3스텝 광택 + 9H 세라믹 코팅',
+        serviceName: '3스텝 광택 + 9H 세라믹 코팅',
         travelZone: 'zone1',
         location: '',
         preferredDate: '',
@@ -325,7 +325,7 @@ export const BookingForm = ({ preselectedService, preselectedPrice }) => {
                     <option value="원하는 부위만 쏙! 맞춤 패널 선택 케어">원하는 부위만 쏙! 맞춤 패널 선택 케어</option>
                   </optgroup>
                   <optgroup label="[전체 차량 패키지]">
-                    <option value="프리미엄 3스텝 수성 광택 + 9H 세라믹 코팅">프리미엄 3스텝 광택 + 9H 세라믹 코팅 (추천)</option>
+                    <option value="3스텝 수성 광택 + 9H 세라믹 코팅">3스텝 광택 + 9H 세라믹 코팅 (추천)</option>
                     <option value="2스텝 세미광택 (도장보호 & 광택 케어)">2스텝 세미광택 (도장보호 & 광택 케어 / 컷팅 최소화)</option>
                     <option value="베이직 수성 광택">베이직 수성 광택</option>
                     <option value="VIP 올인원 풀케어 패키지">VIP 올인원 풀케어 패키지 (내/외장 토탈)</option>

@@ -16,7 +16,7 @@ export const Footer = ({ setCurrentTab }) => {
           </div>
           <p className="text-slate-400 text-xs sm:text-sm leading-relaxed max-w-md">
             루멘 디테일링은 고객님이 계신 자택 및 직장 주차장으로 직접 방문하여 수성 듀얼 광택, 
-            9H 세라믹 유리막 코팅, 실내 고온스팀 크리닝을 1:1로 시공해 드리는 프리미엄 출장 차량관리 서비스입니다.
+            9H 세라믹 유리막 코팅, 실내 고온스팀 크리닝을 1:1로 시공해 드리는 맞춤 출장 차량관리 서비스입니다.
           </p>
           <div className="flex items-center gap-2 text-cyan-400 text-xs font-semibold">
             <MapPin className="w-4 h-4 shrink-0" />
