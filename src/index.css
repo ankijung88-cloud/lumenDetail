@@ -108,12 +108,14 @@ img, svg, video, canvas {
 .text-gradient {
   background: linear-gradient(135deg, #ffffff 30%, #38bdf8 70%, #06b6d4 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .text-gradient-gold {
   background: linear-gradient(135deg, #fef08a 0%, #eab308 50%, #ca8a04 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -173,6 +175,7 @@ img, svg, video, canvas {
   .print-card-item .text-gradient {
     background: none !important;
     -webkit-background-clip: unset !important;
+    background-clip: unset !important;
     -webkit-text-fill-color: initial !important;
     color: #38bdf8 !important;
   }
@@ -180,6 +183,7 @@ img, svg, video, canvas {
   .print-card-item .text-gradient-gold {
     background: none !important;
     -webkit-background-clip: unset !important;
+    background-clip: unset !important;
     -webkit-text-fill-color: initial !important;
     color: #fbbf24 !important;
   }
