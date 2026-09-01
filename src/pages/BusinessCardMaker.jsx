@@ -105,16 +105,16 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
         }
       });
 
-      // 대한민국 표준 명함 규격 90mm × 50mm (900px × 500px, 9:5 비율) 고정 캔버스 생성
+      // 온라인/모바일 명함 최적 규격 600px × 333px (9:5 비율, 모바일 전송 및 온라인 사용 최적화)
       const finalCanvas = document.createElement('canvas');
-      finalCanvas.width = 900;
-      finalCanvas.height = 500;
+      finalCanvas.width = 600;
+      finalCanvas.height = 333;
       const ctx = finalCanvas.getContext('2d');
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
       ctx.fillStyle = theme.solidBg;
-      ctx.fillRect(0, 0, 900, 500);
-      ctx.drawImage(capturedCanvas, 0, 0, 900, 500);
+      ctx.fillRect(0, 0, 600, 333);
+      ctx.drawImage(capturedCanvas, 0, 0, 600, 333);
 
       return finalCanvas.toDataURL('image/png', 1.0);
     } finally {
@@ -130,7 +130,7 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
         const dataUrl = await renderCardToPng(frontRef.current);
         if (dataUrl) {
           const link = document.createElement('a');
-          link.download = `${profile.shopName || '루멘디테일'}_명함_앞면.png`;
+          link.download = `${profile.shopName || '루멘디테일'}_온라인명함_앞면.png`;
           link.href = dataUrl;
           document.body.appendChild(link);
           link.click();
@@ -142,7 +142,7 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
         const dataUrl = await renderCardToPng(backRef.current);
         if (dataUrl) {
           const link = document.createElement('a');
-          link.download = `${profile.shopName || '루멘디테일'}_명함_뒷면.png`;
+          link.download = `${profile.shopName || '루멘디테일'}_온라인명함_뒷면.png`;
           link.href = dataUrl;
           document.body.appendChild(link);
           link.click();
@@ -151,10 +151,10 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
       }
 
       const msg = type === 'front' 
-        ? '앞면 명함 표준 규격(90x50mm) 이미지가 다운로드되었습니다.' 
+        ? '앞면 온라인 명함(600x333) 이미지가 다운로드되었습니다.' 
         : type === 'back' 
-        ? '뒷면 명함 표준 규격(90x50mm) 이미지가 다운로드되었습니다.' 
-        : '앞/뒷면 명함 표준 규격(90x50mm) 이미지가 모두 다운로드되었습니다.';
+        ? '뒷면 온라인 명함(600x333) 이미지가 다운로드되었습니다.' 
+        : '앞/뒷면 온라인 명함(600x333) 이미지가 모두 다운로드되었습니다.';
       setDownloadMsg(msg);
       setTimeout(() => setDownloadMsg(''), 3000);
     } catch (err) {
@@ -163,6 +163,19 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
     } finally {
       setIsDownloading(false);
     }
+  };
+
+  // 온라인 스마트 명함 링크 복사
+  const handleCopyCardLink = () => {
+    const onlineCardUrl = `${window.location.origin}/#card`;
+    navigator.clipboard.writeText(onlineCardUrl);
+    setDownloadMsg('온라인 스마트 명함 링크가 클립보드에 복사되었습니다!');
+    setTimeout(() => setDownloadMsg(''), 3000);
+  };
+
+  // 온라인 스마트 명함 새 창 열기
+  const handleOpenOnlineCard = () => {
+    window.open(`${window.location.origin}/#card`, '_blank');
   };
 
   // 테마별 스타일 정의 (솔리드 베이스 컬러 및 그라디언트 완벽 지원)
@@ -262,6 +275,24 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
             >
               <Save className="w-3.5 h-3.5" />
               <span>설정값 저장</span>
+            </button>
+
+            <button
+              onClick={handleOpenOnlineCard}
+              className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-slate-950 font-extrabold text-xs flex items-center gap-1.5 transition-all shadow-md"
+              title="고객에게 공유할 수 있는 온라인 스마트 명함 웹페이지 열기"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>온라인 명함 보기</span>
+            </button>
+
+            <button
+              onClick={handleCopyCardLink}
+              className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30 text-xs font-semibold flex items-center gap-1.5 transition-all"
+              title="온라인 명함 웹 링크 복사"
+            >
+              <Share2 className="w-3.5 h-3.5 text-cyan-400" />
+              <span>링크 복사</span>
             </button>
 
             <div className="h-5 w-[1px] bg-white/10 mx-1 hidden sm:block" />

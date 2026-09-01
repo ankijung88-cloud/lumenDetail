@@ -3,20 +3,23 @@ import { Navbar } from './components/Navbar';
 import { LandingPage } from './pages/LandingPage';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { BusinessCardMaker } from './pages/BusinessCardMaker';
+import { DigitalBusinessCard } from './pages/DigitalBusinessCard';
 import { Footer } from './components/Footer';
 import { AdminAuthModal } from './components/AdminAuthModal';
 import { isAdminAuthenticated, setAdminAuthenticated } from './utils/storage';
 
 export function App() {
-  const [currentTab, setCurrentTab] = useState('landing'); // 'landing' | 'admin' | 'cardMaker'
+  const [currentTab, setCurrentTab] = useState('landing'); // 'landing' | 'admin' | 'cardMaker' | 'card'
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [pendingTab, setPendingTab] = useState(null);
 
-  // 브라우저 해시 또는 히스토리 감지 (선택적)
+  // 브라우저 해시 또는 히스토리 감지
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '');
-      if (hash === 'admin' || hash === 'card-maker') {
+      if (hash === 'card' || hash === 'mycard' || hash === 'mobile-card') {
+        setCurrentTab('card');
+      } else if (hash === 'admin' || hash === 'card-maker') {
         const target = hash === 'card-maker' ? 'cardMaker' : 'admin';
         if (isAdminAuthenticated()) {
           setCurrentTab(target);
@@ -35,6 +38,13 @@ export function App() {
   }, []);
 
   const handleTabChange = (tab) => {
+    if (tab === 'card') {
+      setCurrentTab('card');
+      window.location.hash = 'card';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     if (tab === 'admin' || tab === 'cardMaker') {
       if (isAdminAuthenticated()) {
         setCurrentTab(tab);
@@ -98,6 +108,9 @@ export function App() {
         )}
         {currentTab === 'cardMaker' && (
           <BusinessCardMaker onBackToAdmin={() => handleTabChange('admin')} />
+        )}
+        {currentTab === 'card' && (
+          <DigitalBusinessCard onGoToBooking={() => handleTabChange('landing')} />
         )}
       </main>
 
