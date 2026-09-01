@@ -546,7 +546,9 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
                         <MapPin className={`w-3.5 h-3.5 ${themeStyle.iconColor} shrink-0`} />
                         <span className="truncate max-w-[280px]">{profile.location}</span>
                       </div>
-                      <span className={`text-[10px] font-mono ${themeStyle.accentText}`}>1:1 맞춤 출장</span>
+                      <span className={`text-[10.5px] font-sans font-bold tracking-normal ${themeStyle.accentText}`}>
+                        1:1 맞춤 출장
+                      </span>
                     </div>
 
                   </div>
@@ -627,7 +629,7 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
                           level="M"
                           includeMargin={false}
                         />
-                        <span className="text-[8px] font-bold text-slate-900 mt-1 font-mono">예약 바로가기</span>
+                        <span className="text-[8px] font-bold text-slate-900 mt-1 font-sans">예약 바로가기</span>
                       </div>
                     </div>
 
@@ -725,7 +727,7 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
                       <MapPin className="w-2.5 h-2.5 text-cyan-700 shrink-0" />
                       <span className="truncate max-w-[180px]">{profile.location}</span>
                     </div>
-                    <span className="text-[7.5px] font-bold text-cyan-800 font-mono">1:1 맞춤 출장</span>
+                    <span className="text-[7.5px] font-bold text-cyan-800 font-sans tracking-normal">1:1 맞춤 출장</span>
                   </div>
                 </div>
               </div>
@@ -775,7 +777,7 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
                         level="M"
                         includeMargin={false}
                       />
-                      <span className="text-[6.5px] font-extrabold text-slate-950 mt-0.5 font-mono">예약 바로가기</span>
+                      <span className="text-[6.5px] font-extrabold text-slate-950 mt-0.5 font-sans tracking-tight">예약 바로가기</span>
                     </div>
                   </div>
 
