@@ -121,12 +121,12 @@ img, svg, video, canvas {
 @media print {
   @page {
     size: A4 portrait;
-    margin: 10mm 12mm;
+    margin: 8mm 10mm;
   }
 
   html, body {
     background: #ffffff !important;
-    color: #000000 !important;
+    color: #ffffff !important;
     margin: 0 !important;
     padding: 0 !important;
     min-height: auto !important;
@@ -149,7 +149,7 @@ img, svg, video, canvas {
     display: grid !important;
     grid-template-columns: repeat(2, 90mm) !important;
     grid-auto-rows: 50mm !important;
-    gap: 3.5mm 5mm !important;
+    gap: 3mm 4mm !important;
     justify-content: center !important;
     align-content: start !important;
     width: 100% !important;
@@ -164,9 +164,23 @@ img, svg, video, canvas {
     overflow: hidden !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
-    border: 0.4px dashed rgba(148, 163, 184, 0.6) !important;
-    border-radius: 3mm !important;
+    border-radius: 2.5mm !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+
+  /* Force solid colors during print to prevent transparent text clipping */
+  .print-card-item .text-gradient {
+    background: none !important;
+    -webkit-background-clip: unset !important;
+    -webkit-text-fill-color: initial !important;
+    color: #38bdf8 !important;
+  }
+
+  .print-card-item .text-gradient-gold {
+    background: none !important;
+    -webkit-background-clip: unset !important;
+    -webkit-text-fill-color: initial !important;
+    color: #fbbf24 !important;
   }
 }

@@ -708,114 +708,128 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
 
       {/* ========================================================================= */}
       {/* A4 10-Card Print Imposition Sheet (5 Front Cards + 5 Back Cards)         */}
-      {/* High-contrast paper-optimized design so all text is 100% sharp & visible */}
+      {/* Exact 1:1 match with the live card preview, crystal clear on white paper   */}
       {/* ========================================================================= */}
       <div className="print-only hidden">
         <div className="print-card-grid">
           {[0, 1, 2, 3, 4].map((idx) => (
             <React.Fragment key={idx}>
               {/* Left Column: Front Card (1 of 5) */}
-              <div className="print-card-item bg-white text-slate-900">
-                <div className="w-full h-full p-3.5 relative overflow-hidden flex flex-col justify-between select-none bg-gradient-to-br from-slate-50 via-white to-cyan-50/40 border border-slate-200">
+              <div 
+                className={`print-card-item rounded-xl overflow-hidden relative ${themeStyle.border}`}
+                style={{ 
+                  backgroundColor: themeStyle.solidBg,
+                  backgroundImage: themeStyle.pattern 
+                }}
+              >
+                <div className={`w-full h-full p-3.5 relative overflow-hidden flex flex-col justify-between select-none ${themeStyle.cardBg}`}>
                   
                   {/* Top Branding */}
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <div className="p-1 rounded bg-cyan-100 text-cyan-700 border border-cyan-300">
+                        <div className={`p-1 rounded bg-white/10 ${themeStyle.iconColor}`}>
                           <Sparkles className="w-3 h-3" />
                         </div>
-                        <span className="font-black text-sm tracking-wider text-slate-950">
+                        <span className={`font-black text-sm tracking-wider text-white ${themeStyle.gradientText}`}>
                           {profile.shopName}
                         </span>
                       </div>
-                      <p className="text-[7.5px] text-slate-500 font-mono tracking-widest uppercase mt-0.5 font-bold">
+                      <p className="text-[7.5px] text-slate-400 font-mono tracking-widest uppercase mt-0.5 font-bold">
                         {profile.englishName}
                       </p>
                     </div>
-                    <span className="text-[7.5px] font-bold px-1.5 py-0.5 rounded-full bg-cyan-100 text-cyan-900 border border-cyan-300">
+                    <span className={`text-[7.5px] font-bold px-1.5 py-0.5 rounded-full border ${themeStyle.accentBg}`}>
                       {profile.accentTag}
                     </span>
                   </div>
 
-                  {/* Center Name & Title (High Contrast Black) */}
+                  {/* Center Name & Title */}
                   <div className="my-auto py-1">
                     <div className="flex items-baseline gap-1.5">
-                      <h4 className="text-base font-black text-slate-950 tracking-tight">{profile.ownerName}</h4>
-                      <span className="text-[9px] font-bold text-cyan-700">{profile.title}</span>
+                      <h4 className="text-sm sm:text-base font-black text-white tracking-tight">{profile.ownerName}</h4>
+                      <span className={`text-[9px] font-bold ${themeStyle.accentText}`}>{profile.title}</span>
                     </div>
-                    <p className="text-[11px] font-extrabold text-slate-900 font-mono mt-0.5 tracking-wide">
+                    <p className="text-[10.5px] font-extrabold text-slate-100 font-mono mt-0.5 tracking-wide">
                       {profile.phone}
                     </p>
                   </div>
 
                   {/* Bottom Footer */}
-                  <div className="border-t border-slate-200 pt-1 flex items-center justify-between text-[8px] text-slate-700 font-medium">
+                  <div className="border-t border-white/10 pt-1 flex items-center justify-between text-[8px] text-slate-300">
                     <div className="flex items-center gap-1">
-                      <MapPin className="w-2.5 h-2.5 text-cyan-700 shrink-0" />
+                      <MapPin className={`w-2.5 h-2.5 ${themeStyle.iconColor} shrink-0`} />
                       <span className="truncate max-w-[180px]">{profile.location}</span>
                     </div>
-                    <span className="text-[7.5px] font-bold text-cyan-800 font-sans tracking-normal">1:1 맞춤 출장</span>
+                    <span className={`text-[7.5px] font-bold font-sans tracking-normal ${themeStyle.accentText}`}>
+                      1:1 맞춤 출장
+                    </span>
                   </div>
                 </div>
               </div>
 
               {/* Right Column: Back Card (1 of 5) */}
-              <div className="print-card-item bg-white text-slate-900">
-                <div className="w-full h-full p-3.5 relative overflow-hidden flex flex-col justify-between select-none bg-gradient-to-br from-slate-50 via-white to-cyan-50/40 border border-slate-200">
+              <div 
+                className={`print-card-item rounded-xl overflow-hidden relative ${themeStyle.border}`}
+                style={{ 
+                  backgroundColor: themeStyle.solidBg,
+                  backgroundImage: themeStyle.pattern 
+                }}
+              >
+                <div className={`w-full h-full p-3.5 relative overflow-hidden flex flex-col justify-between select-none ${themeStyle.cardBg}`}>
                   
                   {/* Top Services */}
                   <div>
                     <div className="flex items-center gap-1 mb-1">
-                      <Car className="w-3 h-3 text-cyan-700" />
-                      <span className="text-[8.5px] font-black text-slate-950 tracking-wider">PROFESSIONAL SERVICES</span>
+                      <Car className={`w-3 h-3 ${themeStyle.iconColor}`} />
+                      <span className="text-[8.5px] font-bold text-white tracking-wider">PROFESSIONAL SERVICES</span>
                     </div>
-                    <p className="text-[8px] font-bold text-cyan-950 leading-tight bg-cyan-100/70 p-1.5 rounded border border-cyan-300/80">
+                    <p className="text-[7.5px] font-bold text-cyan-300 leading-tight bg-black/60 p-1.5 rounded border border-white/10">
                       {profile.services}
                     </p>
                   </div>
 
                   {/* Middle Contacts & QR */}
                   <div className="flex items-center justify-between gap-2 my-0.5">
-                    <div className="space-y-0.5 text-[8px] text-slate-800 font-medium">
+                    <div className="space-y-0.5 text-[8px] text-slate-200 font-medium">
                       {profile.email && (
                         <div className="flex items-center gap-1">
-                          <Mail className="w-2.5 h-2.5 text-slate-600 shrink-0" />
+                          <Mail className="w-2.5 h-2.5 text-slate-400 shrink-0" />
                           <span>{profile.email}</span>
                         </div>
                       )}
                       {profile.instagram && (
                         <div className="flex items-center gap-1">
-                          <span className="font-bold text-pink-600 text-[8px]">Insta</span>
+                          <span className="font-bold text-pink-400 text-[8px]">Insta</span>
                           <span>{profile.instagram}</span>
                         </div>
                       )}
                       {profile.bankAccount && (
-                        <div className="flex items-center gap-1 text-[7.5px] text-slate-700">
-                          <span className="font-bold">입금:</span>
-                          <span className="font-mono text-slate-900 font-bold">{profile.bankAccount}</span>
+                        <div className="flex items-center gap-1 text-[7.5px] text-slate-300">
+                          <span className="text-slate-400">입금:</span>
+                          <span className="font-mono text-slate-100 font-bold">{profile.bankAccount}</span>
                         </div>
                       )}
                     </div>
 
-                    <div className="p-1 bg-white rounded shadow-sm border border-slate-300 shrink-0 flex flex-col items-center">
+                    <div className="p-1 bg-white rounded shadow shrink-0 flex flex-col items-center">
                       <QRCodeSVG
                         value={profile.qrCustomText || window.location.origin}
                         size={38}
                         level="M"
                         includeMargin={false}
                       />
-                      <span className="text-[6.5px] font-extrabold text-slate-950 mt-0.5 font-sans tracking-tight">예약 바로가기</span>
+                      <span className="text-[6.5px] font-bold text-slate-900 mt-0.5 font-sans tracking-tight">예약 바로가기</span>
                     </div>
                   </div>
 
                   {/* Bottom Footer */}
-                  <div className="border-t border-slate-200 pt-1 flex items-center justify-between text-[7.5px] text-slate-700 font-medium">
+                  <div className="border-t border-white/10 pt-1 flex items-center justify-between text-[7.5px] text-slate-400">
                     <div className="flex items-center gap-1">
-                      <ShieldCheck className="w-2.5 h-2.5 text-cyan-700" />
-                      <span className="font-bold">100% 수성광택 시공보증</span>
+                      <ShieldCheck className={`w-2.5 h-2.5 ${themeStyle.iconColor}`} />
+                      <span>100% 수성광택 시공보증</span>
                     </div>
-                    <span className="font-mono font-bold text-slate-600">LUMEN</span>
+                    <span className="font-mono font-bold text-slate-400">LUMEN</span>
                   </div>
                 </div>
               </div>
