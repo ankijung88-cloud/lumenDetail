@@ -74,33 +74,57 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
   const handleDownloadImage = async (type) => {
     setIsDownloading(true);
     try {
+      const theme = getThemeStyles();
+      const exportOptions = {
+        scale: 4, // 4배 초고화질 (300DPI급)
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: theme.solidBg, // 투명도 뭉개짐 방지: 테마 고유의 솔리드 배경색 적용
+        logging: false,
+        onclone: (clonedDoc, clonedElement) => {
+          // html2canvas가 지원하지 못하는 텍스트 클리핑(-webkit-text-fill-color: transparent)을 솔리드 고선명 컬러로 자동 보정
+          const textGradients = clonedElement.querySelectorAll('.text-gradient, .text-gradient-gold');
+          textGradients.forEach(el => {
+            el.style.background = 'none';
+            el.style.webkitBackgroundClip = 'unset';
+            el.style.webkitTextFillColor = 'initial';
+            el.style.color = profile.theme === 'gold-luxury' ? '#f59e0b' : '#38bdf8';
+            el.style.fontWeight = '900';
+          });
+        }
+      };
+
       if (type === 'front' || type === 'both') {
         if (frontRef.current) {
-          const canvas = await html2canvas(frontRef.current, { scale: 3, useCORS: true, backgroundColor: null });
-          const dataUrl = canvas.toDataURL('image/png');
+          const canvas = await html2canvas(frontRef.current, exportOptions);
+          const dataUrl = canvas.toDataURL('image/png', 1.0);
           const link = document.createElement('a');
-          link.download = `${profile.shopName}_명함_앞면.png`;
+          link.download = `${profile.shopName || '루멘디테일'}_명함_앞면.png`;
           link.href = dataUrl;
+          document.body.appendChild(link);
           link.click();
+          document.body.removeChild(link);
         }
       }
 
       if (type === 'back' || type === 'both') {
         if (backRef.current) {
-          const canvas = await html2canvas(backRef.current, { scale: 3, useCORS: true, backgroundColor: null });
-          const dataUrl = canvas.toDataURL('image/png');
+          const canvas = await html2canvas(backRef.current, exportOptions);
+          const dataUrl = canvas.toDataURL('image/png', 1.0);
           const link = document.createElement('a');
-          link.download = `${profile.shopName}_명함_뒷면.png`;
+          link.download = `${profile.shopName || '루멘디테일'}_명함_뒷면.png`;
           link.href = dataUrl;
+          document.body.appendChild(link);
           link.click();
+          document.body.removeChild(link);
         }
       }
 
       const msg = type === 'front' 
-        ? '앞면 명함 이미지가 다운로드되었습니다.' 
+        ? '앞면 명함 고화질 이미지가 다운로드되었습니다.' 
         : type === 'back' 
-        ? '뒷면 명함 이미지가 다운로드되었습니다.' 
-        : '앞/뒷면 명함 이미지가 모두 다운로드되었습니다.';
+        ? '뒷면 명함 고화질 이미지가 다운로드되었습니다.' 
+        : '앞/뒷면 명함 고화질 이미지가 모두 다운로드되었습니다.';
       setDownloadMsg(msg);
       setTimeout(() => setDownloadMsg(''), 3000);
     } catch (err) {
@@ -111,49 +135,53 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
     }
   };
 
-  // 테마별 스타일 정의
+  // 테마별 스타일 정의 (솔리드 베이스 컬러 포함)
   const getThemeStyles = () => {
     switch (profile.theme) {
       case 'gold-luxury':
         return {
+          solidBg: '#141210',
           cardBg: 'bg-gradient-to-br from-[#1c1917] via-[#141210] to-[#0c0a09]',
-          border: 'border border-amber-500/40 shadow-[0_0_20px_rgba(234,179,8,0.15)]',
+          border: 'border border-amber-500/50 shadow-[0_0_20px_rgba(234,179,8,0.2)]',
           accentText: 'text-amber-400',
-          accentBg: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+          accentBg: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
           gradientText: 'text-gradient-gold',
           iconColor: 'text-amber-400',
           pattern: 'radial-gradient(ellipse at top right, rgba(234, 179, 8, 0.15), transparent 70%)'
         };
       case 'neon-blue':
         return {
+          solidBg: '#050b17',
           cardBg: 'bg-gradient-to-br from-[#081528] via-[#050b17] to-[#02050b]',
-          border: 'border border-sky-400/50 shadow-[0_0_20px_rgba(56,189,248,0.2)]',
+          border: 'border border-sky-400/60 shadow-[0_0_20px_rgba(56,189,248,0.25)]',
           accentText: 'text-sky-400',
-          accentBg: 'bg-sky-500/20 text-sky-300 border-sky-400/30',
+          accentBg: 'bg-sky-500/20 text-sky-300 border-sky-400/40',
           gradientText: 'text-gradient',
           iconColor: 'text-sky-400',
           pattern: 'radial-gradient(ellipse at bottom left, rgba(56, 189, 248, 0.2), transparent 70%)'
         };
       case 'clean-silver':
         return {
+          solidBg: '#121722',
           cardBg: 'bg-gradient-to-br from-[#1e2430] via-[#121722] to-[#0a0d14]',
-          border: 'border border-slate-400/40 shadow-[0_0_15px_rgba(203,213,225,0.1)]',
-          accentText: 'text-slate-200',
-          accentBg: 'bg-slate-700/50 text-white border-slate-500/30',
-          gradientText: 'bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent',
-          iconColor: 'text-slate-300',
+          border: 'border border-slate-400/50 shadow-[0_0_15px_rgba(203,213,225,0.15)]',
+          accentText: 'text-slate-100',
+          accentBg: 'bg-slate-700/60 text-white border-slate-400/40',
+          gradientText: 'text-gradient',
+          iconColor: 'text-slate-200',
           pattern: 'radial-gradient(ellipse at center, rgba(255, 255, 255, 0.08), transparent 70%)'
         };
       case 'carbon-dark':
       default:
         return {
+          solidBg: '#090e17',
           cardBg: 'bg-gradient-to-br from-[#0f172a] via-[#090e17] to-[#04060a]',
-          border: 'border border-cyan-500/40 shadow-[0_0_25px_rgba(6,182,212,0.18)]',
+          border: 'border border-cyan-500/50 shadow-[0_0_25px_rgba(6,182,212,0.25)]',
           accentText: 'text-cyan-400',
-          accentBg: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
+          accentBg: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40',
           gradientText: 'text-gradient',
           iconColor: 'text-cyan-400',
-          pattern: 'radial-gradient(circle at 80% 20%, rgba(6, 182, 212, 0.18), transparent 60%)'
+          pattern: 'radial-gradient(circle at 80% 20%, rgba(6, 182, 212, 0.2), transparent 60%)'
         };
     }
   };
