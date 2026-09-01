@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { PRICING_DATA } from '../data/servicesData';
-import { Check, Sparkles, ShieldCheck, HelpCircle, ArrowRight, MapPin } from 'lucide-react';
+import { Check, Sparkles, ShieldCheck, HelpCircle, ArrowRight, MapPin, Flame, Tag } from 'lucide-react';
 
 export const PriceTable = ({ onSelectPackage }) => {
   const [selectedCategory, setSelectedCategory] = useState('mid');
@@ -124,24 +124,64 @@ export const PriceTable = ({ onSelectPackage }) => {
         })}
       </div>
 
-      {/* Single / Additional Service Table */}
-      <div className="glass-card rounded-2xl p-6 sm:p-8 border border-white/10 max-w-4xl mx-auto mb-10">
-        <div className="flex items-center gap-2 mb-4">
-          <ShieldCheck className="w-5 h-5 text-cyan-400" />
-          <h3 className="text-lg font-bold text-white">단품 및 부위별 추가 옵션</h3>
+      {/* Single / Additional Service Table with 50% Intense Promotion */}
+      <div className="glass-card rounded-2xl p-6 sm:p-8 border-2 border-rose-500/40 shadow-[0_0_35px_rgba(244,63,94,0.15)] max-w-4xl mx-auto mb-10 relative overflow-hidden">
+        
+        {/* Top Floating Promo Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-rose-500/20">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2.5 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-400 animate-pulse">
+              <Flame className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg sm:text-xl font-black text-white">단품 및 부위별 추가 옵션</h3>
+                <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-gradient-to-r from-rose-500 to-amber-500 text-slate-950 shadow-md">
+                  50% 반값 파격 할인
+                </span>
+              </div>
+              <p className="text-xs text-rose-300/90 mt-0.5 font-medium">
+                🔥 기간 한정 프로모션: 원하는 부위만 쏙 골라 50% 할인된 특가로 시공 받으세요!
+              </p>
+            </div>
+          </div>
+
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-950/80 border border-rose-500/30 text-rose-300 text-xs font-bold shrink-0 self-start sm:self-auto">
+            <Tag className="w-3.5 h-3.5 text-rose-400" />
+            <span>전 품목 50% DC 적용</span>
+          </div>
         </div>
+
+        {/* Services Grid with Original Price vs 50% OFF Price */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {PRICING_DATA.singleServices.map((single, idx) => (
-            <div key={idx} className="p-3.5 rounded-xl bg-slate-900/60 border border-white/5 flex items-center justify-between">
-              <span className="text-xs sm:text-sm text-slate-300">{single.name}</span>
-              <span className="text-xs sm:text-sm font-bold text-cyan-300 font-mono">{single.priceRange}</span>
+            <div key={idx} className="p-3.5 rounded-xl bg-slate-900/80 border border-white/10 hover:border-rose-500/40 flex items-center justify-between transition-all group">
+              <span className="text-xs sm:text-sm text-slate-200 font-medium group-hover:text-white transition-colors">{single.name}</span>
+              <div className="flex items-center gap-2 shrink-0 ml-2">
+                {single.originalPrice && (
+                  <span className="text-[11px] text-slate-500 line-through font-mono hidden xs:inline">
+                    {single.originalPrice}
+                  </span>
+                )}
+                <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30">
+                  {single.discount || '50% OFF'}
+                </span>
+                <span className="text-xs sm:text-sm font-extrabold text-cyan-300 font-mono">
+                  {single.priceRange}
+                </span>
+              </div>
             </div>
           ))}
         </div>
-        <div className="mt-4 pt-4 border-t border-white/5 flex items-center gap-2 text-xs text-slate-400">
-          <HelpCircle className="w-4 h-4 text-slate-500 shrink-0" />
-          <span>단품 시공만 원하실 경우에도 자유롭게 출장 상담 및 예약이 가능합니다. (최소 시공 권장 10만원)</span>
+
+        <div className="mt-5 pt-4 border-t border-white/10 flex items-center justify-between flex-wrap gap-2 text-xs text-slate-400">
+          <div className="flex items-center gap-2">
+            <HelpCircle className="w-4 h-4 text-slate-500 shrink-0" />
+            <span>단품 시공만 원하실 경우에도 자유롭게 출장 상담 및 예약이 가능합니다. (최소 시공 권장 10만원)</span>
+          </div>
+          <span className="text-rose-400 font-bold">* 50% 할인 이벤트는 사전 예고 없이 종료될 수 있습니다</span>
         </div>
+
       </div>
 
       {/* Travel Fee & Regional Zone Guide */}
