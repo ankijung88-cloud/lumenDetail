@@ -21,14 +21,14 @@ export const BookingForm = ({ preselectedService, preselectedPrice }) => {
     carModel: '',
     carColor: '',
     carYear: '',
-    serviceName: preselectedService || '3스텝 광택 + 9H 세라믹 코팅',
+    serviceName: preselectedService || '3스텝 광택 + 9H 유리막 코팅',
     travelZone: 'zone1',
     location: '',
     preferredDate: '',
     preferredTime: '10:00',
     notes: '',
-    basePrice: preselectedPrice || 490000,
-    estimatedPrice: preselectedPrice || 490000
+    basePrice: preselectedPrice || 343000,
+    estimatedPrice: preselectedPrice || 343000
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,23 +36,24 @@ export const BookingForm = ({ preselectedService, preselectedPrice }) => {
 
   // Recalculate price when base price or zone changes
   useEffect(() => {
-    let base = preselectedPrice || 490000;
+    let base = preselectedPrice || 343000;
     if (preselectedService) {
-      if (preselectedService.includes('본넷')) base = 100000;
-      else if (preselectedService.includes('도어')) base = 70000;
-      else if (preselectedService.includes('범퍼')) base = 90000;
-      else if (preselectedService.includes('휀다')) base = 60000;
-      else if (preselectedService.includes('트렁크')) base = 80000;
-      else if (preselectedService.includes('맞춤 패널')) base = 150000;
-      else if (preselectedService.includes('세미광택')) base = 270000;
-      else if (preselectedService.includes('베이직')) base = 300000;
-      else if (preselectedService.includes('VIP')) base = 750000;
-      else if (preselectedService.includes('유막')) base = 80000;
+      if (preselectedService.includes('본넷')) base = 40000;
+      else if (preselectedService.includes('도어')) base = 25000;
+      else if (preselectedService.includes('범퍼')) base = 35000;
+      else if (preselectedService.includes('휀다')) base = 25000;
+      else if (preselectedService.includes('트렁크')) base = 35000;
+      else if (preselectedService.includes('맞춤 패널')) base = 75000;
+      else if (preselectedService.includes('세미광택')) base = 189000;
+      else if (preselectedService.includes('베이직')) base = 210000;
+      else if (preselectedService.includes('VIP')) base = 525000;
+      else if (preselectedService.includes('유막')) base = 30000;
+      else if (preselectedService.includes('3스텝')) base = 343000;
     }
 
     setFormData(prev => {
       const zone = ZONE_FEES[prev.travelZone] || ZONE_FEES.zone1;
-      const isFreeTravel = base >= 300000 || zone.fee === 0;
+      const isFreeTravel = base >= 200000 || zone.fee === 0;
       const travelFee = isFreeTravel ? 0 : zone.fee;
       return {
         ...prev,
@@ -68,7 +69,7 @@ export const BookingForm = ({ preselectedService, preselectedPrice }) => {
     if (name === 'travelZone') {
       const zone = ZONE_FEES[value] || ZONE_FEES.zone1;
       setFormData(prev => {
-        const isFreeTravel = prev.basePrice >= 300000 || zone.fee === 0;
+        const isFreeTravel = prev.basePrice >= 200000 || zone.fee === 0;
         const travelFee = isFreeTravel ? 0 : zone.fee;
         return {
           ...prev,
@@ -83,21 +84,22 @@ export const BookingForm = ({ preselectedService, preselectedPrice }) => {
 
   const handleServiceChange = (e) => {
     const val = e.target.value;
-    let base = 490000;
-    if (val.includes('본넷')) base = 100000;
-    else if (val.includes('도어')) base = 70000;
-    else if (val.includes('범퍼')) base = 90000;
-    else if (val.includes('휀다')) base = 60000;
-    else if (val.includes('트렁크')) base = 80000;
-    else if (val.includes('맞춤 패널')) base = 150000;
-    else if (val.includes('세미광택')) base = 270000;
-    else if (val.includes('베이직')) base = 300000;
-    else if (val.includes('VIP')) base = 750000;
-    else if (val.includes('유막')) base = 80000;
+    let base = 343000;
+    if (val.includes('본넷')) base = 40000;
+    else if (val.includes('도어')) base = 25000;
+    else if (val.includes('범퍼')) base = 35000;
+    else if (val.includes('휀다')) base = 25000;
+    else if (val.includes('트렁크')) base = 35000;
+    else if (val.includes('맞춤 패널')) base = 75000;
+    else if (val.includes('세미광택')) base = 189000;
+    else if (val.includes('베이직')) base = 210000;
+    else if (val.includes('VIP')) base = 525000;
+    else if (val.includes('유막')) base = 30000;
+    else if (val.includes('3스텝')) base = 343000;
 
     setFormData(prev => {
       const zone = ZONE_FEES[prev.travelZone] || ZONE_FEES.zone1;
-      const isFreeTravel = base >= 300000 || zone.fee === 0;
+      const isFreeTravel = base >= 200000 || zone.fee === 0;
       const travelFee = isFreeTravel ? 0 : zone.fee;
       return {
         ...prev,
@@ -316,21 +318,21 @@ export const BookingForm = ({ preselectedService, preselectedPrice }) => {
                   onChange={handleServiceChange}
                   className="w-full px-4 py-3 rounded-xl bg-slate-900/90 border border-white/10 text-white focus:outline-none focus:border-cyan-400 text-sm"
                 >
-                  <optgroup label="[부위별 부분케어 맞춤 시공]">
-                    <option value="본넷(후드) 집중 수성 광택 & 케어">본넷(후드) 집중 수성 광택 & 케어</option>
-                    <option value="도어(문짝) 흠집 & 스월마크 케어">도어(문짝) 흠집 & 스월마크 케어</option>
-                    <option value="앞·뒤 범퍼 & 코너 쓸림 집중 광택">앞·뒤 범퍼 & 코너 쓸림 집중 광택</option>
-                    <option value="앞·뒤 휀다 & 필러 집중 케어">앞·뒤 휀다 & 필러 집중 케어</option>
-                    <option value="트렁크 & 루프(천장) 오염 케어">트렁크 & 루프(천장) 오염 케어</option>
-                    <option value="원하는 부위만 쏙! 맞춤 패널 선택 케어">원하는 부위만 쏙! 맞춤 패널 선택 케어</option>
-                  </optgroup>
-                  <optgroup label="[전체 차량 패키지]">
-                    <option value="3스텝 수성 광택 + 9H 세라믹 코팅">3스텝 광택 + 9H 세라믹 코팅 (추천)</option>
-                    <option value="2스텝 세미광택 (도장보호 & 광택 케어)">2스텝 세미광택 (도장보호 & 광택 케어 / 컷팅 최소화)</option>
-                    <option value="베이직 수성 광택">베이직 수성 광택</option>
-                    <option value="VIP 올인원 풀케어 패키지">VIP 올인원 풀케어 패키지 (내/외장 토탈)</option>
-                    <option value="전체 유리 유막제거 + 초발수 코팅">전체 유리 유막제거 + 초발수 코팅</option>
+                  <optgroup label="[전체 차량 패키지 (🔥 30% 특별 할인 적용가)]">
+                    <option value="3스텝 광택 + 9H 유리막 코팅">3스텝 광택 + 9H 유리막 코팅 (30% 특가 343,000원 / 추천)</option>
+                    <option value="2스텝 세미광택 (도장보호 & 광택 케어)">2스텝 세미광택 (30% 특가 189,000원 / 컷팅 최소화)</option>
+                    <option value="베이직 수성 광택">베이직 수성 광택 (30% 특가 210,000원)</option>
+                    <option value="VIP 올인원 풀케어 패키지">VIP 올인원 풀케어 패키지 (30% 특가 525,000원 / 외장+유리막+발수)</option>
                     <option value="기타/상담 후 결정">기타 (현장 상담 후 결정)</option>
+                  </optgroup>
+                  <optgroup label="[부위별 부분케어 맞춤 시공 (🔥 50% 반값 특가 적용가)]">
+                    <option value="본넷(후드) 집중 수성 광택 & 케어">본넷(후드) 집중 수성 광택 (50% 특가 40,000원)</option>
+                    <option value="도어(문짝) 흠집 & 스월마크 케어">도어(문짝 1판) 흠집 케어 (50% 특가 25,000원)</option>
+                    <option value="앞·뒤 범퍼 & 코너 쓸림 집중 광택">앞·뒤 범퍼 코너 쓸림 광택 (50% 특가 35,000원)</option>
+                    <option value="앞·뒤 휀다 & 필러 집중 케어">앞·뒤 휀다 및 필러 케어 (50% 특가 25,000원)</option>
+                    <option value="트렁크 & 루프(천장) 오염 케어">트렁크 / 루프 상판 케어 (50% 특가 35,000원)</option>
+                    <option value="전면 유리 유막제거 + 초발수 코팅">전면 유리 유막제거 + 초발수 코팅 (50% 특가 30,000원)</option>
+                    <option value="원하는 부위만 쏙! 맞춤 패널 선택 케어">원하는 부위만 쏙! 맞춤 패널 (50% 특가 75,000원~)</option>
                   </optgroup>
                 </select>
               </div>
@@ -441,12 +443,14 @@ export const BookingForm = ({ preselectedService, preselectedPrice }) => {
 
             {/* Estimated Price & Submit Button */}
             <div className="pt-4 border-t border-white/10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs text-slate-400">시공 기본가: <strong className="text-slate-200 font-mono">{(formData.basePrice).toLocaleString()}원</strong></span>
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2 flex-wrap text-xs">
+                  <span className="text-slate-400">
+                    시공 특가: <strong className="text-rose-400 font-mono font-bold">{(formData.basePrice).toLocaleString()}원</strong>
+                  </span>
                   <span className="text-slate-600">|</span>
-                  <span className="text-xs text-slate-400">
-                    출장비: {formData.basePrice >= 300000 ? (
+                  <span className="text-slate-400">
+                    출장비: {formData.basePrice >= 200000 ? (
                       <span className="text-emerald-400 font-bold font-mono">0원 (전액 무료 지원)</span>
                     ) : (
                       <span className="text-cyan-300 font-bold font-mono">{ZONE_FEES[formData.travelZone]?.text}</span>
@@ -454,19 +458,19 @@ export const BookingForm = ({ preselectedService, preselectedPrice }) => {
                   </span>
                 </div>
 
-                {formData.basePrice >= 300000 && (
+                {formData.basePrice >= 200000 && (
                   <div className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-300 bg-emerald-950/60 border border-emerald-500/30 px-2.5 py-0.5 rounded-md">
                     <Sparkles className="w-3 h-3" />
-                    <span>30만원 이상 패키지 시공 혜택으로 출장비 무료 적용!</span>
+                    <span>패키지 시공 프로모션 혜택으로 1·2권역 출장비 무료 적용!</span>
                   </div>
                 )}
 
                 <div className="flex items-baseline gap-2 pt-1">
-                  <span className="text-xs text-slate-300 font-bold">최종 예상 견적:</span>
-                  <span className="text-2xl sm:text-3xl font-extrabold text-cyan-400 font-mono">
+                  <span className="text-xs font-bold text-slate-300">최종 예상 견적:</span>
+                  <span className="text-2xl sm:text-3xl font-black text-cyan-300 font-mono tracking-tight">
                     {(formData.estimatedPrice).toLocaleString()}원
                   </span>
-                  <span className="text-[11px] text-slate-500">* 정찰제 기준</span>
+                  <span className="text-[11px] text-rose-400 font-bold">* 특별 할인가 적용 기준</span>
                 </div>
               </div>
 
