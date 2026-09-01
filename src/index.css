@@ -6,9 +6,20 @@
   color-scheme: dark;
 }
 
+html {
+  font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
+  width: 100%;
+  max-width: 100vw;
   background-color: #07090e;
   background-image: 
     radial-gradient(at 0% 0%, rgba(6, 182, 212, 0.08) 0px, transparent 50%),
@@ -16,6 +27,33 @@ body {
     radial-gradient(at 50% 100%, rgba(14, 165, 233, 0.05) 0px, transparent 50%);
   background-attachment: fixed;
   overflow-x: hidden;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* Korean Typography Line-break & Sentence Stability */
+h1, h2, h3, h4, h5, h6, p, span, a, button, label, input, textarea, select, li {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+h1, h2, h3 {
+  text-wrap: balance;
+}
+
+/* Prevent Media Overflow on Small Screens */
+img, svg, video, canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+/* No Scrollbar helper for horizontal scroll containers */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Custom scrollbar */
