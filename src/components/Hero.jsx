@@ -32,7 +32,7 @@ export const Hero = ({ onBookClick, onExploreClick }) => {
         {/* Subtitle */}
         <p className="max-w-2xl mx-auto text-slate-300 text-sm sm:text-base md:text-lg mb-8 sm:mb-10 leading-relaxed font-normal break-keep px-2 sm:px-0">
           샵에 차를 맡기고 기다리는 번거로움 없이, <strong className="text-cyan-300 font-semibold">클리어층을 지키는 수성 듀얼 광택</strong>과 
-          <strong className="text-white font-semibold"> 9H 세라믹 코팅</strong>을 고객님이 계신 곳에서 1:1 맞춤 시공해 드립니다.
+          <strong className="text-white font-semibold"> 9H 유리막 코팅</strong>을 고객님이 계신 곳에서 1:1 맞춤 시공해 드립니다.
         </p>
 
         {/* CTA Button Group */}
