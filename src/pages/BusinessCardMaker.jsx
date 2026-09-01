@@ -78,15 +78,15 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
     try {
       const theme = getThemeStyles();
       const exportOptions = {
-        scale: 2, // 1050x583 고정 해상도 기준 2배율(2100x1166) 300DPI 인쇄급 품질 생성
+        scale: 1, // 900x500 표준 명함 규격(90mm × 50mm) 1:1 실물 사이즈로 정확히 저장
         useCORS: true,
         allowTaint: true,
         backgroundColor: theme.solidBg,
         logging: false,
-        width: 1050,
-        height: 583,
-        windowWidth: 1050,
-        windowHeight: 583,
+        width: 900,
+        height: 500,
+        windowWidth: 900,
+        windowHeight: 500,
       };
 
       if (type === 'front' || type === 'both') {
@@ -856,163 +856,163 @@ export const BusinessCardMaker = ({ onBackToAdmin }) => {
       </div>
 
       {/* ========================================================================= */}
-      {/* Dedicated Pixel-Perfect High-Res Export Cards (1050px × 583px, 300DPI)    */}
-      {/* Positioned off-screen, guaranteed fixed aspect ratio & pure dark colors   */}
+      {/* Dedicated Pixel-Perfect Export Cards (900px × 500px, 90mm × 50mm Standard) */}
+      {/* Positioned off-screen, guaranteed 1:1 business card size & pure dark colors*/}
       {/* ========================================================================= */}
       <div 
         style={{ 
           position: 'fixed', 
           top: 0, 
           left: '-9999px', 
-          width: '1050px', 
+          width: '900px', 
           pointerEvents: 'none', 
           zIndex: -1 
         }}
         aria-hidden="true"
       >
-        {/* Front Export Card */}
+        {/* Front Export Card (900px × 500px) */}
         <div
           ref={frontExportRef}
           style={{
-            width: '1050px',
-            height: '583px',
+            width: '900px',
+            height: '500px',
             boxSizing: 'border-box',
             backgroundColor: themeStyle.solidBg,
             backgroundImage: `${themeStyle.pattern}, ${themeStyle.gradientBg}`,
-            border: `3px solid ${themeStyle.borderColor}`,
-            borderRadius: '32px',
-            padding: '48px 56px',
+            border: `2.5px solid ${themeStyle.borderColor}`,
+            borderRadius: '24px',
+            padding: '38px 46px',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
             fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
             color: '#ffffff',
-            boxShadow: '0 0 50px rgba(6,182,212,0.3)',
+            boxShadow: '0 0 40px rgba(6,182,212,0.3)',
             overflow: 'hidden'
           }}
         >
           {/* Top Branding */}
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                <div style={{ padding: '10px', borderRadius: '12px', background: 'rgba(255,255,255,0.1)', color: themeStyle.accentColor, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Sparkles style={{ width: '28px', height: '28px' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ padding: '8px', borderRadius: '10px', background: 'rgba(255,255,255,0.1)', color: themeStyle.accentColor, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Sparkles style={{ width: '24px', height: '24px' }} />
                 </div>
-                <span style={{ fontSize: '34px', fontWeight: '900', letterSpacing: '0.05em', color: '#ffffff' }}>
+                <span style={{ fontSize: '28px', fontWeight: '900', letterSpacing: '0.05em', color: '#ffffff' }}>
                   {profile.shopName}
                 </span>
               </div>
-              <p style={{ fontSize: '15px', fontWeight: '700', color: '#94a3b8', letterSpacing: '0.2em', textTransform: 'uppercase', marginTop: '6px', fontFamily: 'monospace' }}>
+              <p style={{ fontSize: '13px', fontWeight: '700', color: '#94a3b8', letterSpacing: '0.2em', textTransform: 'uppercase', marginTop: '5px', fontFamily: 'monospace' }}>
                 {profile.englishName}
               </p>
             </div>
-            <span style={{ fontSize: '16px', fontWeight: '700', padding: '8px 20px', borderRadius: '9999px', background: 'rgba(6,182,212,0.2)', border: `2px solid ${themeStyle.borderColor}`, color: themeStyle.accentColor }}>
+            <span style={{ fontSize: '13.5px', fontWeight: '700', padding: '6px 16px', borderRadius: '9999px', background: 'rgba(6,182,212,0.2)', border: `2px solid ${themeStyle.borderColor}`, color: themeStyle.accentColor }}>
               {profile.accentTag}
             </span>
           </div>
 
           {/* Middle Info */}
-          <div style={{ margin: 'auto 0', padding: '10px 0' }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '16px' }}>
-              <h4 style={{ fontSize: '50px', fontWeight: '900', color: '#ffffff', letterSpacing: '-0.02em', margin: 0 }}>
+          <div style={{ margin: 'auto 0', padding: '6px 0' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '14px' }}>
+              <h4 style={{ fontSize: '44px', fontWeight: '900', color: '#ffffff', letterSpacing: '-0.02em', margin: 0 }}>
                 {profile.ownerName}
               </h4>
-              <span style={{ fontSize: '24px', fontWeight: '700', color: themeStyle.accentColor }}>
+              <span style={{ fontSize: '20px', fontWeight: '700', color: themeStyle.accentColor }}>
                 {profile.title}
               </span>
             </div>
-            <p style={{ fontSize: '32px', fontWeight: '800', color: '#ffffff', letterSpacing: '0.05em', marginTop: '10px', fontFamily: 'monospace' }}>
+            <p style={{ fontSize: '26px', fontWeight: '800', color: '#ffffff', letterSpacing: '0.05em', marginTop: '8px', fontFamily: 'monospace' }}>
               {profile.phone}
             </p>
           </div>
 
           {/* Bottom Footer */}
-          <div style={{ borderTop: '2px solid rgba(255,255,255,0.12)', paddingTop: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '18px', color: '#cbd5e1' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <MapPin style={{ width: '24px', height: '24px', color: themeStyle.accentColor, flexShrink: 0 }} />
+          <div style={{ borderTop: '1.5px solid rgba(255,255,255,0.12)', paddingTop: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '15px', color: '#cbd5e1' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <MapPin style={{ width: '20px', height: '20px', color: themeStyle.accentColor, flexShrink: 0 }} />
               <span style={{ fontWeight: '500' }}>{profile.location}</span>
             </div>
-            <span style={{ fontSize: '18px', fontWeight: '800', color: themeStyle.accentColor }}>
+            <span style={{ fontSize: '15px', fontWeight: '800', color: themeStyle.accentColor }}>
               1:1 맞춤 출장
             </span>
           </div>
         </div>
 
-        {/* Back Export Card */}
+        {/* Back Export Card (900px × 500px) */}
         <div
           ref={backExportRef}
           style={{
-            width: '1050px',
-            height: '583px',
+            width: '900px',
+            height: '500px',
             marginTop: '40px',
             boxSizing: 'border-box',
             backgroundColor: themeStyle.solidBg,
             backgroundImage: `${themeStyle.pattern}, ${themeStyle.gradientBg}`,
-            border: `3px solid ${themeStyle.borderColor}`,
-            borderRadius: '32px',
-            padding: '48px 56px',
+            border: `2.5px solid ${themeStyle.borderColor}`,
+            borderRadius: '24px',
+            padding: '38px 46px',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
             fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
             color: '#ffffff',
-            boxShadow: '0 0 50px rgba(6,182,212,0.3)',
+            boxShadow: '0 0 40px rgba(6,182,212,0.3)',
             overflow: 'hidden'
           }}
         >
           {/* Top Services */}
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-              <Car style={{ width: '26px', height: '26px', color: themeStyle.accentColor }} />
-              <span style={{ fontSize: '20px', fontWeight: '800', color: '#ffffff', letterSpacing: '0.08em' }}>PROFESSIONAL SERVICES</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+              <Car style={{ width: '22px', height: '22px', color: themeStyle.accentColor }} />
+              <span style={{ fontSize: '17px', fontWeight: '800', color: '#ffffff', letterSpacing: '0.08em' }}>PROFESSIONAL SERVICES</span>
             </div>
-            <div style={{ background: 'rgba(0, 0, 0, 0.75)', border: '2px solid rgba(255,255,255,0.12)', padding: '16px 22px', borderRadius: '16px' }}>
-              <p style={{ fontSize: '22px', fontWeight: '800', color: '#67e8f9', margin: 0, lineHeight: '1.4' }}>
+            <div style={{ background: 'rgba(0, 0, 0, 0.75)', border: '1.5px solid rgba(255,255,255,0.12)', padding: '12px 18px', borderRadius: '14px' }}>
+              <p style={{ fontSize: '18px', fontWeight: '800', color: '#67e8f9', margin: 0, lineHeight: '1.4' }}>
                 {profile.services}
               </p>
             </div>
           </div>
 
           {/* Middle Contacts & QR */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '24px', margin: '8px 0' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '19px', color: '#e2e8f0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', margin: '6px 0' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '16px', color: '#e2e8f0' }}>
               {profile.email && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Mail style={{ width: '22px', height: '22px', color: '#94a3b8' }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Mail style={{ width: '18px', height: '18px', color: '#94a3b8' }} />
                   <span>{profile.email}</span>
                 </div>
               )}
               {profile.instagram && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ fontWeight: '800', color: '#f472b6', fontSize: '20px' }}>Insta</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontWeight: '800', color: '#f472b6', fontSize: '16px' }}>Insta</span>
                   <span>{profile.instagram}</span>
                 </div>
               )}
               {profile.bankAccount && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '18px', color: '#cbd5e1' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px', color: '#cbd5e1' }}>
                   <span style={{ color: '#94a3b8' }}>입금:</span>
                   <span style={{ fontFamily: 'monospace', color: '#ffffff', fontWeight: '800' }}>{profile.bankAccount}</span>
                 </div>
               )}
             </div>
 
-            <div style={{ background: '#ffffff', borderRadius: '18px', padding: '14px 18px', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '0 8px 24px rgba(0,0,0,0.5)', flexShrink: 0 }}>
+            <div style={{ background: '#ffffff', borderRadius: '16px', padding: '10px 14px', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '0 6px 20px rgba(0,0,0,0.5)', flexShrink: 0 }}>
               <QRCodeSVG
                 value={profile.qrCustomText || window.location.origin}
-                size={110}
+                size={85}
                 level="M"
                 includeMargin={false}
               />
-              <span style={{ fontSize: '13px', fontWeight: '900', color: '#090e17', marginTop: '6px', fontFamily: 'system-ui, sans-serif' }}>
+              <span style={{ fontSize: '11px', fontWeight: '900', color: '#090e17', marginTop: '4px', fontFamily: 'system-ui, sans-serif' }}>
                 예약 바로가기
               </span>
             </div>
           </div>
 
           {/* Bottom Footer */}
-          <div style={{ borderTop: '2px solid rgba(255,255,255,0.12)', paddingTop: '18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '17px', color: '#94a3b8' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <ShieldCheck style={{ width: '24px', height: '24px', color: themeStyle.accentColor }} />
+          <div style={{ borderTop: '1.5px solid rgba(255,255,255,0.12)', paddingTop: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '14.5px', color: '#94a3b8' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <ShieldCheck style={{ width: '20px', height: '20px', color: themeStyle.accentColor }} />
               <span style={{ fontWeight: '600' }}>정품 정량 케미컬 100% 수성광택 시공보증</span>
             </div>
             <span style={{ fontFamily: 'monospace', fontWeight: '800', color: '#64748b' }}>LUMEN</span>
