@@ -214,7 +214,7 @@ export const PartnerPortal = ({
                 <button
                   key={tech.id}
                   onClick={() => handleFastDemoLogin(tech)}
-                  className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/10 hover:border-emerald-500/40 text-left transition-all flex flex-col items-center text-center group"
+                  className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/10 hover:border-emerald-500/40 transition-all flex flex-col items-center text-center group"
                 >
                   <img 
                     src={tech.avatar} 
@@ -1001,7 +1001,7 @@ export const PartnerPortal = ({
               </div>
 
               <div>
-                <label className="block font-bold text-slate-300 mb-1 flex items-center gap-1">
+                <label className="font-bold text-slate-300 mb-1 flex items-center gap-1">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                   <span>플랫폼 제도화 표준 정찰가 (오버차지 0원 고정)</span>
                 </label>
