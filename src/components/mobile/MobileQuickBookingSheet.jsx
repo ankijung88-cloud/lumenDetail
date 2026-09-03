@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { 
   X, Sparkles, Navigation, Calendar, Clock, Car, Phone, 
-  User, MapPin, CheckCircle2, ShieldCheck, ArrowRight, Zap, Building2, ChevronRight
+  User, MapPin, CheckCircle2, ShieldCheck, ArrowRight, Zap, Building2, ChevronRight, Lock
 } from 'lucide-react';
-import { saveMatchRequest, getTechnicians } from '../../utils/storage';
+import { saveMatchRequest, getTechnicians, getLoggedInCustomer } from '../../utils/storage';
 import { getTechniciansByProximity } from '../../data/techniciansData';
+import { CustomerAuthModal } from '../CustomerAuthModal';
 import confetti from 'canvas-confetti';
 
 const SERVICE_OPTIONS = [
@@ -26,9 +27,10 @@ export const MobileQuickBookingSheet = ({ isOpen, onClose, preselectedTech, onBo
   const [step, setStep] = useState(1); // 1: 서비스선택, 2: 차량/주소/일정, 3: 최단거리기사확인
   const [selectedService, setSelectedService] = useState(SERVICE_OPTIONS[0]);
   const [selectedZone, setSelectedZone] = useState('zone1');
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   
-  const [customerName, setCustomerName] = useState('안기정');
-  const [phone, setPhone] = useState('010-3333-8888');
+  const [customerName, setCustomerName] = useState(() => getLoggedInCustomer()?.name || '김민준');
+  const [phone, setPhone] = useState(() => getLoggedInCustomer()?.phone || '010-3849-2918');
   const [carModel, setCarModel] = useState('제네시스 G80');
   const [carColor, setCarColor] = useState('우유니 화이트');
   const [location, setLocation] = useState('인천 서구 청라커낼로 123');
@@ -49,13 +51,16 @@ export const MobileQuickBookingSheet = ({ isOpen, onClose, preselectedTech, onBo
   const zoneFee = (selectedService.price >= 200000 || selectedZone === 'zone1') ? 0 : (ZONE_OPTIONS.find(z => z.id === selectedZone)?.fee || 0);
   const totalPrice = selectedService.price + zoneFee;
 
-  const handleCompleteOrder = () => {
+  const executeMobileOrder = (custName, custPhone) => {
     setIsSubmitting(true);
 
     try {
+      const finalName = custName || customerName;
+      const finalPhone = custPhone || phone;
+
       const newReq = saveMatchRequest({
-        customerName,
-        phone,
+        customerName: finalName,
+        phone: finalPhone,
         carModel: `${carModel} (${carColor})`,
         carColor,
         serviceName: selectedService.name,
@@ -87,6 +92,22 @@ export const MobileQuickBookingSheet = ({ isOpen, onClose, preselectedTech, onBo
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleCompleteOrder = () => {
+    const cust = getLoggedInCustomer();
+    if (!cust) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+    executeMobileOrder(cust.name, cust.phone);
+  };
+
+  const handleAuthSuccess = (cust) => {
+    setIsAuthModalOpen(false);
+    setCustomerName(cust.name);
+    setPhone(cust.phone);
+    executeMobileOrder(cust.name, cust.phone);
   };
 
   return (
@@ -339,6 +360,15 @@ export const MobileQuickBookingSheet = ({ isOpen, onClose, preselectedTech, onBo
             </div>
           </div>
         )}
+
+        {/* Customer Login / Signup Gate Modal */}
+        <CustomerAuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          onSuccess={handleAuthSuccess}
+          title="견적 의뢰를 위해 로그인이 필요합니다"
+          subtitle="간편 회원가입/로그인 후 1:1 담당 기사 매칭 및 견적 접수가 즉시 완료됩니다."
+        />
 
       </div>
     </div>

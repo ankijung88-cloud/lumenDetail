@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { saveMatchRequest, getTechnicians } from '../utils/storage';
+import { saveMatchRequest, getTechnicians, getLoggedInCustomer } from '../utils/storage';
 import { getTechniciansByProximity } from '../data/techniciansData';
 import { sendToGoogleSheet } from '../utils/googleSheet';
+import { CustomerAuthModal } from './CustomerAuthModal';
 import confetti from 'canvas-confetti';
 import { 
   Calendar, Clock, Car, Phone, User, MapPin, 
   FileText, Send, CheckCircle2, AlertCircle, Sparkles, ShieldAlert,
   Zap, Building2, UserCheck, ShieldCheck, Navigation, ArrowRightLeft,
-  DollarSign
+  DollarSign, Lock
 } from 'lucide-react';
 
 const ZONE_FEES = {
@@ -32,23 +33,27 @@ const DEFAULT_FALLBACK_TECH = {
 export const BookingForm = ({ preselectedService, preselectedPrice, targetTech, onClearTargetTech, onOpenTracker }) => {
   const [technicians, setTechnicians] = useState(() => getTechnicians());
   const [selectedTechId, setSelectedTechId] = useState(targetTech?.id || 'AUTO_CLOSEST');
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  const [formData, setFormData] = useState({
-    customerName: '',
-    phone: '',
-    carModel: '',
-    carColor: '',
-    carYear: '',
-    serviceName: preselectedService || '3스텝 광택 + 9H 유리막 코팅',
-    travelZone: 'zone1',
-    location: '',
-    preferredDate: '',
-    preferredTime: '10:00',
-    notes: '',
-    hasOutlet: true,
-    isIndoor: true,
-    basePrice: preselectedPrice || 343000,
-    estimatedPrice: preselectedPrice || 343000
+  const [formData, setFormData] = useState(() => {
+    const cust = getLoggedInCustomer();
+    return {
+      customerName: cust?.name || '',
+      phone: cust?.phone || '',
+      carModel: '',
+      carColor: '',
+      carYear: '',
+      serviceName: preselectedService || '3스텝 광택 + 9H 유리막 코팅',
+      travelZone: 'zone1',
+      location: '',
+      preferredDate: '',
+      preferredTime: '10:00',
+      notes: '',
+      hasOutlet: true,
+      isIndoor: true,
+      basePrice: preselectedPrice || 343000,
+      estimatedPrice: preselectedPrice || 343000
+    };
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -152,22 +157,18 @@ export const BookingForm = ({ preselectedService, preselectedPrice, targetTech, 
     });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!formData.customerName || !formData.phone || !formData.carModel || !formData.carColor || !formData.location || !formData.preferredDate) {
-      alert('필수 입력 항목(성함, 연락처, 차종, 색상, 출장지 주소, 희망일자)을 모두 작성해 주세요.');
-      return;
-    }
-
+  const executeBooking = async (custName, custPhone) => {
     setIsSubmitting(true);
 
     try {
       const finalTech = activeAssignedTech;
+      const finalName = custName || formData.customerName;
+      const finalPhone = custPhone || formData.phone;
 
       // 1. 중개 의뢰 데이터 로컬스토리지 저장 (표준 정찰가 + 최단거리/선택 기사 연결)
       const newRequest = saveMatchRequest({
-        customerName: formData.customerName,
-        phone: formData.phone,
+        customerName: finalName,
+        phone: finalPhone,
         carModel: `${formData.carModel} (${formData.carColor}${formData.carYear ? `, ${formData.carYear}년식` : ''})`,
         carColor: formData.carColor,
         carYear: formData.carYear,
@@ -189,6 +190,8 @@ export const BookingForm = ({ preselectedService, preselectedPrice, targetTech, 
       try {
         await sendToGoogleSheet({
           ...formData,
+          customerName: finalName,
+          phone: finalPhone,
           id: newRequest.id,
           targetTech: finalTech.name,
           estimatedPrice: formData.estimatedPrice
@@ -213,12 +216,39 @@ export const BookingForm = ({ preselectedService, preselectedPrice, targetTech, 
         finalPrice: formData.estimatedPrice
       });
 
-    } catch (error) {
-      console.error('Submission Error:', error);
-      alert('견적 요청 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+    } catch (err) {
+      console.error(err);
+      alert('견적 의뢰 접수 중 오류가 발생했습니다.');
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.carModel || !formData.carColor || !formData.location || !formData.preferredDate) {
+      alert('필수 입력 항목(차종, 색상, 출장지 주소, 희망일자)을 모두 작성해 주세요.');
+      return;
+    }
+
+    // Check if customer is logged in
+    const currentCust = getLoggedInCustomer();
+    if (!currentCust) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+
+    executeBooking(currentCust.name, currentCust.phone);
+  };
+
+  const handleAuthSuccess = (cust) => {
+    setIsAuthModalOpen(false);
+    setFormData(prev => ({
+      ...prev,
+      customerName: cust.name,
+      phone: cust.phone
+    }));
+    executeBooking(cust.name, cust.phone);
   };
 
   return (
@@ -650,6 +680,15 @@ export const BookingForm = ({ preselectedService, preselectedPrice, targetTech, 
         )}
 
       </div>
+
+      {/* Customer Login & Signup Modal Gate */}
+      <CustomerAuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={handleAuthSuccess}
+        title="견적 의뢰를 위해 로그인이 필요합니다"
+        subtitle="간편 회원가입/로그인 후 1:1 담당 기사 매칭 및 견적 접수가 즉시 완료됩니다."
+      />
 
     </section>
   );

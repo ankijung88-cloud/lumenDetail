@@ -26,7 +26,7 @@ export const PartnerPortal = ({
   const [partnerTab, setPartnerTab] = useState('market'); // 'market' | 'myJobs' | 'settlement' | 'profile'
   
   // Authentication State for Technician
-  const [loggedInTech, setLoggedInTech] = useState(() => getLoggedInTechnician() || technicians[0] || null);
+  const [loggedInTech, setLoggedInTech] = useState(() => getLoggedInTechnician());
   const [loginPhone, setLoginPhone] = useState('');
   const [loginPin, setLoginPin] = useState('');
   const [rememberMe, setRememberMe] = useState(false);

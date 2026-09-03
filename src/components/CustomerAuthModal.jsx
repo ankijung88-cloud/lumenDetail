@@ -1,12 +1,18 @@
 import React, { useState } from 'react';
-import { User, Phone, ShieldCheck, CheckCircle2, Lock, X, Sparkles, ArrowRight } from 'lucide-react';
+import { User, Phone, ShieldCheck, CheckCircle2, Lock, X, Sparkles, ArrowRight, UserPlus } from 'lucide-react';
 import { loginCustomer } from '../utils/storage';
 import confetti from 'canvas-confetti';
 
-export const CustomerAuthModal = ({ isOpen, onClose, onSuccess }) => {
+export const CustomerAuthModal = ({ 
+  isOpen, 
+  onClose, 
+  onSuccess,
+  title = "고객 회원가입 및 간편 로그인",
+  subtitle = "견적 의뢰 진행 및 1:1 맞춤 기사 매칭을 위해 본인 정보를 입력해 주세요."
+}) => {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true); // default true for convenience
   const [error, setError] = useState('');
 
   if (!isOpen) return null;
@@ -52,11 +58,11 @@ export const CustomerAuthModal = ({ isOpen, onClose, onSuccess }) => {
         {/* Header */}
         <div className="text-center mb-6">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center mx-auto shadow-lg shadow-cyan-500/30 mb-3">
-            <User className="w-6 h-6 text-slate-950" />
+            <UserPlus className="w-6 h-6 text-slate-950" />
           </div>
-          <h3 className="text-2xl font-black text-white">고객 로그인 / 본인 확인</h3>
-          <p className="text-xs text-slate-400 mt-1">
-            맞춤 견적 의뢰 및 내 견적/시공 현황 조회를 위해 로그인하세요.
+          <h3 className="text-xl sm:text-2xl font-black text-white">{title}</h3>
+          <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+            {subtitle}
           </p>
         </div>
 
@@ -69,7 +75,7 @@ export const CustomerAuthModal = ({ isOpen, onClose, onSuccess }) => {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4 text-xs">
           <div>
-            <label className="block text-slate-300 font-bold mb-1">고객 성함</label>
+            <label className="block text-slate-300 font-bold mb-1">고객 성함 (실명 또는 닉네임)</label>
             <div className="relative">
               <User className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
@@ -84,7 +90,7 @@ export const CustomerAuthModal = ({ isOpen, onClose, onSuccess }) => {
           </div>
 
           <div>
-            <label className="block text-slate-300 font-bold mb-1">휴대폰 번호 (견적 알림 수신용)</label>
+            <label className="block text-slate-300 font-bold mb-1">휴대폰 번호 (견적 알림 및 기사 확인용)</label>
             <div className="relative">
               <Phone className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
@@ -114,9 +120,9 @@ export const CustomerAuthModal = ({ isOpen, onClose, onSuccess }) => {
 
           <button
             type="submit"
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-sm shadow-lg shadow-cyan-500/25 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-sm shadow-lg shadow-cyan-500/25 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
-            <span>고객 로그인 완료</span>
+            <span>회원가입/로그인 완료 후 견적 진행</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
@@ -124,22 +130,22 @@ export const CustomerAuthModal = ({ isOpen, onClose, onSuccess }) => {
         {/* 1-Click Demo Customer Accounts */}
         <div className="mt-5 pt-4 border-t border-white/10">
           <span className="text-[11px] text-slate-400 font-bold block mb-2 text-center">
-            ⚡ 빠른 체험용 원클릭 데모 고객 로그인
+            ⚡ 빠른 체험용 원클릭 데모 고객 계정
           </span>
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={() => handleQuickDemoLogin('김민준', '010-3849-2918')}
-              className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/10 text-left transition-all text-xs"
+              className="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/10 text-left transition-all text-xs group"
             >
-              <strong className="text-white block">김민준 고객님</strong>
-              <span className="text-[10px] text-cyan-400">010-3849-2918 (G80)</span>
+              <strong className="text-white block group-hover:text-cyan-400">김민준 고객님</strong>
+              <span className="text-[10px] text-cyan-400/90">010-3849-2918 (G80)</span>
             </button>
             <button
               onClick={() => handleQuickDemoLogin('이서연', '010-9182-4411')}
-              className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/10 text-left transition-all text-xs"
+              className="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/10 text-left transition-all text-xs group"
             >
-              <strong className="text-white block">이서연 고객님</strong>
-              <span className="text-[10px] text-cyan-400">010-9182-4411 (BMW)</span>
+              <strong className="text-white block group-hover:text-cyan-400">이서연 고객님</strong>
+              <span className="text-[10px] text-cyan-400/90">010-9182-4411 (BMW)</span>
             </button>
           </div>
         </div>
