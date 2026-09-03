@@ -29,6 +29,7 @@ export const PartnerPortal = ({
   const [loggedInTech, setLoggedInTech] = useState(() => getLoggedInTechnician() || technicians[0] || null);
   const [loginPhone, setLoginPhone] = useState('');
   const [loginPin, setLoginPin] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [loginError, setLoginError] = useState('');
   
   const [selectedRegion, setSelectedRegion] = useState('ALL');
@@ -79,7 +80,7 @@ export const PartnerPortal = ({
       return;
     }
 
-    const res = loginTechnician(loginPhone, loginPin);
+    const res = loginTechnician(loginPhone, loginPin, rememberMe);
     if (res.success) {
       setLoggedInTech(res.tech);
       setLoginPhone('');
@@ -92,7 +93,7 @@ export const PartnerPortal = ({
 
   // Fast Demo Login
   const handleFastDemoLogin = (tech) => {
-    setLoggedInTechnician(tech.id);
+    setLoggedInTechnician(tech.id, rememberMe);
     setLoggedInTech(tech);
     setLoginError('');
     confetti({ particleCount: 60, spread: 50, origin: { y: 0.6 } });
@@ -102,7 +103,7 @@ export const PartnerPortal = ({
   const handleLogout = () => {
     logoutTechnician();
     setLoggedInTech(null);
-    alert('기사 파트너 계정에서 로그아웃되었습니다.');
+    alert('기사 파트너 계정에서 완전히 로그아웃되었습니다. (자동로그인이 해제되었습니다)');
   };
 
   // Save Profile Changes
@@ -193,6 +194,20 @@ export const PartnerPortal = ({
                   className="w-full pl-9 pr-3 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-emerald-500"
                 />
               </div>
+            </div>
+
+            {/* Auto Login Checkbox */}
+            <div className="flex items-center justify-between pt-1">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-emerald-500 focus:ring-0 cursor-pointer accent-emerald-500"
+                />
+                <span className="text-slate-300 text-xs font-semibold">자동 로그인 유지</span>
+              </label>
+              <span className="text-[10px] text-slate-500">(체크 해제 시 창 닫거나 로그아웃 시 해제)</span>
             </div>
 
             <button

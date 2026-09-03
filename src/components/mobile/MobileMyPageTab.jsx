@@ -1,17 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   User, Car, MapPin, Tag, ShieldCheck, Phone, MessageSquare, 
   ChevronRight, Wrench, Sparkles, LogOut, KeyRound, ExternalLink,
-  Award, FileText
+  Award, FileText, Briefcase
 } from 'lucide-react';
+import { getLoggedInCustomer, logoutCustomer } from '../../utils/storage';
 
 export const MobileMyPageTab = ({ 
-  onOpenRegisterModal, 
-  onGoToAdmin,
-  onGoToWebMode 
+  onOpenRegisterModal,
+  onSwitchToPartner,
+  onOpenCustomerAuth
 }) => {
+  const [customer, setCustomer] = useState(() => getLoggedInCustomer());
   const [carInfo, setCarInfo] = useState({ model: '제네시스 G80', color: '우유니 화이트', year: '2023년식' });
   const [address, setAddress] = useState('인천 서구 청라동 루멘아파트 101동');
+
+  useEffect(() => {
+    setCustomer(getLoggedInCustomer());
+  }, []);
+
+  const handleLogout = () => {
+    logoutCustomer();
+    setCustomer(null);
+    alert('고객 계정에서 로그아웃되었습니다. (자동로그인이 해제되었습니다)');
+  };
 
   return (
     <div className="pb-24 space-y-4 animate-fadeIn">
@@ -24,19 +36,42 @@ export const MobileMyPageTab = ({
               <User className="w-6 h-6" />
             </div>
             <div>
-              <div className="flex items-center gap-1.5">
-                <h3 className="font-extrabold text-white text-sm">안기정 고객님</h3>
-                <span className="text-[10px] px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 font-bold">
-                  VIP 회원
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400 mt-0.5">010-3333-8888</p>
+              {customer ? (
+                <>
+                  <div className="flex items-center gap-1.5">
+                    <h3 className="font-extrabold text-white text-sm">{customer.name} 고객님</h3>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 font-bold">
+                      회원
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-0.5">{customer.phone}</p>
+                </>
+              ) : (
+                <>
+                  <h3 className="font-extrabold text-white text-sm">로그인이 필요합니다</h3>
+                  <button
+                    onClick={onOpenCustomerAuth}
+                    className="text-[11px] text-cyan-400 font-bold underline mt-0.5 block text-left"
+                  >
+                    고객 로그인 / 본인확인 하기
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
-          <span className="text-[10px] px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
-            출장비 무료
-          </span>
+          {customer ? (
+            <button
+              onClick={handleLogout}
+              className="text-[11px] px-2.5 py-1 rounded-xl bg-slate-800 text-slate-400 hover:text-rose-400 border border-white/10 font-bold transition-colors"
+            >
+              로그아웃
+            </button>
+          ) : (
+            <span className="text-[10px] px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
+              출장비 무료
+            </span>
+          )}
         </div>
       </div>
 
@@ -85,13 +120,25 @@ export const MobileMyPageTab = ({
         
         <div className="glass-card rounded-2xl border border-white/10 divide-y divide-white/5 overflow-hidden text-xs">
           
+          {/* Switch to Partner Mode on Mobile */}
+          <button
+            onClick={onSwitchToPartner}
+            className="w-full p-3.5 flex items-center justify-between text-left bg-emerald-950/30 hover:bg-emerald-900/40 transition-colors text-emerald-300"
+          >
+            <div className="flex items-center gap-2.5">
+              <Briefcase className="w-4 h-4 text-emerald-400" />
+              <span className="font-bold text-emerald-300">👨‍🔧 기사 파트너 포털로 전환 (수주/정산)</span>
+            </div>
+            <ChevronRight className="w-4 h-4 text-emerald-500" />
+          </button>
+
           {/* Become Technician Partner */}
           <button
             onClick={onOpenRegisterModal}
             className="w-full p-3.5 flex items-center justify-between text-left hover:bg-slate-900/60 transition-colors"
           >
             <div className="flex items-center gap-2.5">
-              <Wrench className="w-4 h-4 text-emerald-400" />
+              <Wrench className="w-4 h-4 text-slate-300" />
               <span className="font-bold text-white">디테일러 기사 파트너 등록 지원</span>
             </div>
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold">
@@ -120,17 +167,6 @@ export const MobileMyPageTab = ({
             <ChevronRight className="w-4 h-4 text-slate-500" />
           </a>
 
-          {/* Switch to Web Mode */}
-          <button
-            onClick={onGoToWebMode}
-            className="w-full p-3.5 flex items-center justify-between text-left hover:bg-slate-900/60 transition-colors text-cyan-300"
-          >
-            <div className="flex items-center gap-2.5">
-              <ExternalLink className="w-4 h-4 text-cyan-400" />
-              <span className="font-bold">데스크톱 PC 웹 버전으로 전환</span>
-            </div>
-            <ChevronRight className="w-4 h-4 text-slate-500" />
-          </button>
         </div>
       </div>
 

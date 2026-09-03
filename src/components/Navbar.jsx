@@ -13,7 +13,10 @@ export const Navbar = ({
   onOpenRegisterModal,
   onSwitchToMobileApp,
   portalMode = 'customer',
-  onSelectPortal
+  onSelectPortal,
+  loggedInCustomer,
+  onOpenCustomerAuth,
+  onCustomerLogout
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -80,6 +83,27 @@ export const Navbar = ({
           {/* Top Right Action Buttons Group (Desktop) */}
           <div className="hidden lg:flex items-center gap-2">
             
+            {/* Customer Auth Button / User Badge */}
+            {loggedInCustomer ? (
+              <div className="flex items-center gap-1.5 bg-slate-900/90 py-1 px-2.5 rounded-xl border border-cyan-500/30 text-xs">
+                <span className="font-bold text-cyan-300">{loggedInCustomer.name} 님</span>
+                <button
+                  onClick={onCustomerLogout}
+                  className="text-[10px] text-slate-400 hover:text-rose-400 font-semibold underline ml-1"
+                  title="고객 로그아웃 (자동로그인 해제)"
+                >
+                  로그아웃
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={onOpenCustomerAuth}
+                className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white bg-slate-900/90 hover:bg-slate-800 border border-white/10 flex items-center gap-1.5 transition-all"
+              >
+                <span>고객 로그인</span>
+              </button>
+            )}
+
             {/* Track Quotes */}
             <button
               onClick={onOpenTracker}
@@ -89,18 +113,6 @@ export const Navbar = ({
               <Search className="w-3.5 h-3.5 text-cyan-400" />
               <span>내 의뢰 조회</span>
             </button>
-
-            {/* Mobile App Mode Switcher */}
-            {onSwitchToMobileApp && (
-              <button
-                onClick={onSwitchToMobileApp}
-                className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-950 bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 shadow-md shadow-emerald-500/20 flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95"
-                title="모바일 전용 앱 화면으로 전환"
-              >
-                <Smartphone className="w-3.5 h-3.5 text-slate-950" />
-                <span>모바일 앱 버전</span>
-              </button>
-            )}
 
             {/* Main CTA */}
             <button
@@ -252,13 +264,6 @@ export const Navbar = ({
             >
               <UserCheck className="w-4 h-4 text-cyan-400" />
               기사 파트너 지원하기
-            </button>
-            <button
-              onClick={() => { setCurrentTab('admin'); setMobileMenuOpen(false); }}
-              className="w-full py-2.5 rounded-lg bg-slate-800 text-slate-200 text-xs font-semibold flex items-center justify-center gap-2 border border-white/10"
-            >
-              <LayoutDashboard className="w-4 h-4 text-cyan-400" />
-              관리자 콘솔
             </button>
           </div>
         </div>

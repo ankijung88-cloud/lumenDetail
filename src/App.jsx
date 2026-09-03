@@ -6,22 +6,25 @@ import { DigitalBusinessCard } from './pages/DigitalBusinessCard';
 import { TechnicianExplorer } from './components/TechnicianExplorer';
 import { TechnicianRegisterModal } from './components/TechnicianRegisterModal';
 import { MatchTrackerModal } from './components/MatchTrackerModal';
+import { CustomerAuthModal } from './components/CustomerAuthModal';
 import { Footer } from './components/Footer';
 import { MobileApp } from './components/mobile/MobileApp';
-import { getTechnicians, getMatchRequests } from './utils/storage';
-import { Smartphone } from 'lucide-react';
+import { 
+  getTechnicians, getMatchRequests, 
+  getLoggedInCustomer, logoutCustomer 
+} from './utils/storage';
 
 export function App() {
   // Public Portal Mode State: 'customer' | 'partner' | 'card'
   const [portalMode, setPortalMode] = useState('customer');
   const [customerSubTab, setCustomerSubTab] = useState('landing'); // 'landing' | 'technicians'
 
-  // Mobile App View Mode State (Auto-enabled on mobile screen or user preference for customer portal)
-  const [isMobileAppMode, setIsMobileAppMode] = useState(() => {
-    const saved = localStorage.getItem('lumen_view_mode');
-    if (saved) return saved === 'mobile';
-    return window.innerWidth <= 768;
-  });
+  // Device Responsive State: Mobile is strictly Mobile App, PC is strictly PC Web
+  const [isMobileDevice, setIsMobileDevice] = useState(() => window.innerWidth <= 768);
+
+  // Customer Authentication State
+  const [loggedInCustomer, setLoggedInCustomer] = useState(() => getLoggedInCustomer());
+  const [isCustomerAuthOpen, setIsCustomerAuthOpen] = useState(false);
 
   // Platform Data States
   const [technicians, setTechnicians] = useState([]);
@@ -34,6 +37,13 @@ export function App() {
 
   useEffect(() => {
     refreshData();
+    setLoggedInCustomer(getLoggedInCustomer());
+
+    const handleResize = () => {
+      setIsMobileDevice(window.innerWidth <= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const refreshData = () => {
@@ -41,12 +51,15 @@ export function App() {
     setMatchRequests(getMatchRequests());
   };
 
-  const handleToggleMobileAppMode = (enableMobile) => {
-    setIsMobileAppMode(enableMobile);
-    localStorage.setItem('lumen_view_mode', enableMobile ? 'mobile' : 'web');
-    if (enableMobile) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+  const handleCustomerLoginSuccess = (cust) => {
+    setLoggedInCustomer(cust);
+    setIsCustomerAuthOpen(false);
+  };
+
+  const handleCustomerLogout = () => {
+    logoutCustomer();
+    setLoggedInCustomer(null);
+    alert('고객 계정에서 완전히 로그아웃되었습니다. (자동로그인이 해제되었습니다)');
   };
 
   // Browser hash routing sync for Customer & Partner Portals
@@ -62,17 +75,12 @@ export function App() {
       else if (hash === 'card' || hash === 'mycard' || hash === 'mobile-card') {
         setPortalMode('card');
       } 
-      // 3. Mobile App view shortcut
-      else if (hash === 'mobile' || hash === 'app') {
-        setPortalMode('customer');
-        setIsMobileAppMode(true);
-      } 
-      // 4. Customer Portal Sub-routes
+      // 3. Customer Portal Sub-routes
       else if (hash === 'technicians' || hash === 'pros') {
         setPortalMode('customer');
         setCustomerSubTab('technicians');
       } 
-      // 5. Default Customer Portal
+      // 4. Default Customer Portal
       else {
         setPortalMode('customer');
         setCustomerSubTab('landing');
@@ -135,7 +143,25 @@ export function App() {
     }, 100);
   };
 
-  // ==================== [PORTAL 2] PARTNER / TECHNICIAN PORTAL ====================
+  // ==================== 1. MOBILE DEVICE: STRICTLY MOBILE APP VIEW ====================
+  if (isMobileDevice) {
+    return (
+      <>
+        <MobileApp
+          technicians={technicians}
+          matchRequests={matchRequests}
+          onRefreshData={refreshData}
+        />
+        <CustomerAuthModal
+          isOpen={isCustomerAuthOpen}
+          onClose={() => setIsCustomerAuthOpen(false)}
+          onSuccess={handleCustomerLoginSuccess}
+        />
+      </>
+    );
+  }
+
+  // ==================== 2. PC DESKTOP: PARTNER / TECHNICIAN PORTAL ====================
   if (portalMode === 'partner') {
     return (
       <PartnerPortal
@@ -147,26 +173,14 @@ export function App() {
     );
   }
 
-  // ==================== DIGITAL BUSINESS CARD ====================
+  // ==================== 3. PC DESKTOP: DIGITAL BUSINESS CARD ====================
   if (portalMode === 'card') {
     return (
       <DigitalBusinessCard onGoToBooking={() => handleSelectPortal('customer')} />
     );
   }
 
-  // ==================== [PORTAL 1] CUSTOMER PORTAL (MOBILE APP MODE) ====================
-  if (isMobileAppMode && portalMode === 'customer') {
-    return (
-      <MobileApp
-        technicians={technicians}
-        matchRequests={matchRequests}
-        onRefreshData={refreshData}
-        onSwitchToWeb={() => handleToggleMobileAppMode(false)}
-      />
-    );
-  }
-
-  // ==================== [PORTAL 1] CUSTOMER PORTAL (DESKTOP WEB) ====================
+  // ==================== 4. PC DESKTOP: CUSTOMER PORTAL ====================
   return (
     <div className="min-h-screen bg-[#07090e] text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-slate-950">
       
@@ -176,9 +190,11 @@ export function App() {
         setCurrentTab={handleCustomerTabChange}
         onOpenTracker={() => setIsTrackerOpen(true)}
         onOpenRegisterModal={() => setIsRegisterModalOpen(true)}
-        onSwitchToMobileApp={() => handleToggleMobileAppMode(true)}
         portalMode="customer"
         onSelectPortal={handleSelectPortal}
+        loggedInCustomer={loggedInCustomer}
+        onOpenCustomerAuth={() => setIsCustomerAuthOpen(true)}
+        onCustomerLogout={handleCustomerLogout}
       />
 
       {/* Customer Main Content */}
@@ -193,7 +209,6 @@ export function App() {
             onOpenTracker={() => setIsTrackerOpen(true)}
             onGoToTechnicians={() => handleCustomerTabChange('technicians')}
             onGoToOrderMarket={() => handleSelectPortal('partner')}
-            onSwitchToMobileApp={() => handleToggleMobileAppMode(true)}
           />
         )}
 
@@ -212,6 +227,13 @@ export function App() {
       <Footer 
         setCurrentTab={handleCustomerTabChange} 
         onSelectPortal={handleSelectPortal}
+      />
+
+      {/* Customer Login Modal */}
+      <CustomerAuthModal
+        isOpen={isCustomerAuthOpen}
+        onClose={() => setIsCustomerAuthOpen(false)}
+        onSuccess={handleCustomerLoginSuccess}
       />
 
       {/* Modals */}

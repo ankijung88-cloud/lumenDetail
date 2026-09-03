@@ -218,12 +218,72 @@ export const deleteTechnician = (id) => {
   return updated;
 };
 
-// ==================== 기사 개별 로그인 & 권한 인증 관리 ====================
+// ==================== 고객 전용 로그인 & 자동로그인 관리 ====================
+const CUSTOMER_SESSION_KEY = 'lumen_polish_cust_session';
+const CUSTOMER_REMEMBER_KEY = 'lumen_polish_cust_remember';
+
+export const getLoggedInCustomer = () => {
+  try {
+    // 1. Check temporary session storage first
+    const sessionData = sessionStorage.getItem(CUSTOMER_SESSION_KEY);
+    if (sessionData) return JSON.parse(sessionData);
+
+    // 2. Check persistent remember-me storage
+    const rememberData = localStorage.getItem(CUSTOMER_REMEMBER_KEY);
+    if (rememberData) {
+      const parsed = JSON.parse(rememberData);
+      sessionStorage.setItem(CUSTOMER_SESSION_KEY, JSON.stringify(parsed));
+      return parsed;
+    }
+    return null;
+  } catch (e) {
+    return null;
+  }
+};
+
+export const loginCustomer = (name, phone, rememberMe = false) => {
+  const cleanPhone = phone.trim().replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+  const customer = {
+    name: name.trim() || '고객님',
+    phone: cleanPhone,
+    loggedInAt: new Date().toISOString()
+  };
+
+  // Always store in current session
+  sessionStorage.setItem(CUSTOMER_SESSION_KEY, JSON.stringify(customer));
+
+  // If user selected rememberMe, store in localStorage for auto-login
+  if (rememberMe) {
+    localStorage.setItem(CUSTOMER_REMEMBER_KEY, JSON.stringify(customer));
+  } else {
+    localStorage.removeItem(CUSTOMER_REMEMBER_KEY);
+  }
+
+  return customer;
+};
+
+export const logoutCustomer = () => {
+  sessionStorage.removeItem(CUSTOMER_SESSION_KEY);
+  localStorage.removeItem(CUSTOMER_REMEMBER_KEY);
+};
+
+// ==================== 기사 개별 로그인 & 자동로그인 관리 ====================
 const TECH_SESSION_KEY = 'lumen_polish_tech_session_id';
+const TECH_REMEMBER_KEY = 'lumen_polish_tech_remember_id';
 
 export const getLoggedInTechId = () => {
   try {
-    return localStorage.getItem(TECH_SESSION_KEY) || null;
+    // 1. Check session first
+    const sId = sessionStorage.getItem(TECH_SESSION_KEY);
+    if (sId) return sId;
+
+    // 2. Check persistent remember-me storage
+    const rId = localStorage.getItem(TECH_REMEMBER_KEY);
+    if (rId) {
+      sessionStorage.setItem(TECH_SESSION_KEY, rId);
+      return rId;
+    }
+    return null;
   } catch (e) {
     return null;
   }
@@ -236,15 +296,21 @@ export const getLoggedInTechnician = () => {
   return allTechs.find(t => t.id === techId) || null;
 };
 
-export const setLoggedInTechnician = (techId) => {
+export const setLoggedInTechnician = (techId, rememberMe = false) => {
   if (!techId) {
-    localStorage.removeItem(TECH_SESSION_KEY);
+    sessionStorage.removeItem(TECH_SESSION_KEY);
+    localStorage.removeItem(TECH_REMEMBER_KEY);
   } else {
-    localStorage.setItem(TECH_SESSION_KEY, techId);
+    sessionStorage.setItem(TECH_SESSION_KEY, techId);
+    if (rememberMe) {
+      localStorage.setItem(TECH_REMEMBER_KEY, techId);
+    } else {
+      localStorage.removeItem(TECH_REMEMBER_KEY);
+    }
   }
 };
 
-export const loginTechnician = (phoneOrId, passwordOrPin = '') => {
+export const loginTechnician = (phoneOrId, passwordOrPin = '', rememberMe = false) => {
   const allTechs = getTechnicians();
   const cleanInput = phoneOrId.trim().replace(/-/g, '');
   
@@ -265,7 +331,7 @@ export const loginTechnician = (phoneOrId, passwordOrPin = '') => {
   const inputPin = passwordOrPin.trim();
   // Allow login with tech PIN, '1234', or last 4 digits of phone
   if (!inputPin || inputPin === expectedPin || inputPin === defaultLast4 || inputPin === '1234') {
-    setLoggedInTechnician(tech.id);
+    setLoggedInTechnician(tech.id, rememberMe);
     return { success: true, tech };
   }
 
@@ -273,7 +339,8 @@ export const loginTechnician = (phoneOrId, passwordOrPin = '') => {
 };
 
 export const logoutTechnician = () => {
-  localStorage.removeItem(TECH_SESSION_KEY);
+  sessionStorage.removeItem(TECH_SESSION_KEY);
+  localStorage.removeItem(TECH_REMEMBER_KEY);
 };
 
 // ==================== 중개 의뢰 & 매칭 관리 ====================
