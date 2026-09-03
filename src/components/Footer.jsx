@@ -57,7 +57,7 @@ export const Footer = ({ setCurrentTab, onSelectPortal }) => {
           </ul>
         </div>
 
-        {/* Portals & Admin */}
+        {/* Portals & Tools */}
         <div>
           <h4 className="text-white font-bold text-sm mb-4">전용 독립 포털 바로가기</h4>
           <ul className="space-y-2.5">
@@ -68,15 +68,6 @@ export const Footer = ({ setCurrentTab, onSelectPortal }) => {
               >
                 <Briefcase className="w-3.5 h-3.5" />
                 <span>👨‍🔧 기사 파트너 포털 (오더수주/정산)</span>
-              </button>
-            </li>
-            <li>
-              <button 
-                onClick={() => { if (onSelectPortal) onSelectPortal('admin'); }}
-                className="flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300 transition-colors"
-              >
-                <LayoutDashboard className="w-3.5 h-3.5" />
-                <span>⚙️ 본사 관리자 콘솔 (총괄관제)</span>
               </button>
             </li>
             <li>

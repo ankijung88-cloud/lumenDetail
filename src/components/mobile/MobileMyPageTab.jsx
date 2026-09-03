@@ -131,19 +131,6 @@ export const MobileMyPageTab = ({
             </div>
             <ChevronRight className="w-4 h-4 text-slate-500" />
           </button>
-
-          {/* Admin Dashboard */}
-          <button
-            onClick={onGoToAdmin}
-            className="w-full p-3.5 flex items-center justify-between text-left hover:bg-slate-900/60 transition-colors text-slate-400"
-          >
-            <div className="flex items-center gap-2.5">
-              <KeyRound className="w-4 h-4 text-slate-400" />
-              <span>관리자 콘솔 바로가기</span>
-            </div>
-            <ChevronRight className="w-4 h-4 text-slate-600" />
-          </button>
-
         </div>
       </div>
 

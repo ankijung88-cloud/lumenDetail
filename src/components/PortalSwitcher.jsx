@@ -1,5 +1,5 @@
 import React from 'react';
-import { Car, Briefcase, LayoutDashboard } from 'lucide-react';
+import { Car, Briefcase } from 'lucide-react';
 
 export const PortalSwitcher = ({ currentPortal, onSelectPortal }) => {
   return (
@@ -28,19 +28,6 @@ export const PortalSwitcher = ({ currentPortal, onSelectPortal }) => {
       >
         <Briefcase className="w-3.5 h-3.5" />
         <span>기사용</span>
-      </button>
-
-      {/* 3. Admin Portal */}
-      <button
-        onClick={() => onSelectPortal('admin')}
-        className={`px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 ${
-          currentPortal === 'admin'
-            ? 'bg-purple-500 text-slate-950 font-black shadow-md shadow-purple-500/25'
-            : 'text-slate-400 hover:text-white'
-        }`}
-      >
-        <LayoutDashboard className="w-3.5 h-3.5" />
-        <span>관리자</span>
       </button>
     </div>
   );
