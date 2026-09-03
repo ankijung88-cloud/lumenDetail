@@ -1,36 +1,52 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  getBookings, updateBookingStatus, updateBookingMemo, deleteBooking, 
-  getGoogleWebhookUrl, saveGoogleWebhookUrl 
+  getMatchRequests, updateMatchStatus, updateMatchMemo, deleteMatchRequest,
+  getTechnicians, updateTechnician, deleteTechnician, saveTechnician,
+  getGoogleWebhookUrl, saveGoogleWebhookUrl, updateMatchSettlementStatus 
 } from '../utils/storage';
 import { 
-  sendToGoogleSheet, fetchFromGoogleSheet, 
-  updateGoogleSheetStatus, deleteFromGoogleSheet 
+  fetchFromGoogleSheet, updateGoogleSheetStatus, deleteFromGoogleSheet 
 } from '../utils/googleSheet';
+import { calculateSettlement } from '../utils/settlement';
 import { GoogleSheetGuideModal } from '../components/GoogleSheetGuideModal';
 import { AdminPasswordChangeModal } from '../components/AdminPasswordChangeModal';
+import { SettlementModal } from '../components/SettlementModal';
 import { 
-  LayoutDashboard, Search, Filter, Download, Printer, 
-  Trash2, Edit3, CheckCircle, Clock, AlertTriangle, 
-  Save, Sparkles, RefreshCw, ChevronLeft, Calendar, 
-  Phone, MapPin, Car, ExternalLink, HelpCircle, CreditCard,
-  Lock, KeyRound, LogOut, Check, ArrowDownUp
+  Search, Download, Trash2, CheckCircle, RefreshCw,
+  MapPin, Car, CreditCard, KeyRound, LogOut, Users, 
+  Briefcase, TrendingUp, DollarSign, Plus, X, Sparkles,
+  FileText, CheckCircle2, ShieldCheck, ArrowRight
 } from 'lucide-react';
 
-export const AdminDashboard = ({ onBackToLanding, onOpenCardMaker, onLogout }) => {
-  const [bookings, setBookings] = useState([]);
+export const AdminDashboard = ({ onBackToLanding: _onBackToLanding, onOpenCardMaker, onLogout }) => {
+  const [adminTab, setAdminTab] = useState('orders'); // 'orders' | 'technicians' | 'analytics' | 'settings'
+  
+  // Orders State
+  const [requests, setRequests] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
-  const [selectedBooking, setSelectedBooking] = useState(null);
-  const [editingMemoId, setEditingMemoId] = useState(null);
+  const [selectedReq, setSelectedReq] = useState(null);
   const [memoText, setMemoText] = useState('');
-  
+  const [settlementModalReq, setSettlementModalReq] = useState(null);
+
+  // Technicians State
+  const [technicians, setTechnicians] = useState([]);
+  const [techSearch, setTechSearch] = useState('');
+  const [isAddTechModalOpen, setIsAddTechModalOpen] = useState(false);
+  const [newTechForm, setNewTechForm] = useState({
+    name: '',
+    phone: '',
+    region: '인천/서부권',
+    experienceYears: 5,
+    specialties: '수성 듀얼 광택, 9H 세라믹 코팅',
+    introduction: '',
+    minPrice: 200000
+  });
+
+  // Settings & Sync State
   const [webhookUrl, setWebhookUrl] = useState('');
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [isPwModalOpen, setIsPwModalOpen] = useState(false);
-  const [testStatus, setTestStatus] = useState(null);
-
-  // 양방향 실시간 동기화 상태
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState(null);
   const [syncStatusMsg, setSyncStatusMsg] = useState('');
@@ -41,40 +57,33 @@ export const AdminDashboard = ({ onBackToLanding, onOpenCardMaker, onLogout }) =
     const url = getGoogleWebhookUrl();
     setWebhookUrl(url);
 
-    // 구글 시트 URL이 있으면 즉시 실시간 동기화 실행
     if (url) {
-      handleSyncGoogleSheet(false);
+      handleSyncGoogleSheet(true);
     }
   }, []);
 
-  // 20초마다 주기적 자동 동기화 (새로운 시트 변경사항 실시간 감지)
+  // 20-second background sync
   useEffect(() => {
     if (!autoSync || !webhookUrl) return;
-
     const interval = setInterval(() => {
-      handleSyncGoogleSheet(true); // background silent sync
+      handleSyncGoogleSheet(true);
     }, 20000);
-
     return () => clearInterval(interval);
   }, [autoSync, webhookUrl]);
 
   const loadData = () => {
-    setBookings(getBookings());
+    setRequests(getMatchRequests());
+    setTechnicians(getTechnicians());
   };
 
-  // 구글 스프레드시트와 양방향 동기화 실행
   const handleSyncGoogleSheet = async (isSilent = false) => {
     if (!isSilent) setIsSyncing(true);
     try {
       const res = await fetchFromGoogleSheet();
       if (res.success && res.bookings) {
-        setBookings(res.bookings);
+        setRequests(getMatchRequests());
         setLastSyncTime(new Date().toLocaleTimeString('ko-KR'));
         setSyncStatusMsg(`구글 시트 동기화 완료 (${res.bookings.length}건)`);
-      } else {
-        if (!isSilent) {
-          setSyncStatusMsg(res.message || '동기화 실패');
-        }
       }
     } catch (err) {
       console.error(err);
@@ -85,593 +94,942 @@ export const AdminDashboard = ({ onBackToLanding, onOpenCardMaker, onLogout }) =
   };
 
   const handleStatusChange = async (id, newStatus) => {
-    const updated = updateBookingStatus(id, newStatus);
-    setBookings(updated);
-    if (selectedBooking && selectedBooking.id === id) {
-      setSelectedBooking({ ...selectedBooking, status: newStatus });
+    const updated = updateMatchStatus(id, newStatus);
+    setRequests(updated);
+    if (selectedReq && selectedReq.id === id) {
+      setSelectedReq({ ...selectedReq, status: newStatus });
     }
-
-    // 구글 시트에 실시간 상태 변경 전송 (양방향 반영)
     if (webhookUrl) {
       await updateGoogleSheetStatus(id, newStatus);
     }
   };
 
   const handleSaveMemo = (id) => {
-    const updated = updateBookingMemo(id, memoText);
-    setBookings(updated);
+    const updated = updateMatchMemo(id, memoText);
+    setRequests(updated);
     setEditingMemoId(null);
-    if (selectedBooking && selectedBooking.id === id) {
-      setSelectedBooking({ ...selectedBooking, adminMemo: memoText });
-    }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('정말 이 신청 내역을 삭제하시겠습니까? (구글 스프레드시트에서도 함께 삭제됩니다)')) {
-      const updated = deleteBooking(id);
-      setBookings(updated);
-      if (selectedBooking && selectedBooking.id === id) {
-        setSelectedBooking(null);
-      }
-
-      // 구글 시트에서도 실시간 행 삭제 (양방향 반영)
+  const handleDeleteRequest = async (id) => {
+    if (window.confirm('이 의뢰 내역을 완전히 삭제하시겠습니까?')) {
+      const updated = deleteMatchRequest(id);
+      setRequests(updated);
+      if (selectedReq?.id === id) setSelectedReq(null);
       if (webhookUrl) {
         await deleteFromGoogleSheet(id);
       }
     }
   };
 
+  const handleTechStatusToggle = (techId, currentStatus) => {
+    const newStatus = currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+    const updated = updateTechnician(techId, { status: newStatus });
+    setTechnicians(updated);
+  };
+
+  const handleDeleteTech = (techId) => {
+    if (window.confirm('이 파트너 기사를 목록에서 삭제하시겠습니까?')) {
+      const updated = deleteTechnician(techId);
+      setTechnicians(updated);
+    }
+  };
+
+  const handleAddTechSubmit = (e) => {
+    e.preventDefault();
+    if (!newTechForm.name || !newTechForm.phone) return;
+    saveTechnician({
+      name: newTechForm.name,
+      phone: newTechForm.phone,
+      region: newTechForm.region,
+      experienceYears: Number(newTechForm.experienceYears) || 3,
+      specialties: newTechForm.specialties.split(',').map(s => s.trim()),
+      introduction: newTechForm.introduction || '검증된 1급 디테일러 프로',
+      minPrice: Number(newTechForm.minPrice) || 200000,
+      activeZones: [newTechForm.region]
+    });
+    setTechnicians(getTechnicians());
+    setIsAddTechModalOpen(false);
+    setNewTechForm({
+      name: '',
+      phone: '',
+      region: '인천/서부권',
+      experienceYears: 5,
+      specialties: '수성 듀얼 광택, 9H 세라믹 코팅',
+      introduction: '',
+      minPrice: 200000
+    });
+    alert('새로운 파트너 기사가 등록되었습니다.');
+  };
+
   const handleSaveWebhook = () => {
     saveGoogleWebhookUrl(webhookUrl);
-    alert('구글 스프레드시트 웹훅 URL이 저장되었습니다. 이제 양방향 동기화가 활성화됩니다.');
-    handleSyncGoogleSheet(false);
+    alert('구글 웹훅 URL이 저장되었습니다.');
   };
 
-  const handleTestWebhook = async () => {
-    if (!webhookUrl) {
-      alert('먼저 구글 웹훅 URL을 입력해 주세요.');
+  const handleExportCSV = () => {
+    if (requests.length === 0) {
+      alert('내보낼 데이터가 없습니다.');
       return;
     }
-    setTestStatus('testing');
-    const dummy = {
-      id: `TEST-${Date.now()}`,
-      customerName: '연동테스트 고객',
-      phone: '010-0000-0000',
-      carModelOnly: '포르쉐 911 카레라',
-      carModel: '포르쉐 911 카레라 GT실버 (2024년식)',
-      carColor: 'GT실버',
-      carYear: '2024년식',
-      serviceName: '연동 테스트 시공',
-      location: '서울시 강남구 테스트로 1',
-      preferredDate: '2026-09-01',
-      preferredTime: '10:00',
-      estimatedPrice: 500000,
-      notes: '구글 시트 실시간 연동 테스트용 데이터입니다.',
-      status: '접수대기'
-    };
-
-    const res = await sendToGoogleSheet(dummy);
-    if (res.success) {
-      setTestStatus('success');
-      alert('구글 시트 테스트 데이터가 성공적으로 전송되었습니다! 구글 스프레드시트에서 14개 열로 새 행이 추가되었는지 확인해 보세요.');
-    } else {
-      setTestStatus('error');
-      alert('구글 시트 전송 실패. 웹앱 URL 배포 권한("모든 사용자")을 다시 확인해 주세요.');
-    }
-  };
-
-  // CSV 다운로드 (14개 열)
-  const handleExportCSV = () => {
-    const headers = [
-      '접수일시', '접수번호', '고객명', '연락처', 
-      '차종(모델)', '차량색상', '차량연식', 
-      '시공항목', '출장주소', '희망일자', '시간', 
-      '예상견적', '진행상태', '고객요청사항', '관리자메모'
-    ];
-    const rows = bookings.map(b => [
-      `"${new Date(b.createdAt).toLocaleString('ko-KR')}"`,
-      `"${b.id}"`,
-      `"${b.customerName}"`,
-      `"${b.phone}"`,
-      `"${b.carModelOnly || b.carModel}"`,
-      `"${b.carColor || ''}"`,
-      `"${b.carYear || ''}"`,
-      `"${b.serviceName}"`,
-      `"${b.location.replace(/"/g, '""')}"`,
-      `"${b.preferredDate}"`,
-      `"${b.preferredTime}"`,
-      b.estimatedPrice || 0,
-      `"${b.status}"`,
-      `"${(b.notes || '').replace(/"/g, '""')}"`,
-      `"${(b.adminMemo || '').replace(/"/g, '""')}"`
+    const headers = ['의뢰번호', '접수일시', '고객명', '연락처', '차종', '시공항목', '출장지', '희망일', '희망시간', '예상금액', '매칭기사', '상태', '관리자메모'];
+    const rows = requests.map(r => [
+      r.id,
+      r.createdAt ? new Date(r.createdAt).toLocaleString('ko-KR') : '',
+      r.customerName,
+      r.phone,
+      `"${r.carModel}"`,
+      `"${r.serviceName}"`,
+      `"${r.location}"`,
+      r.preferredDate,
+      r.preferredTime,
+      r.matchedPrice || r.budget || 0,
+      r.matchedTechName || '',
+      r.status,
+      `"${(r.adminMemo || '').replace(/"/g, '""')}"`
     ]);
-
     const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `루멘디테일링_신청접수내역_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', `루멘프로_중개의뢰목록_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  // 통계 계산
-  const totalCount = bookings.length;
-  const pendingCount = bookings.filter(b => b.status === '접수대기').length;
-  const confirmedCount = bookings.filter(b => b.status === '확정').length;
-  const completedCount = bookings.filter(b => b.status === '완료').length;
-  const totalRevenue = bookings.filter(b => b.status === '완료' || b.status === '확정')
-    .reduce((sum, b) => sum + (b.estimatedPrice || 0), 0);
-
-  // 필터링된 목록
-  const filteredBookings = bookings.filter(b => {
-    const matchesSearch = 
-      b.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      b.phone?.includes(searchTerm) ||
-      b.carModel?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      b.id?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'ALL' || b.status === statusFilter;
-    return matchesSearch && matchesStatus;
+  // Filtered requests
+  const filteredRequests = requests.filter(req => {
+    const matchStatus = statusFilter === 'ALL' || req.status === statusFilter;
+    const matchSearch = searchTerm === '' ||
+      req.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      req.phone?.includes(searchTerm) ||
+      req.carModel?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      req.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      req.matchedTechName?.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchStatus && matchSearch;
   });
 
+  // Analytics Computations
+  const totalGMV = requests.reduce((acc, curr) => acc + (Number(curr.matchedPrice) || Number(curr.budget) || 0), 0);
+  const platformFee = Math.round(totalGMV * 0.1); // 10% brokerage commission
+  const completedCount = requests.filter(r => r.status === 'COMPLETED' || r.status === 'MATCHED').length;
+  const matchRate = requests.length > 0 ? Math.round((completedCount / requests.length) * 100) : 0;
+
   return (
-    <div className="min-h-screen bg-[#07090e] text-slate-100 pt-24 pb-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto space-y-8">
-        
-        {/* Top Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
-          <div>
-            <button
-              onClick={onBackToLanding}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-cyan-400 hover:text-cyan-300 mb-2 transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              <span>랜딩페이지로 돌아가기</span>
-            </button>
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
-                <LayoutDashboard className="w-6 h-6" />
-              </div>
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-white">출장 차량관리 예약 & 신청 관리자</h1>
-                <p className="text-xs text-slate-400 mt-0.5">실시간 고객 접수 현황 모니터링 및 구글 스프레드시트 동기화</p>
-              </div>
-            </div>
+    <div className="min-h-screen bg-[#07090e] text-slate-100 pt-24 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      
+      {/* Top Header Bar */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-white/10">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-xs font-bold border border-cyan-500/30">
+              PRO MATCH CONSOLE
+            </span>
+            <span className="text-xs text-slate-400">루멘 중개 플랫폼 통합 관리자</span>
           </div>
-
-          {/* Top Actions */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            <button
-              onClick={onOpenCardMaker}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-amber-500/20 transition-all hover:scale-105 active:scale-95"
-            >
-              <CreditCard className="w-4 h-4" />
-              <span>출장 명함 제작기 열기</span>
-            </button>
-
-            <button
-              onClick={() => setIsGuideOpen(true)}
-              className="px-3.5 py-2 rounded-xl bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-500/40 text-xs font-bold flex items-center gap-1.5 transition-all"
-            >
-              <HelpCircle className="w-4 h-4" />
-              <span>구글 시트 연동 가이드</span>
-            </button>
-
-            <button
-              onClick={() => setIsPwModalOpen(true)}
-              className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-white/10 text-xs font-bold flex items-center gap-1.5 transition-all"
-              title="관리자 비밀번호 변경"
-            >
-              <KeyRound className="w-3.5 h-3.5 text-amber-400" />
-              <span>비밀번호 변경</span>
-            </button>
-
-            <button
-              onClick={() => handleSyncGoogleSheet(false)}
-              disabled={isSyncing}
-              className={`px-3.5 py-2 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-all ${
-                isSyncing 
-                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 animate-pulse' 
-                  : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-white/10'
-              }`}
-              title="구글 스프레드시트 최신 데이터 실시간 불러오기"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 text-cyan-400 ${isSyncing ? 'animate-spin' : ''}`} />
-              <span>{isSyncing ? '동기화 중...' : '구글 시트 동기화'}</span>
-            </button>
-
-            <button
-              onClick={handleExportCSV}
-              className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-white/10 text-xs font-bold flex items-center gap-1.5 transition-all"
-            >
-              <Download className="w-4 h-4 text-cyan-400" />
-              <span>CSV 다운로드</span>
-            </button>
-
-            {onLogout && (
-              <button
-                onClick={onLogout}
-                className="px-3 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-bold flex items-center gap-1.5 transition-all"
-                title="관리자 세션 종료 및 잠금"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                <span>로그아웃</span>
-              </button>
-            )}
-          </div>
+          <h1 className="text-2xl sm:text-3xl font-black text-white mt-1">
+            중개 오더 & 파트너 관리 콘솔
+          </h1>
         </div>
 
-        {/* Google Sheet Webhook Setting Card (Bidirectional Sync) */}
-        <div className="glass-card p-5 rounded-2xl border border-cyan-500/20 bg-gradient-to-r from-cyan-950/30 via-slate-900/60 to-slate-900/60">
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-            <div className="space-y-1.5">
-              <div className="flex flex-wrap items-center gap-2">
-                <Sparkles className="w-4 h-4 text-cyan-400" />
-                <h3 className="text-sm font-bold text-white">Google 스프레드시트 양방향 실시간 동기화</h3>
-                <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${
-                  webhookUrl ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-300'
-                }`}>
-                  {webhookUrl ? '양방향 연동 활성화됨' : 'URL 미설정 (로컬 저장 모드)'}
-                </span>
-                {lastSyncTime && (
-                  <span className="text-[10px] px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-500/30 font-mono">
-                    마지막 동기화: {lastSyncTime}
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                웹에서 상태 변경/삭제 시 구글 시트에 즉시 반영되며, 구글 스프레드시트에서 직접 수정한 내용도 실시간으로 웹에 동기화됩니다.
-              </p>
-            </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => setIsPwModalOpen(true)}
+            className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center gap-1.5 transition-colors border border-white/5"
+          >
+            <KeyRound className="w-3.5 h-3.5 text-cyan-400" />
+            <span>비밀번호 변경</span>
+          </button>
 
-            <div className="flex flex-col sm:flex-row items-center gap-2 w-full lg:w-auto shrink-0">
-              <input
-                type="url"
-                value={webhookUrl}
-                onChange={(e) => setWebhookUrl(e.target.value)}
-                placeholder="https://script.google.com/macros/s/.../exec"
-                className="w-full sm:w-80 px-3.5 py-2 rounded-xl bg-slate-950 border border-white/15 text-xs text-cyan-300 placeholder-slate-600 focus:outline-none focus:border-cyan-400 font-mono"
-              />
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <button
-                  onClick={handleSaveWebhook}
-                  className="w-full sm:w-auto px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shrink-0 transition-all"
-                >
-                  저장
-                </button>
-                <button
-                  onClick={handleTestWebhook}
-                  className="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-white/10 font-semibold text-xs shrink-0 transition-all"
-                >
-                  전송 테스트
-                </button>
-              </div>
-            </div>
-          </div>
+          <button
+            onClick={onOpenCardMaker}
+            className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center gap-1.5 transition-colors border border-white/5"
+          >
+            <CreditCard className="w-3.5 h-3.5 text-cyan-400" />
+            <span>기사 명함 관리</span>
+          </button>
 
-          {/* Sync status & Auto-sync bar */}
-          <div className="mt-3 pt-3 border-t border-white/5 flex flex-wrap items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2 text-slate-400 text-[11px]">
-              <ArrowDownUp className="w-3.5 h-3.5 text-cyan-400" />
-              <span>{syncStatusMsg || (webhookUrl ? '양방향 동기화 대기 중' : '구글 시트 연동 후 양방향 동기화가 지원됩니다')}</span>
-            </div>
-            
-            {webhookUrl && (
-              <div className="flex items-center gap-3">
-                <label className="flex items-center gap-1.5 text-[11px] text-slate-300 cursor-pointer select-none">
-                  <input 
-                    type="checkbox" 
-                    checked={autoSync} 
-                    onChange={(e) => setAutoSync(e.target.checked)}
-                    className="w-3.5 h-3.5 rounded accent-cyan-500 cursor-pointer"
-                  />
-                  <span>20초 주기 자동 감지</span>
-                </label>
-
-                <button
-                  onClick={() => handleSyncGoogleSheet(false)}
-                  disabled={isSyncing}
-                  className="text-[11px] text-cyan-400 hover:text-cyan-300 underline font-semibold flex items-center gap-1"
-                >
-                  <RefreshCw className={`w-3 h-3 ${isSyncing ? 'animate-spin' : ''}`} />
-                  <span>지금 새로고침</span>
-                </button>
-              </div>
-            )}
-          </div>
+          <button
+            onClick={onLogout}
+            className="px-3 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 text-xs font-semibold flex items-center gap-1.5 transition-colors border border-rose-500/30"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>로그아웃</span>
+          </button>
         </div>
+      </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="glass-card p-4 rounded-2xl border border-white/5">
-            <span className="text-xs text-slate-400 font-medium">총 접수 건수</span>
-            <p className="text-2xl sm:text-3xl font-extrabold text-white mt-1 font-mono">{totalCount}건</p>
-          </div>
+      {/* Main Admin Tabs */}
+      <div className="flex items-center gap-2 mt-6 border-b border-white/10 pb-3 overflow-x-auto scrollbar-none">
+        <button
+          onClick={() => setAdminTab('orders')}
+          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all ${
+            adminTab === 'orders'
+              ? 'bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/20'
+              : 'bg-slate-900 text-slate-400 hover:text-white'
+          }`}
+        >
+          <Briefcase className="w-4 h-4" />
+          <span>오더 & 매칭 관리 ({requests.length})</span>
+        </button>
 
-          <div className="glass-card p-4 rounded-2xl border border-amber-500/20 bg-amber-500/5">
-            <span className="text-xs text-amber-300 font-medium">신규 접수대기</span>
-            <p className="text-2xl sm:text-3xl font-extrabold text-amber-400 mt-1 font-mono">{pendingCount}건</p>
-          </div>
+        <button
+          onClick={() => setAdminTab('technicians')}
+          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all ${
+            adminTab === 'technicians'
+              ? 'bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/20'
+              : 'bg-slate-900 text-slate-400 hover:text-white'
+          }`}
+        >
+          <Users className="w-4 h-4" />
+          <span>기술자 파트너 관리 ({technicians.length})</span>
+        </button>
 
-          <div className="glass-card p-4 rounded-2xl border border-cyan-500/20 bg-cyan-500/5">
-            <span className="text-xs text-cyan-300 font-medium">예약 확정</span>
-            <p className="text-2xl sm:text-3xl font-extrabold text-cyan-400 mt-1 font-mono">{confirmedCount}건</p>
-          </div>
+        <button
+          onClick={() => setAdminTab('analytics')}
+          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all ${
+            adminTab === 'analytics'
+              ? 'bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/20'
+              : 'bg-slate-900 text-slate-400 hover:text-white'
+          }`}
+        >
+          <TrendingUp className="w-4 h-4" />
+          <span>정산 & 매출 통계</span>
+        </button>
 
-          <div className="glass-card p-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/5">
-            <span className="text-xs text-emerald-300 font-medium">시공 완료</span>
-            <p className="text-2xl sm:text-3xl font-extrabold text-emerald-400 mt-1 font-mono">{completedCount}건</p>
-          </div>
+        <button
+          onClick={() => setAdminTab('settings')}
+          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all ${
+            adminTab === 'settings'
+              ? 'bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/20'
+              : 'bg-slate-900 text-slate-400 hover:text-white'
+          }`}
+        >
+          <Sparkles className="w-4 h-4" />
+          <span>구글시트 연동 & 설정</span>
+        </button>
+      </div>
 
-          <div className="col-span-2 lg:col-span-1 glass-card p-4 rounded-2xl border border-white/5">
-            <span className="text-xs text-slate-400 font-medium">확정 예상 매출</span>
-            <p className="text-xl sm:text-2xl font-extrabold text-cyan-400 mt-1 font-mono truncate">
-              {(totalRevenue / 10000).toLocaleString()}만원
-            </p>
-          </div>
-        </div>
-
-        {/* Filter and Search Bar */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+      {/* ==================== TAB 1: ORDERS & MATCHING ==================== */}
+      {adminTab === 'orders' && (
+        <div className="mt-6 space-y-6">
           
-          {/* Status Tabs */}
-          <div className="flex items-center gap-1.5 p-1 bg-slate-900 rounded-xl border border-white/10 w-full sm:w-auto overflow-x-auto">
-            {['ALL', '접수대기', '확정', '시공중', '완료', '취소'].map((st) => (
-              <button
-                key={st}
-                onClick={() => setStatusFilter(st)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 ${
-                  statusFilter === st
-                    ? 'bg-cyan-500 text-slate-950 shadow-md'
-                    : 'text-slate-400 hover:text-white'
-                }`}
+          {/* Controls Bar */}
+          <div className="glass-card p-4 rounded-2xl border border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+              {/* Search */}
+              <div className="relative w-full sm:w-72">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="의뢰번호, 고객명, 차종, 기사명 검색..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500"
+                />
+              </div>
+
+              {/* Status Filter */}
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full sm:w-auto px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-cyan-500"
               >
-                {st === 'ALL' ? '전체보기' : st}
+                <option value="ALL">모든 상태 전체</option>
+                <option value="OPEN">접수 대기 (OPEN)</option>
+                <option value="BIDDING">견적 제안중 (BIDDING)</option>
+                <option value="MATCHED">매칭 확정 (MATCHED)</option>
+                <option value="IN_PROGRESS">시공중 (IN_PROGRESS)</option>
+                <option value="COMPLETED">시공 완료 (COMPLETED)</option>
+                <option value="CANCELLED">취소됨 (CANCELLED)</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2 self-end md:self-center">
+              <button
+                onClick={handleExportCSV}
+                className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-white/10 flex items-center gap-1.5 transition-colors"
+              >
+                <Download className="w-3.5 h-3.5 text-cyan-400" />
+                <span>CSV 다운로드</span>
               </button>
-            ))}
+            </div>
           </div>
 
-          {/* Search Input */}
-          <div className="relative w-full sm:w-72">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="고객명, 연락처, 차종 검색"
-              className="w-full pl-9 pr-4 py-2 bg-slate-900 border border-white/10 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
-            />
-          </div>
-
-        </div>
-
-        {/* Bookings Table */}
-        <div className="glass-card rounded-2xl border border-white/10 overflow-hidden shadow-2xl">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-300">
-              <thead className="bg-slate-900/90 text-slate-400 uppercase tracking-wider text-[11px] border-b border-white/10">
-                <tr>
-                  <th className="py-3.5 px-4 font-bold">접수번호 / 일시</th>
-                  <th className="py-3.5 px-4 font-bold">고객명 / 연락처</th>
-                  <th className="py-3.5 px-4 font-bold">차종 / 시공항목</th>
-                  <th className="py-3.5 px-4 font-bold">출장지 주소</th>
-                  <th className="py-3.5 px-4 font-bold">희망 일정</th>
-                  <th className="py-3.5 px-4 font-bold">상태 관리</th>
-                  <th className="py-3.5 px-4 font-bold text-center">관리</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {filteredBookings.length === 0 ? (
+          {/* Orders Table */}
+          <div className="glass-card rounded-2xl border border-white/10 overflow-hidden shadow-xl">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs text-slate-300">
+                <thead className="bg-slate-900/90 text-slate-400 uppercase tracking-wider font-bold border-b border-white/10 text-[11px]">
                   <tr>
-                    <td colSpan="7" className="py-12 text-center text-slate-500">
-                      신청 접수 내역이 없습니다.
-                    </td>
+                    <th className="py-3.5 px-4">의뢰정보</th>
+                    <th className="py-3.5 px-4">고객 / 연락처</th>
+                    <th className="py-3.5 px-4">차종 / 시공항목</th>
+                    <th className="py-3.5 px-4">출장지 / 희망일</th>
+                    <th className="py-3.5 px-4">금액 / 매칭기사</th>
+                    <th className="py-3.5 px-4">매칭상태</th>
+                    <th className="py-3.5 px-4 text-center">관리</th>
                   </tr>
-                ) : (
-                  filteredBookings.map((b) => {
-                    const statusColors = {
-                      '접수대기': 'bg-amber-500/15 text-amber-300 border-amber-500/30',
-                      '확정': 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30',
-                      '시공중': 'bg-blue-500/15 text-blue-300 border-blue-500/30',
-                      '완료': 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
-                      '취소': 'bg-rose-500/15 text-rose-300 border-rose-500/30',
-                    };
-
-                    return (
-                      <tr 
-                        key={b.id} 
-                        className="hover:bg-slate-800/40 transition-colors cursor-pointer group"
-                        onClick={() => setSelectedBooking(b)}
-                      >
-                        <td className="py-4 px-4 font-mono">
-                          <span className="font-bold text-cyan-300">{b.id}</span>
-                          <span className="block text-[10px] text-slate-500 mt-0.5">
-                            {new Date(b.createdAt).toLocaleDateString('ko-KR')}
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {filteredRequests.map(req => (
+                    <tr 
+                      key={req.id}
+                      onClick={() => setSelectedReq(req)}
+                      className={`hover:bg-slate-800/40 cursor-pointer transition-colors ${
+                        selectedReq?.id === req.id ? 'bg-cyan-500/10' : ''
+                      }`}
+                    >
+                      <td className="py-3.5 px-4 font-mono font-bold text-cyan-400 whitespace-nowrap">
+                        {req.id}
+                        {req.targetTechName && (
+                          <span className="block text-[10px] text-amber-300 font-normal">
+                            지정: {req.targetTechName}
                           </span>
-                        </td>
+                        )}
+                      </td>
 
-                        <td className="py-4 px-4">
-                          <span className="font-bold text-white text-sm">{b.customerName}</span>
-                          <span className="block text-slate-400 font-mono mt-0.5">{b.phone}</span>
-                        </td>
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <div className="font-bold text-white">{req.customerName}</div>
+                        <div className="text-slate-400">{req.phone}</div>
+                      </td>
 
-                        <td className="py-4 px-4">
-                          <span className="font-bold text-slate-200">{b.carModel}</span>
-                          <span className="block text-cyan-400 text-[11px] truncate max-w-[200px]">{b.serviceName}</span>
-                        </td>
+                      <td className="py-3.5 px-4">
+                        <div className="font-semibold text-white truncate max-w-[180px]">{req.carModel}</div>
+                        <div className="text-[11px] text-slate-400 truncate max-w-[180px]">{req.serviceName}</div>
+                      </td>
 
-                        <td className="py-4 px-4 max-w-[220px]">
-                          <span className="truncate block text-slate-300">{b.location}</span>
-                        </td>
+                      <td className="py-3.5 px-4">
+                        <div className="truncate max-w-[160px]">{req.location}</div>
+                        <div className="text-slate-400 text-[11px]">{req.preferredDate} ({req.preferredTime})</div>
+                      </td>
 
-                        <td className="py-4 px-4">
-                          <span className="font-semibold text-white">{b.preferredDate}</span>
-                          <span className="block text-[11px] text-slate-400 font-mono">{b.preferredTime}</span>
-                        </td>
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <div className="font-bold text-emerald-400">
+                          {(req.matchedPrice || req.budget || 0).toLocaleString()}원
+                        </div>
+                        <div className="text-[11px] text-slate-400">
+                          {req.matchedTechName ? `배정: ${req.matchedTechName}` : `제안 ${req.bids?.length || 0}건`}
+                        </div>
+                      </td>
 
-                        <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
-                          <select
-                            value={b.status}
-                            onChange={(e) => handleStatusChange(b.id, e.target.value)}
-                            className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${
-                              statusColors[b.status] || 'bg-slate-800 text-slate-300'
-                            } bg-slate-900 focus:outline-none`}
-                          >
-                            <option value="접수대기">접수대기</option>
-                            <option value="확정">확정</option>
-                            <option value="시공중">시공중</option>
-                            <option value="완료">완료</option>
-                            <option value="취소">취소</option>
-                          </select>
-                        </td>
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <select
+                          value={req.status}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => handleStatusChange(req.id, e.target.value)}
+                          className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border focus:outline-none ${
+                            req.status === 'MATCHED'
+                              ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
+                              : (req.status === 'COMPLETED'
+                                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                                : (req.status === 'BIDDING'
+                                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                                  : 'bg-slate-800 text-slate-300 border-white/10'))
+                          }`}
+                        >
+                          <option value="OPEN">접수대기</option>
+                          <option value="BIDDING">제안비교중</option>
+                          <option value="MATCHED">매칭확정</option>
+                          <option value="IN_PROGRESS">시공중</option>
+                          <option value="COMPLETED">시공완료</option>
+                          <option value="CANCELLED">취소됨</option>
+                        </select>
+                      </td>
 
-                        <td className="py-4 px-4 text-center" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            onClick={() => handleDelete(b.id)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
-                            title="삭제"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteRequest(req.id);
+                          }}
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                          title="삭제"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {filteredRequests.length === 0 && (
+              <div className="py-12 text-center text-slate-500">
+                조회된 의뢰 내역이 없습니다.
+              </div>
+            )}
           </div>
-        </div>
 
-        {/* Selected Booking Detail Modal */}
-        {selectedBooking && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-            <div className="glass-card bg-[#0e1422] border border-white/10 rounded-3xl max-w-xl w-full p-6 sm:p-8 space-y-6 shadow-2xl relative">
-              
-              <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                <div>
-                  <span className="text-xs text-cyan-400 font-mono font-bold">{selectedBooking.id}</span>
-                  <h3 className="text-xl font-extrabold text-white mt-0.5">
-                    {selectedBooking.customerName} 고객님 상세 접수 내역
+          {/* Selected Order Detail Panel */}
+          {selectedReq && (
+            <div className="glass-card p-6 rounded-2xl border border-cyan-500/30 animate-fadeIn space-y-4">
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono text-cyan-400 bg-cyan-950/80 px-2.5 py-0.5 rounded border border-cyan-500/30">
+                    {selectedReq.id}
+                  </span>
+                  <h3 className="font-extrabold text-white text-base">
+                    {selectedReq.carModel} - {selectedReq.customerName} 고객님 의뢰 상세
                   </h3>
                 </div>
                 <button
-                  onClick={() => setSelectedBooking(null)}
-                  className="text-slate-400 hover:text-white p-1 rounded-lg bg-slate-800"
+                  onClick={() => setSelectedReq(null)}
+                  className="p-1 rounded-lg bg-slate-800 text-slate-400 hover:text-white"
                 >
-                  닫기
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 text-xs">
-                <div className="p-3 rounded-xl bg-slate-900/80 border border-white/5">
-                  <span className="text-slate-400 block mb-1">연락처</span>
-                  <a href={`tel:${selectedBooking.phone}`} className="text-cyan-300 font-bold font-mono text-sm hover:underline">
-                    {selectedBooking.phone}
-                  </a>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-300">
+                <div className="space-y-1 bg-slate-900/50 p-3 rounded-xl border border-white/5">
+                  <p className="text-slate-400 font-bold">고객 연락처 & 위치</p>
+                  <p>• 연락처: <strong className="text-white">{selectedReq.phone}</strong></p>
+                  <p>• 출장지: {selectedReq.location}</p>
+                  <p>• 권역: {selectedReq.travelZone}</p>
                 </div>
 
-                <div className="p-3 rounded-xl bg-slate-900/80 border border-white/5">
-                  <span className="text-slate-400 block mb-1">차종 및 연식</span>
-                  <span className="text-white font-bold text-sm">{selectedBooking.carModel}</span>
+                <div className="space-y-1 bg-slate-900/50 p-3 rounded-xl border border-white/5">
+                  <p className="text-slate-400 font-bold">일정 & 현장 환경</p>
+                  <p>• 희망일시: <strong className="text-cyan-300">{selectedReq.preferredDate} ({selectedReq.preferredTime})</strong></p>
+                  <p>• 220V 콘센트: {selectedReq.hasOutlet ? '사용 가능' : '협의 필요'}</p>
+                  <p>• 주차 형태: {selectedReq.isIndoor ? '지하/실내' : '야외'}</p>
                 </div>
 
-                <div className="p-3 rounded-xl bg-slate-900/80 border border-white/5 col-span-2">
-                  <span className="text-slate-400 block mb-1">신청 시공 항목</span>
-                  <span className="text-cyan-300 font-bold">{selectedBooking.serviceName}</span>
+                <div className="space-y-1 bg-slate-900/50 p-3 rounded-xl border border-white/5">
+                  <p className="text-slate-400 font-bold">금액 & 매칭 정보</p>
+                  <p>• 확정/희망가: <strong className="text-emerald-400">{(selectedReq.matchedPrice || selectedReq.budget || 0).toLocaleString()}원</strong></p>
+                  <p>• 매칭 기사: <strong className="text-white">{selectedReq.matchedTechName || '미배정'}</strong></p>
+                  <p>• 제안된 입찰: {selectedReq.bids?.length || 0}건</p>
                 </div>
-
-                <div className="p-3 rounded-xl bg-slate-900/80 border border-white/5 col-span-2">
-                  <span className="text-slate-400 block mb-1">출장 희망 장소</span>
-                  <span className="text-white">{selectedBooking.location}</span>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-900/80 border border-white/5">
-                  <span className="text-slate-400 block mb-1">희망 시공 일시</span>
-                  <span className="text-white font-bold">{selectedBooking.preferredDate} ({selectedBooking.preferredTime})</span>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-900/80 border border-white/5">
-                  <span className="text-slate-400 block mb-1">예상 시공 견적</span>
-                  <span className="text-cyan-300 font-bold font-mono text-sm">
-                    {(selectedBooking.estimatedPrice || 0).toLocaleString()}원
-                  </span>
-                </div>
-
-                {selectedBooking.notes && (
-                  <div className="p-3 rounded-xl bg-slate-900/80 border border-white/5 col-span-2">
-                    <span className="text-slate-400 block mb-1">고객 요청사항</span>
-                    <p className="text-slate-300 leading-relaxed">{selectedBooking.notes}</p>
-                  </div>
-                )}
               </div>
 
-              {/* Admin Memo Section */}
-              <div className="p-4 rounded-xl bg-slate-950 border border-white/10 space-y-2">
-                <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                  <Edit3 className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>관리자 메모 (방문 전 준비사항, 특이사항, 콘센트 위치 등)</span>
+              {/* Memo Editor */}
+              <div className="pt-2">
+                <label className="block text-xs font-bold text-slate-400 mb-1">
+                  관리자 전용 진행 메모
                 </label>
-                <textarea
-                  defaultValue={selectedBooking.adminMemo}
-                  id="modal-memo-input"
-                  rows="2"
-                  placeholder="예: 220V 콘센트 지하 2층 기둥에 있음. 10시 정시 방문."
-                  className="w-full p-2.5 rounded-lg bg-slate-900 border border-white/10 text-xs text-white focus:outline-none focus:border-cyan-400 resize-none"
-                />
-                <div className="flex justify-end">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    defaultValue={selectedReq.adminMemo || ''}
+                    onChange={(e) => setMemoText(e.target.value)}
+                    placeholder="기사 배정 내역, 고객 유선상담 특이사항 입력..."
+                    className="flex-grow px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500"
+                  />
                   <button
-                    onClick={() => {
-                      const input = document.getElementById('modal-memo-input');
-                      if (input) {
-                        handleSaveMemo(selectedBooking.id);
-                        alert('메모가 저장되었습니다.');
-                      }
-                    }}
-                    className="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold flex items-center gap-1"
+                    onClick={() => handleSaveMemo(selectedReq.id)}
+                    className="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold transition-colors shrink-0"
                   >
-                    <Save className="w-3 h-3" />
-                    <span>메모 저장</span>
+                    메모 저장
                   </button>
                 </div>
               </div>
+            </div>
+          )}
 
-              <div className="flex items-center justify-between pt-2">
+        </div>
+      )}
+
+      {/* ==================== TAB 2: TECHNICIAN PARTNERS ==================== */}
+      {adminTab === 'technicians' && (
+        <div className="mt-6 space-y-6">
+          
+          <div className="glass-card p-4 rounded-2xl border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="relative w-full sm:w-72">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="기사명, 활동지역 검색..."
+                value={techSearch}
+                onChange={(e) => setTechSearch(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500"
+              />
+            </div>
+
+            <button
+              onClick={() => setIsAddTechModalOpen(true)}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs shadow-md shadow-cyan-500/20 flex items-center gap-1.5 transition-all"
+            >
+              <Plus className="w-4 h-4" />
+              <span>신규 기사 파트너 직접 등록</span>
+            </button>
+          </div>
+
+          {/* Technicians Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {technicians
+              .filter(t => techSearch === '' || t.name.includes(techSearch) || t.region.includes(techSearch))
+              .map(tech => (
+                <div key={tech.id} className="glass-card rounded-2xl border border-white/10 p-5 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <img 
+                          src={tech.avatar} 
+                          alt={tech.name} 
+                          className="w-12 h-12 rounded-2xl object-cover border border-cyan-500/40"
+                        />
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <h3 className="font-extrabold text-white text-base">{tech.name}</h3>
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-bold">
+                              {tech.badge || '인증 파트너'}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-400">{tech.phone} | 경력 {tech.experienceYears}년</p>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => handleTechStatusToggle(tech.id, tech.status)}
+                        className={`text-[10px] px-2.5 py-1 rounded-full font-bold border transition-all ${
+                          tech.status === 'ACTIVE'
+                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                            : 'bg-slate-800 text-slate-400 border-slate-700'
+                        }`}
+                      >
+                        {tech.status === 'ACTIVE' ? '활성 (수주가능)' : '비활성 (휴식)'}
+                      </button>
+                    </div>
+
+                    <div className="mt-3 text-xs text-slate-300 space-y-1 bg-slate-900/40 p-3 rounded-xl border border-white/5">
+                      <p><strong className="text-slate-400">활동 권역:</strong> {tech.region} ({tech.activeZones?.join(', ')})</p>
+                      <p><strong className="text-slate-400">전문 분야:</strong> {tech.specialties?.join(', ')}</p>
+                      <p className="line-clamp-2 text-slate-400 mt-1 italic">"{tech.introduction}"</p>
+                    </div>
+
+                    <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
+                      <span>평점: <strong className="text-amber-400">★ {tech.rating || 5.0}</strong> ({tech.reviewCount || 0}건)</span>
+                      <span>누적 시공: <strong className="text-cyan-400">{tech.completedJobs || 0}건</strong></span>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-end gap-2">
+                    <button
+                      onClick={() => handleDeleteTech(tech.id)}
+                      className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                      title="삭제"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+          </div>
+
+        </div>
+      )}
+
+      {/* ==================== TAB 3: REVENUE & ANALYTICS ==================== */}
+      {adminTab === 'analytics' && (
+        <div className="mt-6 space-y-6">
+          
+          {/* Top 4 KPI Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            {/* 1. Total GMV */}
+            <div className="glass-card p-5 rounded-2xl border border-white/10">
+              <div className="flex items-center justify-between text-slate-400 text-xs font-bold">
+                <span>총 시공 매출액 (GMV 100%)</span>
+                <DollarSign className="w-4 h-4 text-cyan-400" />
+              </div>
+              <p className="text-2xl sm:text-3xl font-black text-white mt-2">
+                {totalGMV.toLocaleString()}원
+              </p>
+              <span className="text-[11px] text-slate-400 mt-1 block">누적 매칭 의뢰 {requests.length}건 기준</span>
+            </div>
+
+            {/* 2. Platform 10% Revenue */}
+            <div className="glass-card p-5 rounded-2xl border border-cyan-500/30 bg-cyan-950/20">
+              <div className="flex items-center justify-between text-cyan-300 text-xs font-bold">
+                <span>플랫폼 중개 수수료 수익 (10%)</span>
+                <TrendingUp className="w-4 h-4 text-cyan-400" />
+              </div>
+              <p className="text-2xl sm:text-3xl font-black text-cyan-400 mt-2">
+                {platformFee.toLocaleString()}원
+              </p>
+              <span className="text-[11px] text-cyan-300/70 mt-1 block">플랫폼 순 중개매출</span>
+            </div>
+
+            {/* 3. Withholding Tax (3.3%) */}
+            <div className="glass-card p-5 rounded-2xl border border-rose-500/30 bg-rose-950/20">
+              <div className="flex items-center justify-between text-rose-300 text-xs font-bold">
+                <span>원천징수 예수금 합계 (3.3%)</span>
+                <ShieldCheck className="w-4 h-4 text-rose-400" />
+              </div>
+              <p className="text-2xl sm:text-3xl font-black text-rose-400 mt-2">
+                {Math.round(totalGMV * 0.9 * 0.033).toLocaleString()}원
+              </p>
+              <span className="text-[11px] text-rose-300/70 mt-1 block">국세청 원천징수 신고 대상</span>
+            </div>
+
+            {/* 4. Tech Net Payout */}
+            <div className="glass-card p-5 rounded-2xl border border-emerald-500/30 bg-emerald-950/20">
+              <div className="flex items-center justify-between text-emerald-300 text-xs font-bold">
+                <span>기사 최종 실지급액 (87.03%)</span>
+                <CheckCircle className="w-4 h-4 text-emerald-400" />
+              </div>
+              <p className="text-2xl sm:text-3xl font-black text-emerald-400 mt-2">
+                {(totalGMV - platformFee - Math.round(totalGMV * 0.9 * 0.033)).toLocaleString()}원
+              </p>
+              <span className="text-[11px] text-emerald-300/70 mt-1 block">기사 정산 지급 대상 총액</span>
+            </div>
+
+          </div>
+
+          {/* Detailed Settlement Ledger Table */}
+          <div className="glass-card rounded-2xl border border-white/10 overflow-hidden shadow-xl">
+            <div className="p-4 sm:p-5 border-b border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/60">
+              <div>
+                <h3 className="font-extrabold text-white text-base flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-cyan-400" />
+                  <span>건별 기사 정산 지급 명세 및 세무 장부</span>
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  매출액의 10% 플랫폼 수수료 공제 및 3.3% 사업소득세 원천징수 후 실입금액을 관리합니다.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-400">정산 대상: <strong className="text-emerald-400">{requests.length}건</strong></span>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs text-slate-300">
+                <thead className="bg-slate-900/90 text-slate-400 uppercase tracking-wider font-bold border-b border-white/10 text-[11px]">
+                  <tr>
+                    <th className="py-3.5 px-4">의뢰번호 / 시공일</th>
+                    <th className="py-3.5 px-4">차종 / 시공항목</th>
+                    <th className="py-3.5 px-4">담당 기술자</th>
+                    <th className="py-3.5 px-4 text-right">총 결제매출</th>
+                    <th className="py-3.5 px-4 text-right text-cyan-400">수수료(10%)</th>
+                    <th className="py-3.5 px-4 text-right text-rose-400">원천세(3.3%)</th>
+                    <th className="py-3.5 px-4 text-right text-emerald-400">기사 실지급액</th>
+                    <th className="py-3.5 px-4 text-center">정산상태</th>
+                    <th className="py-3.5 px-4 text-center">명세서 / 관리</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {requests.map(req => {
+                    const price = Number(req.matchedPrice || req.budget || req.estimatedPrice || 350000);
+                    const st = calculateSettlement(price);
+                    const isSettled = req.settlementStatus === 'SETTLED';
+
+                    return (
+                      <tr key={req.id} className="hover:bg-slate-800/40 transition-colors">
+                        <td className="py-3.5 px-4 font-mono font-bold text-slate-200 whitespace-nowrap">
+                          {req.id}
+                          <span className="block text-[10px] text-slate-500 font-normal">
+                            {req.preferredDate} ({req.preferredTime})
+                          </span>
+                        </td>
+
+                        <td className="py-3.5 px-4">
+                          <div className="font-semibold text-white truncate max-w-[150px]">{req.carModel}</div>
+                          <div className="text-[11px] text-slate-400 truncate max-w-[150px]">{req.serviceName}</div>
+                        </td>
+
+                        <td className="py-3.5 px-4 whitespace-nowrap">
+                          <div className="font-bold text-white">{req.matchedTechName || '최단거리 배정'}</div>
+                          <div className="text-[10px] text-slate-500">{req.customerName} 고객님</div>
+                        </td>
+
+                        <td className="py-3.5 px-4 text-right font-bold text-white whitespace-nowrap">
+                          {st.gmv.toLocaleString()}원
+                        </td>
+
+                        <td className="py-3.5 px-4 text-right font-semibold text-cyan-400 whitespace-nowrap">
+                          -{st.platformFee.toLocaleString()}원
+                        </td>
+
+                        <td className="py-3.5 px-4 text-right font-semibold text-rose-400 whitespace-nowrap">
+                          -{st.withholdingTax.toLocaleString()}원
+                        </td>
+
+                        <td className="py-3.5 px-4 text-right font-black text-emerald-400 whitespace-nowrap text-sm">
+                          {st.techNetPayout.toLocaleString()}원
+                        </td>
+
+                        <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                          <span className={`text-[10px] px-2.5 py-1 rounded-full font-bold border ${
+                            isSettled
+                              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                              : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                          }`}>
+                            {isSettled ? '정산 완료' : '정산 대기'}
+                          </span>
+                        </td>
+
+                        <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              onClick={() => setSettlementModalReq(req)}
+                              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 text-[11px] font-bold border border-cyan-500/30 transition-colors"
+                            >
+                              명세서
+                            </button>
+                            <button
+                              onClick={() => {
+                                const updated = updateMatchSettlementStatus(req.id, !isSettled);
+                                setRequests(updated);
+                              }}
+                              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors ${
+                                isSettled 
+                                  ? 'bg-slate-800 text-slate-400 hover:text-white' 
+                                  : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-md'
+                              }`}
+                            >
+                              {isSettled ? '대기로 변경' : '입금 완료'}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Regional & Package Distribution */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <div className="glass-card p-6 rounded-2xl border border-white/10">
+              <h3 className="font-extrabold text-white text-sm mb-4 flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-cyan-400" />
+                권역별 오더 점유율
+              </h3>
+              <div className="space-y-3 text-xs">
+                {['zone1 (인천/서구/부평/김포)', 'zone2 (송도/서울서부/일산)', 'zone3 (서울전역/분당/수원)', 'zone4 (기타 장거리)'].map((z, i) => {
+                  const key = `zone${i+1}`;
+                  const count = requests.filter(r => r.travelZone === key).length;
+                  const pct = requests.length > 0 ? Math.round((count / requests.length) * 100) : 0;
+                  return (
+                    <div key={key}>
+                      <div className="flex justify-between text-slate-300 mb-1">
+                        <span>{z}</span>
+                        <strong className="text-white">{count}건 ({pct}%)</strong>
+                      </div>
+                      <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
+                        <div className="h-full bg-cyan-500 rounded-full" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="glass-card p-6 rounded-2xl border border-white/10">
+              <h3 className="font-extrabold text-white text-sm mb-4 flex items-center gap-2">
+                <Car className="w-4 h-4 text-cyan-400" />
+                인기 시공 항목 분포
+              </h3>
+              <div className="space-y-3 text-xs">
+                {[
+                  '3스텝 광택 + 9H 유리막 코팅',
+                  'VIP 올인원 풀케어 패키지',
+                  '베이직 수성 광택',
+                  '본넷(후드) 집중 수성 광택'
+                ].map((svc) => {
+                  const count = requests.filter(r => r.serviceName?.includes(svc.slice(0, 5))).length;
+                  const pct = requests.length > 0 ? Math.round((count / requests.length) * 100) : 0;
+                  return (
+                    <div key={svc}>
+                      <div className="flex justify-between text-slate-300 mb-1">
+                        <span>{svc}</span>
+                        <strong className="text-white">{count}건 ({pct}% )</strong>
+                      </div>
+                      <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
+                        <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      )}
+
+      {/* ==================== TAB 4: SETTINGS & GOOGLE SHEETS ==================== */}
+      {adminTab === 'settings' && (
+        <div className="mt-6 space-y-6 max-w-3xl">
+          
+          <div className="glass-card p-6 rounded-2xl border border-white/10 space-y-4">
+            <div>
+              <h3 className="font-extrabold text-white text-base flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-cyan-400" />
+                구글 스프레드시트 양방향 연동 웹훅 설정
+              </h3>
+              <p className="text-xs text-slate-400 mt-1">
+                Google Apps Script 배포 URL을 입력하면 웹사이트와 구글 시트 간 양방향 실시간 동기화가 활성화됩니다.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <input
+                type="text"
+                value={webhookUrl}
+                onChange={(e) => setWebhookUrl(e.target.value)}
+                placeholder="https://script.google.com/macros/s/.../exec"
+                className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500 font-mono"
+              />
+
+              <div className="flex flex-wrap items-center gap-3">
                 <button
-                  onClick={() => window.print()}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1.5 border border-white/10"
+                  onClick={handleSaveWebhook}
+                  className="px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold transition-colors"
                 >
-                  <Printer className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>작업 지시서 인쇄</span>
+                  웹훅 URL 저장
                 </button>
+
                 <button
-                  onClick={() => setSelectedBooking(null)}
-                  className="px-5 py-2 rounded-xl bg-cyan-500 text-slate-950 text-xs font-bold"
+                  onClick={() => handleSyncGoogleSheet(false)}
+                  disabled={isSyncing || !webhookUrl}
+                  className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-white/10 flex items-center gap-1.5 transition-colors disabled:opacity-50"
                 >
-                  확인 완료
+                  <RefreshCw className={`w-3.5 h-3.5 text-cyan-400 ${isSyncing ? 'animate-spin' : ''}`} />
+                  <span>{isSyncing ? '동기화 중...' : '지금 즉시 동기화'}</span>
+                </button>
+
+                <button
+                  onClick={() => setIsGuideOpen(true)}
+                  className="px-3 py-2.5 text-xs text-cyan-400 hover:underline"
+                >
+                  연동 가이드 보기
                 </button>
               </div>
 
+              {syncStatusMsg && (
+                <p className="text-xs text-emerald-400 bg-emerald-950/40 p-2.5 rounded-xl border border-emerald-500/20">
+                  ✓ {syncStatusMsg} {lastSyncTime && `(최근 동기화: ${lastSyncTime})`}
+                </p>
+              )}
             </div>
           </div>
-        )}
 
-        {/* Guide Modal */}
-        <GoogleSheetGuideModal
-          isOpen={isGuideOpen}
-          onClose={() => setIsGuideOpen(false)}
-        />
+        </div>
+      )}
 
-        {/* Admin Password Change Modal */}
-        <AdminPasswordChangeModal
-          isOpen={isPwModalOpen}
-          onClose={() => setIsPwModalOpen(false)}
-        />
+      {/* Add Tech Modal */}
+      {isAddTechModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+          <div className="relative w-full max-w-md bg-[#0d121f] border border-cyan-500/30 rounded-3xl p-6 shadow-2xl">
+            <button
+              onClick={() => setIsAddTechModalOpen(false)}
+              className="absolute top-4 right-4 p-1.5 rounded-full bg-slate-800 text-slate-400 hover:text-white"
+            >
+              <X className="w-4 h-4" />
+            </button>
 
-      </div>
+            <h3 className="text-lg font-bold text-white mb-4">신규 파트너 기사 직접 등록</h3>
+            <form onSubmit={handleAddTechSubmit} className="space-y-3 text-xs">
+              <div>
+                <label className="block text-slate-300 font-bold mb-1">기사 성함</label>
+                <input
+                  type="text"
+                  value={newTechForm.name}
+                  onChange={(e) => setNewTechForm({ ...newTechForm, name: e.target.value })}
+                  placeholder="예: 최동훈 마스터"
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-cyan-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-bold mb-1">연락처</label>
+                <input
+                  type="tel"
+                  value={newTechForm.phone}
+                  onChange={(e) => setNewTechForm({ ...newTechForm, phone: e.target.value })}
+                  placeholder="010-0000-0000"
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-cyan-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-bold mb-1">활동 권역</label>
+                <select
+                  value={newTechForm.region}
+                  onChange={(e) => setNewTechForm({ ...newTechForm, region: e.target.value })}
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-cyan-500"
+                >
+                  <option value="인천/서부권">인천/서부권</option>
+                  <option value="서울/강남권">서울/강남권</option>
+                  <option value="경기/남부권">경기/남부권</option>
+                  <option value="경기/북부권">경기/북부권</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-bold mb-1">경력 (년차)</label>
+                <input
+                  type="number"
+                  value={newTechForm.experienceYears}
+                  onChange={(e) => setNewTechForm({ ...newTechForm, experienceYears: e.target.value })}
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-cyan-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-bold mb-1">전문 시공 분야 (쉼표 구분)</label>
+                <input
+                  type="text"
+                  value={newTechForm.specialties}
+                  onChange={(e) => setNewTechForm({ ...newTechForm, specialties: e.target.value })}
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-cyan-500"
+                />
+              </div>
+
+              <div className="pt-3 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAddTechModalOpen(false)}
+                  className="flex-1 py-2.5 rounded-xl bg-slate-800 text-slate-300 font-bold"
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold"
+                >
+                  등록 완료
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Guide & Password Modals */}
+      <GoogleSheetGuideModal
+        isOpen={isGuideOpen}
+        onClose={() => setIsGuideOpen(false)}
+      />
+
+      <AdminPasswordChangeModal
+        isOpen={isPwModalOpen}
+        onClose={() => setIsPwModalOpen(false)}
+      />
+
+      {/* Technician Settlement Statement Modal */}
+      <SettlementModal
+        isOpen={Boolean(settlementModalReq)}
+        onClose={() => setSettlementModalReq(null)}
+        request={settlementModalReq}
+        onToggleSettled={(reqId, isSettled) => {
+          const updated = updateMatchSettlementStatus(reqId, isSettled);
+          setRequests(updated);
+          setSettlementModalReq(null);
+        }}
+      />
+
     </div>
   );
 };
