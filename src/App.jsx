@@ -151,6 +151,7 @@ export function App() {
           technicians={technicians}
           matchRequests={matchRequests}
           onRefreshData={refreshData}
+          onOpenCustomerAuth={() => setIsCustomerAuthOpen(true)}
         />
         <CustomerAuthModal
           isOpen={isCustomerAuthOpen}
