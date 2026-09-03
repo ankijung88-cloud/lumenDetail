@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Navbar } from './components/Navbar';
 import { LandingPage } from './pages/LandingPage';
+import { PartnerPortal } from './pages/PartnerPortal';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { BusinessCardMaker } from './pages/BusinessCardMaker';
 import { DigitalBusinessCard } from './pages/DigitalBusinessCard';
@@ -18,11 +19,14 @@ import {
 import { Smartphone } from 'lucide-react';
 
 export function App() {
-  const [currentTab, setCurrentTab] = useState('landing'); // 'landing' | 'technicians' | 'orderMarket' | 'admin' | 'cardMaker' | 'card'
+  // 3-Portal Mode State: 'customer' | 'partner' | 'admin' | 'cardMaker' | 'card'
+  const [portalMode, setPortalMode] = useState('customer');
+  const [customerSubTab, setCustomerSubTab] = useState('landing'); // 'landing' | 'technicians'
+  
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [pendingTab, setPendingTab] = useState(null);
+  const [pendingPortal, setPendingPortal] = useState(null);
 
-  // Mobile App View Mode State (Auto-enabled on mobile screen or user preference)
+  // Mobile App View Mode State (Auto-enabled on mobile screen or user preference for customer portal)
   const [isMobileAppMode, setIsMobileAppMode] = useState(() => {
     const saved = localStorage.getItem('lumen_view_mode');
     if (saved) return saved === 'mobile';
@@ -55,32 +59,43 @@ export function App() {
     }
   };
 
-  // Browser hash routing sync
+  // Browser hash routing sync for 3 Portals
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '');
-      if (hash === 'mobile' || hash === 'app') {
-        setIsMobileAppMode(true);
-        localStorage.setItem('lumen_view_mode', 'mobile');
-      } else if (hash === 'web' || hash === 'pc') {
-        setIsMobileAppMode(false);
-        localStorage.setItem('lumen_view_mode', 'web');
-      } else if (hash === 'card' || hash === 'mycard' || hash === 'mobile-card') {
-        setCurrentTab('card');
-      } else if (hash === 'technicians' || hash === 'pros') {
-        setCurrentTab('technicians');
-      } else if (hash === 'orders' || hash === 'market') {
-        setCurrentTab('orderMarket');
-      } else if (hash === 'admin' || hash === 'card-maker') {
+      
+      // 1. Partner Portal Routing (#partner, #pro, #technician, #market)
+      if (hash === 'partner' || hash === 'pro' || hash === 'technician' || hash === 'market' || hash === 'orders') {
+        setPortalMode('partner');
+      } 
+      // 2. Admin Portal Routing (#admin, #card-maker)
+      else if (hash === 'admin' || hash === 'card-maker') {
         const target = hash === 'card-maker' ? 'cardMaker' : 'admin';
         if (isAdminAuthenticated()) {
-          setCurrentTab(target);
+          setPortalMode(target);
         } else {
-          setPendingTab(target);
+          setPendingPortal(target);
           setIsAuthModalOpen(true);
         }
-      } else {
-        setCurrentTab('landing');
+      } 
+      // 3. Digital Card Routing
+      else if (hash === 'card' || hash === 'mycard' || hash === 'mobile-card') {
+        setPortalMode('card');
+      } 
+      // 4. Mobile App view shortcut
+      else if (hash === 'mobile' || hash === 'app') {
+        setPortalMode('customer');
+        setIsMobileAppMode(true);
+      } 
+      // 5. Customer Portal Sub-routes
+      else if (hash === 'technicians' || hash === 'pros') {
+        setPortalMode('customer');
+        setCustomerSubTab('technicians');
+      } 
+      // 6. Default Customer Portal
+      else {
+        setPortalMode('customer');
+        setCustomerSubTab('landing');
       }
     };
 
@@ -89,107 +104,180 @@ export function App() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  const handleTabChange = (tab) => {
-    if (tab === 'card') {
-      setCurrentTab('card');
+  // Portal Switcher Handler
+  const handleSelectPortal = (targetPortal) => {
+    if (targetPortal === 'admin' || targetPortal === 'cardMaker') {
+      if (isAdminAuthenticated()) {
+        setPortalMode(targetPortal);
+        window.location.hash = targetPortal === 'cardMaker' ? 'card-maker' : 'admin';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        setPendingPortal(targetPortal);
+        setIsAuthModalOpen(true);
+      }
+      return;
+    }
+
+    if (targetPortal === 'partner') {
+      setPortalMode('partner');
+      window.location.hash = 'partner';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    if (targetPortal === 'card') {
+      setPortalMode('card');
       window.location.hash = 'card';
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
+    // Default: Customer Portal
+    setPortalMode('customer');
+    setCustomerSubTab('landing');
+    window.location.hash = 'customer';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCustomerTabChange = (tab) => {
     if (tab === 'technicians') {
-      setCurrentTab('technicians');
+      setCustomerSubTab('technicians');
       window.location.hash = 'technicians';
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
     if (tab === 'orderMarket') {
-      setCurrentTab('orderMarket');
-      window.location.hash = 'market';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      handleSelectPortal('partner');
       return;
     }
 
-    if (tab === 'admin' || tab === 'cardMaker') {
-      if (isAdminAuthenticated()) {
-        setCurrentTab(tab);
-        window.location.hash = tab === 'cardMaker' ? 'card-maker' : 'admin';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else {
-        setPendingTab(tab);
-        setIsAuthModalOpen(true);
-      }
+    if (tab === 'admin') {
+      handleSelectPortal('admin');
       return;
     }
 
-    setCurrentTab('landing');
-    window.location.hash = '';
+    setCustomerSubTab('landing');
+    window.location.hash = 'customer';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleAuthSuccess = () => {
     setIsAuthModalOpen(false);
-    const target = pendingTab || 'admin';
-    setCurrentTab(target);
+    const target = pendingPortal || 'admin';
+    setPortalMode(target);
     window.location.hash = target === 'cardMaker' ? 'card-maker' : 'admin';
-    setPendingTab(null);
+    setPendingPortal(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleAuthClose = () => {
     setIsAuthModalOpen(false);
-    setPendingTab(null);
-    if (currentTab === 'admin' || currentTab === 'cardMaker') {
-      setCurrentTab('landing');
-      window.location.hash = '';
+    setPendingPortal(null);
+    if (portalMode === 'admin' || portalMode === 'cardMaker') {
+      setPortalMode('customer');
+      window.location.hash = 'customer';
     }
   };
 
   const handleAdminLogout = () => {
     setAdminAuthenticated(false);
-    setCurrentTab('landing');
-    window.location.hash = '';
+    setPortalMode('customer');
+    window.location.hash = 'customer';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleRequestToTech = (tech) => {
     setTargetTech(tech);
-    setCurrentTab('landing');
+    setPortalMode('customer');
+    setCustomerSubTab('landing');
     setTimeout(() => {
       const el = document.getElementById('booking');
       if (el) el.scrollIntoView({ behavior: 'smooth' });
     }, 100);
   };
 
-  // If Mobile App mode is active and not on admin pages, render dedicated mobile app
-  if (isMobileAppMode && currentTab !== 'admin' && currentTab !== 'cardMaker') {
+  // ==================== [PORTAL 2] PARTNER / TECHNICIAN PORTAL ====================
+  if (portalMode === 'partner') {
+    return (
+      <>
+        <PartnerPortal
+          matchRequests={matchRequests}
+          technicians={technicians}
+          onRefreshData={refreshData}
+          onSwitchToCustomer={() => handleSelectPortal('customer')}
+          onGoToAdmin={() => handleSelectPortal('admin')}
+        />
+        <AdminAuthModal
+          isOpen={isAuthModalOpen}
+          onClose={handleAuthClose}
+          onSuccess={handleAuthSuccess}
+        />
+      </>
+    );
+  }
+
+  // ==================== [PORTAL 3] ADMIN CONSOLE PORTAL ====================
+  if (portalMode === 'admin') {
+    return (
+      <>
+        <AdminDashboard 
+          onBackToLanding={() => handleSelectPortal('customer')} 
+          onOpenCardMaker={() => handleSelectPortal('cardMaker')}
+          onLogout={handleAdminLogout}
+        />
+        <AdminAuthModal
+          isOpen={isAuthModalOpen}
+          onClose={handleAuthClose}
+          onSuccess={handleAuthSuccess}
+        />
+      </>
+    );
+  }
+
+  if (portalMode === 'cardMaker') {
+    return (
+      <BusinessCardMaker onBackToAdmin={() => handleSelectPortal('admin')} />
+    );
+  }
+
+  if (portalMode === 'card') {
+    return (
+      <DigitalBusinessCard onGoToBooking={() => handleSelectPortal('customer')} />
+    );
+  }
+
+  // ==================== [PORTAL 1] CUSTOMER PORTAL (MOBILE APP MODE) ====================
+  if (isMobileAppMode && portalMode === 'customer') {
     return (
       <MobileApp
         technicians={technicians}
         matchRequests={matchRequests}
         onRefreshData={refreshData}
         onSwitchToWeb={() => handleToggleMobileAppMode(false)}
-        onGoToAdmin={() => handleTabChange('admin')}
+        onGoToAdmin={() => handleSelectPortal('admin')}
       />
     );
   }
 
+  // ==================== [PORTAL 1] CUSTOMER PORTAL (DESKTOP WEB) ====================
   return (
     <div className="min-h-screen bg-[#07090e] text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-slate-950">
       
-      {/* Universal Top Navigation */}
+      {/* Universal 2-Row Top Navigation with 3-Portal Switcher Hub */}
       <Navbar 
-        currentTab={currentTab} 
-        setCurrentTab={handleTabChange}
+        currentTab={customerSubTab} 
+        setCurrentTab={handleCustomerTabChange}
         onOpenTracker={() => setIsTrackerOpen(true)}
         onOpenRegisterModal={() => setIsRegisterModalOpen(true)}
         onSwitchToMobileApp={() => handleToggleMobileAppMode(true)}
+        portalMode="customer"
+        onSelectPortal={handleSelectPortal}
       />
 
-      {/* Main Content Area */}
+      {/* Customer Main Content */}
       <main className="flex-grow">
-        {currentTab === 'landing' && (
+        {customerSubTab === 'landing' && (
           <LandingPage 
             technicians={technicians}
             targetTech={targetTech}
@@ -197,14 +285,14 @@ export function App() {
             onRequestToTech={handleRequestToTech}
             onOpenRegisterModal={() => setIsRegisterModalOpen(true)}
             onOpenTracker={() => setIsTrackerOpen(true)}
-            onGoToTechnicians={() => handleTabChange('technicians')}
-            onGoToOrderMarket={() => handleTabChange('orderMarket')}
+            onGoToTechnicians={() => handleCustomerTabChange('technicians')}
+            onGoToOrderMarket={() => handleSelectPortal('partner')}
             onSwitchToMobileApp={() => handleToggleMobileAppMode(true)}
           />
         )}
 
-        {currentTab === 'technicians' && (
-          <div className="pt-16">
+        {customerSubTab === 'technicians' && (
+          <div className="pt-24">
             <TechnicianExplorer 
               technicians={technicians}
               onRequestToTech={handleRequestToTech}
@@ -212,48 +300,21 @@ export function App() {
             />
           </div>
         )}
-
-        {currentTab === 'orderMarket' && (
-          <div className="pt-16">
-            <OrderMarket 
-              matchRequests={matchRequests}
-              technicians={technicians}
-              onBidSubmitted={refreshData}
-              onOpenRegisterModal={() => setIsRegisterModalOpen(true)}
-            />
-          </div>
-        )}
-
-        {currentTab === 'admin' && (
-          <AdminDashboard 
-            onBackToLanding={() => handleTabChange('landing')} 
-            onOpenCardMaker={() => handleTabChange('cardMaker')}
-            onLogout={handleAdminLogout}
-          />
-        )}
-
-        {currentTab === 'cardMaker' && (
-          <BusinessCardMaker onBackToAdmin={() => handleTabChange('admin')} />
-        )}
-
-        {currentTab === 'card' && (
-          <DigitalBusinessCard onGoToBooking={() => handleTabChange('landing')} />
-        )}
       </main>
 
       {/* Universal Footer */}
-      <Footer setCurrentTab={handleTabChange} />
+      <Footer 
+        setCurrentTab={handleCustomerTabChange} 
+        onSelectPortal={handleSelectPortal}
+      />
 
-      {/* Partner Registration Modal */}
+      {/* Modals */}
       <TechnicianRegisterModal
         isOpen={isRegisterModalOpen}
         onClose={() => setIsRegisterModalOpen(false)}
-        onRegistered={(newTech) => {
-          refreshData();
-        }}
+        onRegistered={() => refreshData()}
       />
 
-      {/* Match & Quote Comparison Tracker Modal */}
       <MatchTrackerModal
         isOpen={isTrackerOpen}
         onClose={() => setIsTrackerOpen(false)}
@@ -261,11 +322,10 @@ export function App() {
         onBidAccepted={refreshData}
       />
 
-      {/* Admin Password Gate Modal */}
       <AdminAuthModal
         isOpen={isAuthModalOpen}
-        onSuccess={handleAuthSuccess}
         onClose={handleAuthClose}
+        onSuccess={handleAuthSuccess}
       />
 
     </div>

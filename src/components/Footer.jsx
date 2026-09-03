@@ -4,7 +4,7 @@ import {
   CreditCard, LayoutDashboard, Users, Briefcase, UserCheck 
 } from 'lucide-react';
 
-export const Footer = ({ setCurrentTab }) => {
+export const Footer = ({ setCurrentTab, onSelectPortal }) => {
   return (
     <footer className="border-t border-white/10 bg-[#05070a] pt-16 pb-12 px-4 sm:px-6 lg:px-8 text-slate-400 text-xs">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
@@ -29,8 +29,16 @@ export const Footer = ({ setCurrentTab }) => {
 
         {/* Quick Links */}
         <div>
-          <h4 className="text-white font-bold text-sm mb-4">플랫폼 메뉴</h4>
+          <h4 className="text-white font-bold text-sm mb-4">고객 전용 메뉴</h4>
           <ul className="space-y-2.5">
+            <li>
+              <button 
+                onClick={() => { if (onSelectPortal) onSelectPortal('customer'); }}
+                className="hover:text-cyan-300 transition-colors flex items-center gap-1"
+              >
+                <span>🚗 고객 포털 홈 (서비스 탐색)</span>
+              </button>
+            </li>
             <li>
               <button 
                 onClick={() => { setCurrentTab('technicians'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
@@ -41,18 +49,6 @@ export const Footer = ({ setCurrentTab }) => {
               </button>
             </li>
             <li>
-              <button 
-                onClick={() => { setCurrentTab('orderMarket'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                className="hover:text-emerald-300 transition-colors flex items-center gap-1"
-              >
-                <Briefcase className="w-3.5 h-3.5 text-emerald-400" />
-                <span>오더 마켓 (기사용 실시간 일감)</span>
-              </button>
-            </li>
-            <li>
-              <a href="#services" className="hover:text-cyan-300 transition-colors">수성 듀얼 광택 시공 안내</a>
-            </li>
-            <li>
               <a href="#pricing" className="hover:text-cyan-300 transition-colors">차종별 정찰 가격표</a>
             </li>
             <li>
@@ -61,22 +57,31 @@ export const Footer = ({ setCurrentTab }) => {
           </ul>
         </div>
 
-        {/* Admin & Tools */}
+        {/* Portals & Admin */}
         <div>
-          <h4 className="text-white font-bold text-sm mb-4">파트너 & 관리 콘솔</h4>
+          <h4 className="text-white font-bold text-sm mb-4">전용 독립 포털 바로가기</h4>
           <ul className="space-y-2.5">
             <li>
               <button 
-                onClick={() => { setCurrentTab('admin'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                className="flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300 transition-colors"
+                onClick={() => { if (onSelectPortal) onSelectPortal('partner'); }}
+                className="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 transition-colors font-bold"
               >
-                <LayoutDashboard className="w-3.5 h-3.5" />
-                <span>중개 관리자 콘솔 (오더/기사관리)</span>
+                <Briefcase className="w-3.5 h-3.5" />
+                <span>👨‍🔧 기사 파트너 포털 (오더수주/정산)</span>
               </button>
             </li>
             <li>
               <button 
-                onClick={() => { setCurrentTab('card'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                onClick={() => { if (onSelectPortal) onSelectPortal('admin'); }}
+                className="flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300 transition-colors"
+              >
+                <LayoutDashboard className="w-3.5 h-3.5" />
+                <span>⚙️ 본사 관리자 콘솔 (총괄관제)</span>
+              </button>
+            </li>
+            <li>
+              <button 
+                onClick={() => { if (onSelectPortal) onSelectPortal('card'); }}
                 className="flex items-center gap-1.5 text-slate-300 hover:text-white transition-colors"
               >
                 <CreditCard className="w-3.5 h-3.5 text-cyan-400" />

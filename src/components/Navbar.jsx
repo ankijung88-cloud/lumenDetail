@@ -2,15 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { 
   Sparkles, Phone, ShieldCheck, Menu, X, CreditCard, 
   LayoutDashboard, Calendar, Search, Briefcase, UserCheck,
-  Smartphone, ChevronRight, Layers, Tag, Award
+  Smartphone, ChevronRight, Layers, Tag, Award, Car
 } from 'lucide-react';
+import { PortalSwitcher } from './PortalSwitcher';
 
 export const Navbar = ({ 
   currentTab, 
   setCurrentTab, 
   onOpenTracker, 
   onOpenRegisterModal,
-  onSwitchToMobileApp 
+  onSwitchToMobileApp,
+  portalMode = 'customer',
+  onSelectPortal
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -43,9 +46,9 @@ export const Navbar = ({
         : 'bg-[#07090e]/80 backdrop-blur-sm border-b border-white/5'
     }`}>
       
-      {/* ==================== 1행 (TOP ROW): Brand Logo & Action Controls ==================== */}
+      {/* ==================== 1행 (TOP ROW): Brand Logo & Portal Switcher & Actions ==================== */}
       <div className="border-b border-white/5 py-2.5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-3">
           
           {/* Logo */}
           <div 
@@ -64,6 +67,16 @@ export const Navbar = ({
             </div>
           </div>
 
+          {/* 3-Portal Switcher Hub (Desktop Center/Right) */}
+          <div className="hidden md:flex items-center gap-2.5">
+            <PortalSwitcher 
+              currentPortal={portalMode} 
+              onSelectPortal={(portal) => {
+                if (onSelectPortal) onSelectPortal(portal);
+              }} 
+            />
+          </div>
+
           {/* Top Right Action Buttons Group (Desktop) */}
           <div className="hidden lg:flex items-center gap-2">
             
@@ -77,15 +90,6 @@ export const Navbar = ({
               <span>내 의뢰 조회</span>
             </button>
 
-            {/* Partner Registration */}
-            <button
-              onClick={onOpenRegisterModal}
-              className="px-3 py-1.5 rounded-xl text-xs font-bold text-cyan-300 bg-cyan-950/60 hover:bg-cyan-900/60 border border-cyan-500/30 flex items-center gap-1.5 transition-all"
-            >
-              <UserCheck className="w-3.5 h-3.5 text-cyan-400" />
-              <span>기사 파트너 등록</span>
-            </button>
-
             {/* Mobile App Mode Switcher */}
             {onSwitchToMobileApp && (
               <button
@@ -97,19 +101,6 @@ export const Navbar = ({
                 <span>모바일 앱 버전</span>
               </button>
             )}
-
-            {/* Admin Console */}
-            <button
-              onClick={() => setCurrentTab('admin')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
-                currentTab === 'admin'
-                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
-                  : 'text-slate-400 hover:text-white bg-slate-900/60 hover:bg-slate-800 border border-white/5'
-              }`}
-            >
-              <LayoutDashboard className="w-3.5 h-3.5 text-cyan-400" />
-              <span>관리자</span>
-            </button>
 
             {/* Main CTA */}
             <button
