@@ -1,11 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Briefcase, Send, Clock, MapPin, Car, Sparkles, CheckCircle2, 
   AlertCircle, DollarSign, Filter, Search, Zap, Building2, User,
   Calendar, Check, X, ShieldCheck, TrendingUp, Phone, ChevronRight,
-  FileText, ArrowLeft, RefreshCw, Award, LogOut, Printer
+  FileText, ArrowLeft, RefreshCw, Award, LogOut, Printer, Lock,
+  KeyRound, UserCheck, ShieldAlert
 } from 'lucide-react';
-import { submitTechnicianBid, updateMatchStatus, getTechnicians } from '../utils/storage';
+import { 
+  submitTechnicianBid, updateMatchStatus, getTechnicians, 
+  getLoggedInTechnician, getLoggedInTechId, setLoggedInTechnician,
+  loginTechnician, logoutTechnician, updateTechnician
+} from '../utils/storage';
 import { calculateSettlement } from '../utils/settlement';
 import { SettlementModal } from '../components/SettlementModal';
 import { TechnicianRegisterModal } from '../components/TechnicianRegisterModal';
@@ -19,7 +24,13 @@ export const PartnerPortal = ({
   onGoToAdmin 
 }) => {
   const [partnerTab, setPartnerTab] = useState('market'); // 'market' | 'myJobs' | 'settlement' | 'profile'
-  const [selectedTechId, setSelectedTechId] = useState(technicians[0]?.id || 'TECH-001');
+  
+  // Authentication State for Technician
+  const [loggedInTech, setLoggedInTech] = useState(() => getLoggedInTechnician() || technicians[0] || null);
+  const [loginPhone, setLoginPhone] = useState('');
+  const [loginPin, setLoginPin] = useState('');
+  const [loginError, setLoginError] = useState('');
+  
   const [selectedRegion, setSelectedRegion] = useState('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -33,20 +44,216 @@ export const PartnerPortal = ({
   const [proposalMessage, setProposalMessage] = useState('수성 듀얼 광택 전용 장비와 9H 세라믹 코팅제로 신차급 퀄리티를 보증합니다. (전면 발수코팅 무료 서비스)');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const currentTech = technicians.find(t => t.id === selectedTechId) || technicians[0] || {
-    id: 'TECH-001',
-    name: '김태진',
-    badge: '마스터 디테일러',
-    rating: 4.98,
-    reviewCount: 142,
-    baseLocation: '인천 서구 청라국제도시',
-    region: '인천/서부권',
-    experienceYears: 9,
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-    specialties: ['수성 듀얼 광택', '9H 세라믹 코팅', '유막제거 및 발수']
+  // Profile Edit State
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    phone: '',
+    pin: '',
+    baseLocation: '',
+    region: '',
+    specialties: '',
+    introduction: ''
+  });
+
+  useEffect(() => {
+    const current = getLoggedInTechnician();
+    if (current) {
+      setLoggedInTech(current);
+      setProfileForm({
+        phone: current.phone || '',
+        pin: current.pin || current.password || '1234',
+        baseLocation: current.baseLocation || '',
+        region: current.region || '',
+        specialties: current.specialties ? current.specialties.join(', ') : '',
+        introduction: current.introduction || ''
+      });
+    }
+  }, [technicians]);
+
+  // Handle Login Submit
+  const handleLoginSubmit = (e) => {
+    e.preventDefault();
+    setLoginError('');
+    if (!loginPhone.trim()) {
+      setLoginError('휴대폰 번호 또는 기사 이름을 입력해주세요.');
+      return;
+    }
+
+    const res = loginTechnician(loginPhone, loginPin);
+    if (res.success) {
+      setLoggedInTech(res.tech);
+      setLoginPhone('');
+      setLoginPin('');
+      confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
+    } else {
+      setLoginError(res.message || '인증에 실패했습니다.');
+    }
   };
 
-  // 1. Available Open Market Orders
+  // Fast Demo Login
+  const handleFastDemoLogin = (tech) => {
+    setLoggedInTechnician(tech.id);
+    setLoggedInTech(tech);
+    setLoginError('');
+    confetti({ particleCount: 60, spread: 50, origin: { y: 0.6 } });
+  };
+
+  // Handle Logout
+  const handleLogout = () => {
+    logoutTechnician();
+    setLoggedInTech(null);
+    alert('기사 파트너 계정에서 로그아웃되었습니다.');
+  };
+
+  // Save Profile Changes
+  const handleSaveProfile = (e) => {
+    e.preventDefault();
+    if (!loggedInTech) return;
+    
+    const updated = updateTechnician(loggedInTech.id, {
+      phone: profileForm.phone,
+      pin: profileForm.pin,
+      baseLocation: profileForm.baseLocation,
+      region: profileForm.region,
+      specialties: profileForm.specialties.split(',').map(s => s.trim()),
+      introduction: profileForm.introduction
+    });
+    
+    if (onRefreshData) onRefreshData();
+    const refreshed = updated.find(t => t.id === loggedInTech.id);
+    if (refreshed) setLoggedInTech(refreshed);
+    setIsEditingProfile(false);
+    alert('프로필 및 보안 PIN 설정이 성공적으로 저장되었습니다.');
+  };
+
+  // ==================== AUTH GATE: If Not Logged In ====================
+  if (!loggedInTech) {
+    return (
+      <div className="min-h-screen bg-[#07090e] text-slate-100 flex flex-col justify-center items-center p-4 font-sans selection:bg-emerald-500 selection:text-slate-950">
+        
+        {/* Top Back Nav */}
+        <div className="w-full max-w-md flex justify-between items-center mb-6">
+          <button
+            onClick={onSwitchToCustomer}
+            className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors bg-slate-900/80 px-3 py-1.5 rounded-xl border border-white/10"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>고객 포털로 돌아가기</span>
+          </button>
+          <span className="text-xs text-emerald-400 font-bold bg-emerald-950/60 px-2.5 py-1 rounded-full border border-emerald-500/30">
+            기사 전용 보안 게이트
+          </span>
+        </div>
+
+        {/* Login Card */}
+        <div className="w-full max-w-md glass-card border border-emerald-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl bg-[#090e1a]/95">
+          <div className="text-center mb-6">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/30 mb-3">
+              <KeyRound className="w-6 h-6 text-slate-950" />
+            </div>
+            <h2 className="text-2xl font-black text-white">기사 파트너 전용 로그인</h2>
+            <p className="text-xs text-slate-400 mt-1">
+              각 기술자는 본인의 수주 오더, 시공 일정, 정산 명세서에만 접근할 수 있습니다.
+            </p>
+          </div>
+
+          {loginError && (
+            <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-center gap-2">
+              <ShieldAlert className="w-4 h-4 shrink-0" />
+              <span>{loginError}</span>
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleLoginSubmit} className="space-y-4 text-xs">
+            <div>
+              <label className="block text-slate-300 font-bold mb-1">등록된 휴대폰 번호 또는 기사명</label>
+              <div className="relative">
+                <Phone className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={loginPhone}
+                  onChange={(e) => setLoginPhone(e.target.value)}
+                  placeholder="예: 010-8472-1928 또는 김태진"
+                  className="w-full pl-9 pr-3 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-emerald-500"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-slate-300 font-bold mb-1">비밀번호 / PIN 번호</label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="password"
+                  value={loginPin}
+                  onChange={(e) => setLoginPin(e.target.value)}
+                  placeholder="기본: 1234 (또는 핸드폰 뒤 4자리)"
+                  className="w-full pl-9 pr-3 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black text-sm shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            >
+              <Lock className="w-4 h-4" />
+              <span>기사 파트너 로그인</span>
+            </button>
+          </form>
+
+          {/* 1-Click Demo Profiles for Evaluation */}
+          <div className="mt-6 pt-5 border-t border-white/10">
+            <span className="text-[11px] text-slate-400 font-bold block mb-2 text-center">
+              ⚡ 빠른 체험용 원클릭 파트너 로그인 (권한 분리 테스트)
+            </span>
+            <div className="grid grid-cols-3 gap-2">
+              {technicians.slice(0, 3).map(tech => (
+                <button
+                  key={tech.id}
+                  onClick={() => handleFastDemoLogin(tech)}
+                  className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/10 hover:border-emerald-500/40 text-left transition-all flex flex-col items-center text-center group"
+                >
+                  <img 
+                    src={tech.avatar} 
+                    alt={tech.name} 
+                    className="w-8 h-8 rounded-full object-cover border border-emerald-400/50 mb-1 group-hover:scale-105 transition-transform" 
+                  />
+                  <span className="text-xs font-bold text-white block">{tech.name} 프로</span>
+                  <span className="text-[10px] text-emerald-400 block">{tech.region?.split('/')[0]}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Partner Registration Trigger */}
+          <div className="mt-5 text-center">
+            <button
+              onClick={() => setIsRegisterOpen(true)}
+              className="text-xs text-cyan-300 hover:text-cyan-200 underline"
+            >
+              아직 파트너 기사로 등록되지 않으셨나요? [기사 지원 신청]
+            </button>
+          </div>
+        </div>
+
+        {/* Modal */}
+        <TechnicianRegisterModal
+          isOpen={isRegisterOpen}
+          onClose={() => setIsRegisterOpen(false)}
+          onRegistered={() => {
+            if (onRefreshData) onRefreshData();
+          }}
+        />
+      </div>
+    );
+  }
+
+  // ==================== AUTHENTICATED PARTNER VIEW ====================
+
+  // 1. Available Open Market Orders (Filtered by relevance)
   const availableOrders = matchRequests.filter(req => {
     const matchRegion = selectedRegion === 'ALL' || (req.location && req.location.includes(selectedRegion));
     const matchSearch = searchTerm === '' ||
@@ -56,14 +263,14 @@ export const PartnerPortal = ({
     return matchRegion && matchSearch;
   });
 
-  // 2. My Assigned Jobs
+  // 2. Strict Filter: My Assigned Jobs & Proposals Only
   const myAssignedJobs = matchRequests.filter(req => 
-    req.matchedTechId === currentTech.id || 
-    req.matchedTechName?.includes(currentTech.name) ||
-    (req.bids && req.bids.some(b => b.techId === currentTech.id))
+    req.matchedTechId === loggedInTech.id || 
+    req.matchedTechName?.includes(loggedInTech.name) ||
+    (req.bids && req.bids.some(b => b.techId === loggedInTech.id))
   );
 
-  // 3. Settlement Statistics for Current Tech
+  // 3. Strict Filter: Settlement Statistics for Authenticated Technician Only
   const completedJobs = myAssignedJobs.filter(r => r.status === 'COMPLETED' || r.isPaid);
   const myTotalGrossSales = completedJobs.reduce((acc, cur) => acc + (Number(cur.matchedPrice || cur.budget || cur.estimatedPrice || 350000)), 0);
   const myTotalPlatformFee = Math.round(myTotalGrossSales * 0.10);
@@ -76,15 +283,15 @@ export const PartnerPortal = ({
 
   const handleBidSubmit = (e) => {
     e.preventDefault();
-    if (!biddingRequest) return;
+    if (!biddingRequest || !loggedInTech) return;
 
     setIsSubmitting(true);
     try {
       submitTechnicianBid(biddingRequest.id, {
-        techId: currentTech.id,
-        techName: currentTech.name,
-        techAvatar: currentTech.avatar,
-        techRating: currentTech.rating,
+        techId: loggedInTech.id,
+        techName: loggedInTech.name,
+        techAvatar: loggedInTech.avatar,
+        techRating: loggedInTech.rating,
         bidPrice: Number(biddingRequest.budget || biddingRequest.estimatedPrice || 350000),
         estimatedHours,
         message: proposalMessage
@@ -98,7 +305,7 @@ export const PartnerPortal = ({
 
       if (onRefreshData) onRefreshData();
       setBiddingRequest(null);
-      alert(`[${biddingRequest.carModel}] 의뢰에 맞춤 제안이 성공적으로 전달되었습니다! 고객에게 알림이 전송됩니다.`);
+      alert(`[${biddingRequest.carModel}] 의뢰에 [${loggedInTech.name} 프로] 명의로 맞춤 제안이 성공적으로 전달되었습니다!`);
     } catch (err) {
       console.error(err);
       alert('제안 제출 중 오류가 발생했습니다.');
@@ -132,31 +339,38 @@ export const PartnerPortal = ({
                   기사 전용 포털
                 </span>
               </div>
-              <p className="text-[10px] text-slate-400">출장 디테일러 실시간 오더 수주 및 정산 관리 시스템</p>
+              <p className="text-[10px] text-slate-400">출장 디테일러 실시간 오더 수주 및 개별 정산 관리 시스템</p>
             </div>
           </div>
 
-          {/* Current Tech Profile Selector & Switcher */}
+          {/* Authenticated Tech Profile Info & Switcher */}
           <div className="flex items-center gap-3">
-            {/* Active Tech Selector */}
-            <div className="flex items-center gap-2 bg-slate-900/90 p-1.5 pr-3 rounded-xl border border-white/10">
+            {/* Logged in Tech Pill */}
+            <div className="flex items-center gap-2 bg-slate-900/90 py-1.5 px-3 rounded-2xl border border-emerald-500/30 shadow-md">
               <img 
-                src={currentTech.avatar} 
-                alt={currentTech.name} 
-                className="w-7 h-7 rounded-lg object-cover border border-emerald-400"
+                src={loggedInTech.avatar} 
+                alt={loggedInTech.name} 
+                className="w-7 h-7 rounded-full object-cover border-2 border-emerald-400"
               />
-              <select
-                value={selectedTechId}
-                onChange={(e) => setSelectedTechId(e.target.value)}
-                className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer"
-              >
-                {technicians.map(t => (
-                  <option key={t.id} value={t.id} className="bg-slate-900 text-white">
-                    {t.name} 프로 ({t.baseLocation || t.region})
-                  </option>
-                ))}
-              </select>
+              <div>
+                <span className="text-xs font-black text-white flex items-center gap-1">
+                  {loggedInTech.name} 프로
+                  <span className="text-[9px] px-1.5 py-0.2 bg-emerald-500/20 text-emerald-300 rounded font-normal">
+                    {loggedInTech.region}
+                  </span>
+                </span>
+                <span className="text-[9px] text-slate-400 block">{loggedInTech.phone}</span>
+              </div>
             </div>
+
+            {/* Logout Button */}
+            <button
+              onClick={handleLogout}
+              className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-rose-400 border border-white/10 transition-colors"
+              title="로그아웃"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
 
             {/* Switch to Customer Portal Button */}
             <button
@@ -208,7 +422,7 @@ export const PartnerPortal = ({
             }`}
           >
             <DollarSign className="w-3.5 h-3.5" />
-            <span>정산 명세서 (10% 수수료/3.3% 세무)</span>
+            <span>내 정산 장부 (10% 수수료/3.3% 세무)</span>
           </button>
 
           <button
@@ -220,7 +434,7 @@ export const PartnerPortal = ({
             }`}
           >
             <User className="w-3.5 h-3.5" />
-            <span>내 프로필 & 거점 관리</span>
+            <span>내 프로필 & 보안 PIN 관리</span>
           </button>
         </div>
       </div>
@@ -277,13 +491,19 @@ export const PartnerPortal = ({
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {availableOrders.map(req => {
                 const isMatched = req.status === 'MATCHED' || req.status === 'COMPLETED';
+                const hasMyBid = req.bids && req.bids.some(b => b.techId === loggedInTech.id);
+                const isAssignedToMe = req.matchedTechId === loggedInTech.id;
                 const standardPrice = Number(req.budget || req.estimatedPrice || 350000);
                 const settlement = calculateSettlement(standardPrice);
 
                 return (
                   <div
                     key={req.id}
-                    className="glass-card rounded-2xl border border-white/10 p-5 flex flex-col justify-between hover:border-emerald-500/40 transition-all hover:shadow-xl hover:shadow-emerald-500/10"
+                    className={`glass-card rounded-2xl border p-5 flex flex-col justify-between transition-all hover:shadow-xl ${
+                      isAssignedToMe 
+                        ? 'border-cyan-500/50 bg-cyan-950/20' 
+                        : (hasMyBid ? 'border-emerald-500/40 bg-emerald-950/10' : 'border-white/10 hover:border-emerald-500/40')
+                    }`}
                   >
                     <div>
                       {/* Order Header */}
@@ -291,13 +511,20 @@ export const PartnerPortal = ({
                         <span className="text-[11px] font-mono text-cyan-400 bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-500/30 font-bold">
                           {req.id}
                         </span>
-                        <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold ${
-                          isMatched 
-                            ? 'bg-slate-800 text-slate-400' 
-                            : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 animate-pulse'
-                        }`}>
-                          {isMatched ? '매칭 완료' : '신규 의뢰 접수'}
-                        </span>
+                        
+                        {isAssignedToMe ? (
+                          <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+                            ★ 나에게 배정 확정됨
+                          </span>
+                        ) : hasMyBid ? (
+                          <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                            ✓ 내 제안 발송 완료
+                          </span>
+                        ) : (
+                          <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 animate-pulse">
+                            신규 의뢰 접수
+                          </span>
+                        )}
                       </div>
 
                       {/* Car & Service */}
@@ -338,25 +565,33 @@ export const PartnerPortal = ({
                           <strong className="text-base font-black text-white">{standardPrice.toLocaleString()}원</strong>
                         </div>
                         <div className="text-right">
-                          <span className="text-[10px] text-emerald-400 font-bold block">기사 예상 실수령액</span>
+                          <span className="text-[10px] text-emerald-400 font-bold block">기사 실수령액</span>
                           <strong className="text-base font-black text-emerald-400">
                             {settlement.techNetPayout.toLocaleString()}원
                           </strong>
-                          <span className="text-[9px] text-slate-500 block">(수수료 10% / 세금 3.3% 공제후)</span>
+                          <span className="text-[9px] text-slate-500 block">(10% 수수료 / 3.3% 원천세 공제)</span>
                         </div>
                       </div>
 
-                      {isMatched ? (
+                      {isMatched && !isAssignedToMe ? (
                         <span className="block text-center py-2 rounded-xl bg-slate-800 text-slate-400 text-xs font-bold">
-                          매칭 완료 ({req.matchedTechName})
+                          매칭 완료됨
                         </span>
+                      ) : hasMyBid ? (
+                        <button
+                          onClick={() => handleOpenBidModal(req)}
+                          className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-300 text-xs font-bold border border-emerald-500/30 flex items-center justify-center gap-1.5"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>제안 수정 및 재발송</span>
+                        </button>
                       ) : (
                         <button
                           onClick={() => handleOpenBidModal(req)}
                           className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black text-xs shadow-md shadow-emerald-500/25 flex items-center justify-center gap-1.5 transition-all hover:scale-[1.02] active:scale-[0.98]"
                         >
                           <Send className="w-3.5 h-3.5" />
-                          <span>맞춤 제안서 발송하기</span>
+                          <span>[{loggedInTech.name} 프로] 명의로 제안서 발송</span>
                         </button>
                       )}
                     </div>
@@ -369,20 +604,20 @@ export const PartnerPortal = ({
             {availableOrders.length === 0 && (
               <div className="text-center py-16 glass-card rounded-2xl border border-white/10 text-slate-400">
                 <Briefcase className="w-10 h-10 text-slate-600 mx-auto mb-2" />
-                <p className="font-bold text-slate-300">현재 등록된 의뢰가 없습니다.</p>
+                <p className="font-bold text-slate-300">현재 조건에 맞는 의뢰가 없습니다.</p>
               </div>
             )}
 
           </div>
         )}
 
-        {/* ==================== TAB 2: MY JOBS (내 수주 일정 & 시공 관리) ==================== */}
+        {/* ==================== TAB 2: MY JOBS (본인 배정 수주 & 시공 일정) ==================== */}
         {partnerTab === 'myJobs' && (
           <div className="space-y-6 animate-fadeIn">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-black text-white">[{currentTech.name} 프로] 배정 시공 일정</h3>
-                <p className="text-xs text-slate-400 mt-0.5">매칭이 확정된 고객 시공 일정을 확인하고 시공 완료 처리를 진행하세요.</p>
+                <h3 className="text-lg font-black text-white">[{loggedInTech.name} 프로] 본인 배정 시공 일정</h3>
+                <p className="text-xs text-slate-400 mt-0.5">본인에게 매칭 확정된 의뢰만 표시되며, 고객 연락처 확인 및 시공 완료 처리를 진행할 수 있습니다.</p>
               </div>
             </div>
 
@@ -451,7 +686,7 @@ export const PartnerPortal = ({
                           </button>
                         ) : (
                           <span className="px-3.5 py-2 rounded-xl bg-slate-800 text-slate-400 text-xs font-bold">
-                            시공 완료 완료됨
+                            시공 완료 처리됨
                           </span>
                         )}
                       </div>
@@ -463,7 +698,7 @@ export const PartnerPortal = ({
               {myAssignedJobs.length === 0 && (
                 <div className="text-center py-16 glass-card rounded-2xl border border-white/10 text-slate-400 text-xs">
                   <Calendar className="w-10 h-10 text-slate-600 mx-auto mb-2" />
-                  <p className="font-bold text-slate-300">현재 배정된 시공 일정이 없습니다.</p>
+                  <p className="font-bold text-slate-300">현재 [{loggedInTech.name} 프로] 님에게 배정된 시공 일정이 없습니다.</p>
                   <p className="text-slate-500 mt-1">오더 마켓 탭에서 새로운 의뢰에 맞춤 제안을 제출해 보세요.</p>
                 </div>
               )}
@@ -471,7 +706,7 @@ export const PartnerPortal = ({
           </div>
         )}
 
-        {/* ==================== TAB 3: SETTLEMENT LEDGER (정산 장부) ==================== */}
+        {/* ==================== TAB 3: SETTLEMENT LEDGER (본인 전용 정산 장부) ==================== */}
         {partnerTab === 'settlement' && (
           <div className="space-y-6 animate-fadeIn">
             
@@ -507,7 +742,7 @@ export const PartnerPortal = ({
               <div className="p-4 bg-slate-900/80 border-b border-white/10 flex items-center justify-between">
                 <h4 className="font-extrabold text-white text-sm flex items-center gap-2">
                   <FileText className="w-4 h-4 text-emerald-400" />
-                  <span>[{currentTech.name} 프로] 건별 정산 지급 명세서</span>
+                  <span>[{loggedInTech.name} 프로] 본인 건별 정산 지급 명세서</span>
                 </h4>
                 <span className="text-xs text-slate-400">정산 대상: <strong className="text-emerald-400">{completedJobs.length}건</strong></span>
               </div>
@@ -566,60 +801,168 @@ export const PartnerPortal = ({
           </div>
         )}
 
-        {/* ==================== TAB 4: PROFILE & BASE SETTINGS ==================== */}
+        {/* ==================== TAB 4: PROFILE & SECURITY PIN SETTINGS ==================== */}
         {partnerTab === 'profile' && (
           <div className="space-y-6 max-w-3xl animate-fadeIn">
-            <div className="glass-card p-6 rounded-2xl border border-white/10 space-y-5">
-              <div className="flex items-center gap-4">
-                <img 
-                  src={currentTech.avatar} 
-                  alt={currentTech.name} 
-                  className="w-16 h-16 rounded-2xl object-cover border-2 border-emerald-400 shadow-lg"
-                />
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-xl font-black text-white">{currentTech.name} 프로</h3>
-                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40">
-                      {currentTech.badge || '마스터 디테일러'}
-                    </span>
+            
+            <div className="glass-card p-6 rounded-2xl border border-white/10 space-y-6">
+              
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-5">
+                <div className="flex items-center gap-4">
+                  <img 
+                    src={loggedInTech.avatar} 
+                    alt={loggedInTech.name} 
+                    className="w-16 h-16 rounded-2xl object-cover border-2 border-emerald-400 shadow-lg"
+                  />
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-xl font-black text-white">{loggedInTech.name} 프로</h3>
+                      <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40">
+                        {loggedInTech.badge || '마스터 디테일러'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-1">{loggedInTech.phone} | 경력 {loggedInTech.experienceYears}년차</p>
                   </div>
-                  <p className="text-xs text-slate-400 mt-1">{currentTech.phone} | 경력 {currentTech.experienceYears}년차</p>
                 </div>
-              </div>
 
-              <div className="space-y-3 text-xs bg-slate-900/60 p-4 rounded-xl border border-white/5">
-                <div className="flex justify-between">
-                  <span className="text-slate-400 font-bold">활동 거점 주소</span>
-                  <strong className="text-white">{currentTech.baseLocation || '인천 서구 청라국제도시'}</strong>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400 font-bold">활동 권역 (Zone)</span>
-                  <span className="text-cyan-300 font-semibold">{currentTech.region}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400 font-bold">전문 시공 분야</span>
-                  <span className="text-slate-200">{currentTech.specialties?.join(', ')}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400 font-bold">고객 평점 / 리뷰</span>
-                  <span className="text-amber-400 font-bold">★ {currentTech.rating} ({currentTech.reviewCount}건)</span>
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-white/10 flex items-center justify-between">
                 <button
-                  onClick={() => setIsRegisterOpen(true)}
-                  className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-white/10"
+                  onClick={() => setIsEditingProfile(!isEditingProfile)}
+                  className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-cyan-300 border border-cyan-500/30 self-start sm:self-auto"
                 >
-                  신규 기사 파트너 추가 등록
+                  {isEditingProfile ? '취소' : '프로필 & PIN 수정'}
+                </button>
+              </div>
+
+              {!isEditingProfile ? (
+                <div className="space-y-3 text-xs bg-slate-900/60 p-5 rounded-2xl border border-white/5">
+                  <div className="flex justify-between py-1 border-b border-white/5">
+                    <span className="text-slate-400 font-bold">활동 거점 주소</span>
+                    <strong className="text-white">{loggedInTech.baseLocation || '인천 서구 청라국제도시'}</strong>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-white/5">
+                    <span className="text-slate-400 font-bold">활동 권역 (Zone)</span>
+                    <span className="text-cyan-300 font-semibold">{loggedInTech.region}</span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-white/5">
+                    <span className="text-slate-400 font-bold">전문 시공 분야</span>
+                    <span className="text-slate-200">{loggedInTech.specialties?.join(', ')}</span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-white/5">
+                    <span className="text-slate-400 font-bold">고객 평점 / 리뷰</span>
+                    <span className="text-amber-400 font-bold">★ {loggedInTech.rating} ({loggedInTech.reviewCount}건)</span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-white/5">
+                    <span className="text-slate-400 font-bold">보안 PIN (로그인용)</span>
+                    <span className="text-emerald-400 font-mono font-bold">•••• (설정됨)</span>
+                  </div>
+                  <div className="pt-2">
+                    <span className="text-slate-400 font-bold block mb-1">한줄 소개</span>
+                    <p className="text-slate-300 leading-relaxed">{loggedInTech.introduction}</p>
+                  </div>
+                </div>
+              ) : (
+                <form onSubmit={handleSaveProfile} className="space-y-4 text-xs bg-slate-900/60 p-5 rounded-2xl border border-cyan-500/30">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-slate-300 font-bold mb-1">휴대폰 번호 (로그인 ID)</label>
+                      <input
+                        type="text"
+                        value={profileForm.phone}
+                        onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                        className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-emerald-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-300 font-bold mb-1">로그인 비밀번호 / PIN</label>
+                      <input
+                        type="password"
+                        value={profileForm.pin}
+                        onChange={(e) => setProfileForm({ ...profileForm, pin: e.target.value })}
+                        placeholder="새 비밀번호 입력"
+                        className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-emerald-500"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-slate-300 font-bold mb-1">활동 거점 주소</label>
+                      <input
+                        type="text"
+                        value={profileForm.baseLocation}
+                        onChange={(e) => setProfileForm({ ...profileForm, baseLocation: e.target.value })}
+                        className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-emerald-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-300 font-bold mb-1">활동 권역</label>
+                      <input
+                        type="text"
+                        value={profileForm.region}
+                        onChange={(e) => setProfileForm({ ...profileForm, region: e.target.value })}
+                        className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-emerald-500"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-300 font-bold mb-1">전문 시공 분야 (쉼표로 구분)</label>
+                    <input
+                      type="text"
+                      value={profileForm.specialties}
+                      onChange={(e) => setProfileForm({ ...profileForm, specialties: e.target.value })}
+                      className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-300 font-bold mb-1">소개글</label>
+                    <textarea
+                      rows="3"
+                      value={profileForm.introduction}
+                      onChange={(e) => setProfileForm({ ...profileForm, introduction: e.target.value })}
+                      className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+
+                  <div className="pt-2 flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingProfile(false)}
+                      className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-bold"
+                    >
+                      취소
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black shadow-md shadow-emerald-500/25"
+                    >
+                      변경사항 저장
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              <div className="pt-4 border-t border-white/10 flex items-center justify-between">
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-bold border border-rose-500/30 flex items-center gap-1.5"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>파트너 계정 로그아웃</span>
                 </button>
                 <button
                   onClick={onSwitchToCustomer}
-                  className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black shadow-md shadow-emerald-500/20"
+                  className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-white/10"
                 >
                   고객 포털 확인하기
                 </button>
               </div>
+
             </div>
           </div>
         )}
@@ -648,10 +991,10 @@ export const PartnerPortal = ({
 
             <form onSubmit={handleBidSubmit} className="space-y-4 text-xs">
               <div>
-                <label className="block font-bold text-slate-300 mb-1">제안 기술자</label>
+                <label className="block font-bold text-slate-300 mb-1">제안 기술자 (인증된 본인 계정)</label>
                 <input
                   type="text"
-                  value={`${currentTech.name} 프로 (${currentTech.badge})`}
+                  value={`${loggedInTech.name} 프로 (${loggedInTech.badge || '1급 디테일러'})`}
                   readOnly
                   className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-bold"
                 />

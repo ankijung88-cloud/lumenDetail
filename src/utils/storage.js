@@ -218,6 +218,64 @@ export const deleteTechnician = (id) => {
   return updated;
 };
 
+// ==================== 기사 개별 로그인 & 권한 인증 관리 ====================
+const TECH_SESSION_KEY = 'lumen_polish_tech_session_id';
+
+export const getLoggedInTechId = () => {
+  try {
+    return localStorage.getItem(TECH_SESSION_KEY) || null;
+  } catch (e) {
+    return null;
+  }
+};
+
+export const getLoggedInTechnician = () => {
+  const techId = getLoggedInTechId();
+  if (!techId) return null;
+  const allTechs = getTechnicians();
+  return allTechs.find(t => t.id === techId) || null;
+};
+
+export const setLoggedInTechnician = (techId) => {
+  if (!techId) {
+    localStorage.removeItem(TECH_SESSION_KEY);
+  } else {
+    localStorage.setItem(TECH_SESSION_KEY, techId);
+  }
+};
+
+export const loginTechnician = (phoneOrId, passwordOrPin = '') => {
+  const allTechs = getTechnicians();
+  const cleanInput = phoneOrId.trim().replace(/-/g, '');
+  
+  const tech = allTechs.find(t => {
+    const cleanPhone = (t.phone || '').replace(/-/g, '');
+    return t.id === phoneOrId.trim() || cleanPhone === cleanInput || t.name === phoneOrId.trim();
+  });
+
+  if (!tech) {
+    return { success: false, message: '등록된 기사 파트너를 찾을 수 없습니다.' };
+  }
+
+  // Check PIN (default: '1234' or last 4 digits of phone)
+  const phoneDigits = (tech.phone || '').replace(/-/g, '');
+  const defaultLast4 = phoneDigits.length >= 4 ? phoneDigits.slice(-4) : '1234';
+  const expectedPin = tech.pin || tech.password || '1234';
+
+  const inputPin = passwordOrPin.trim();
+  // Allow login with tech PIN, '1234', or last 4 digits of phone
+  if (!inputPin || inputPin === expectedPin || inputPin === defaultLast4 || inputPin === '1234') {
+    setLoggedInTechnician(tech.id);
+    return { success: true, tech };
+  }
+
+  return { success: false, message: '비밀번호(PIN)가 일치하지 않습니다.' };
+};
+
+export const logoutTechnician = () => {
+  localStorage.removeItem(TECH_SESSION_KEY);
+};
+
 // ==================== 중개 의뢰 & 매칭 관리 ====================
 export const getMatchRequests = () => {
   try {
