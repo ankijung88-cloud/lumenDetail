@@ -27,8 +27,7 @@ export const Hero = ({ onBookClick, onExploreClick, onGoToTechnicians }) => {
 
         {/* Main Headline */}
         <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight text-white mb-4 sm:mb-6 leading-tight break-keep">
-          스월마크 없는 <span className="text-gradient">거울 광택 리플렉션</span>, <br className="hidden sm:inline" />
-          검증된 프로 디테일러를 <br className="hidden sm:inline" />
+          <span className="text-gradient">검증된 프로 디테일러</span>를 <br className="hidden sm:inline" />
           고객님의 주차장으로.
         </h1>
 
