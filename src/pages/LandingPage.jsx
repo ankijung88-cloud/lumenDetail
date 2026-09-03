@@ -8,7 +8,8 @@ import { Reviews } from '../components/Reviews';
 import { TechnicianExplorer } from '../components/TechnicianExplorer';
 import { 
   Phone, MessageSquare, ArrowUp, Calendar, ShieldCheck, 
-  Search, Award, Sparkles, CheckCircle2, Users, Briefcase 
+  Search, Award, Sparkles, CheckCircle2, Users, Briefcase,
+  Smartphone 
 } from 'lucide-react';
 
 export const LandingPage = ({ 
@@ -19,7 +20,8 @@ export const LandingPage = ({
   onOpenRegisterModal,
   onOpenTracker,
   onGoToTechnicians,
-  onGoToOrderMarket
+  onGoToOrderMarket,
+  onSwitchToMobileApp
 }) => {
   const [selectedService, setSelectedService] = useState('');
   const [selectedPrice, setSelectedPrice] = useState(0);
@@ -136,22 +138,34 @@ export const LandingPage = ({
       {/* 8. Customer Reviews & FAQ */}
       <Reviews />
 
-      {/* Floating Action Controls */}
-      <div className="fixed bottom-6 right-6 z-40 flex flex-col gap-2.5 items-end">
+      {/* Unified Floating Action Controls */}
+      <div className="fixed bottom-6 right-6 z-40 flex flex-col gap-2 items-end">
         {/* Track Quotes / My Requests Button */}
         <button
           onClick={onOpenTracker}
-          className="px-4 py-2.5 rounded-full bg-slate-900/90 hover:bg-slate-800 text-cyan-300 border border-cyan-500/40 shadow-xl flex items-center gap-2 text-xs font-extrabold backdrop-blur-md hover:scale-105 active:scale-95 transition-all"
+          className="px-3.5 py-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-cyan-300 border border-cyan-500/40 shadow-xl flex items-center gap-2 text-xs font-bold backdrop-blur-md hover:scale-105 active:scale-95 transition-all"
           title="내 의뢰 견적 현황 조회"
         >
-          <Search className="w-4 h-4 text-cyan-400" />
+          <Search className="w-3.5 h-3.5 text-cyan-400" />
           <span>내 의뢰 조회</span>
         </button>
+
+        {/* Mobile App Mode Switcher */}
+        {onSwitchToMobileApp && (
+          <button
+            onClick={onSwitchToMobileApp}
+            className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs shadow-xl shadow-emerald-500/25 flex items-center gap-1.5 hover:scale-105 active:scale-95 transition-all border border-white/10"
+            title="모바일 전용 앱 화면으로 전환"
+          >
+            <Smartphone className="w-4 h-4 text-slate-950" />
+            <span>모바일 앱 모드</span>
+          </button>
+        )}
 
         {/* Quick Booking Floating CTA */}
         <button
           onClick={() => scrollToBooking()}
-          className="px-5 py-3 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-black text-xs shadow-xl shadow-cyan-500/30 flex items-center gap-2 hover:scale-105 active:scale-95 transition-all"
+          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs shadow-xl shadow-cyan-500/30 flex items-center gap-2 hover:scale-105 active:scale-95 transition-all"
         >
           <Calendar className="w-4 h-4" />
           <span>실시간 견적 의뢰</span>

@@ -199,6 +199,7 @@ export function App() {
             onOpenTracker={() => setIsTrackerOpen(true)}
             onGoToTechnicians={() => handleTabChange('technicians')}
             onGoToOrderMarket={() => handleTabChange('orderMarket')}
+            onSwitchToMobileApp={() => handleToggleMobileAppMode(true)}
           />
         )}
 
@@ -239,18 +240,6 @@ export function App() {
           <DigitalBusinessCard onGoToBooking={() => handleTabChange('landing')} />
         )}
       </main>
-
-      {/* Desktop Floating Mobile App Switcher Badge */}
-      <aside aria-label="모바일 앱 전환" className="fixed bottom-6 right-6 z-40 hidden md:block">
-        <button
-          onClick={() => handleToggleMobileAppMode(true)}
-          className="p-3.5 pr-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs shadow-2xl shadow-emerald-500/40 flex items-center gap-2 transition-all hover:scale-105 active:scale-95 border border-white/20"
-          title="모바일 앱 화면으로 전환"
-        >
-          <Smartphone className="w-5 h-5 text-slate-950" />
-          <span>모바일 앱 모드</span>
-        </button>
-      </aside>
 
       {/* Universal Footer */}
       <Footer setCurrentTab={handleTabChange} />
