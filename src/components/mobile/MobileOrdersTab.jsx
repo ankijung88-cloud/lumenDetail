@@ -1,40 +1,109 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   CheckCircle2, Clock, Car, User, Phone, MapPin, 
   Star, Send, ShieldCheck, DollarSign, CreditCard, FileText,
-  ChevronRight, RefreshCw, Sparkles, Navigation, AlertCircle
+  ChevronRight, RefreshCw, Sparkles, Navigation, AlertCircle, Lock
 } from 'lucide-react';
-import { switchMatchedTechnician, getTechnicians, updateMatchPayment } from '../../utils/storage';
+import { 
+  switchMatchedTechnician, getTechnicians, updateMatchPayment, 
+  getLoggedInCustomer, deleteMatchRequest, updateMatchStatus
+} from '../../utils/storage';
 import { PaymentModal } from '../PaymentModal';
 import { SettlementModal } from '../SettlementModal';
 import confetti from 'canvas-confetti';
 
 const STATUS_STEPS = [
-  { key: 'OPEN', label: '의뢰접수' },
-  { key: 'BIDDING', label: '기사배정' },
-  { key: 'MATCHED', label: '매칭완료' },
-  { key: 'IN_PROGRESS', label: '출장시공' },
-  { key: 'COMPLETED', label: '시공완료' }
+  { key: 'OPEN', label: '의뢰접수', desc: '의뢰가 정상 접수되었습니다.' },
+  { key: 'BIDDING', label: '기사배정', desc: '담당 마스터 기술자 배정 중입니다.' },
+  { key: 'MATCHED', label: '매칭완료', desc: '기사 매칭 및 방문 일정이 확정되었습니다.' },
+  { key: 'IN_PROGRESS', label: '출장시공', desc: '현장 방문 정밀 시공 진행 중입니다.' },
+  { key: 'COMPLETED', label: '시공완료', desc: '시공 및 품질 검수가 완료되었습니다.' }
 ];
 
-export const MobileOrdersTab = ({ matchRequests, onRefresh }) => {
-  const [selectedReq, setSelectedReq] = useState(matchRequests[0] || null);
+export const MobileOrdersTab = ({ matchRequests, onRefresh, onOpenCustomerAuth }) => {
+  const customer = getLoggedInCustomer();
+  const allTechnicians = getTechnicians();
+
+  // Strict Filter: ONLY show this logged-in customer's orders
+  const customerOrders = customer
+    ? matchRequests.filter(req => {
+        const cleanCustPhone = (customer.phone || '').replace(/\D/g, '');
+        const cleanReqPhone = (req.phone || '').replace(/\D/g, '');
+        return (cleanCustPhone && cleanCustPhone === cleanReqPhone) || req.customerName === customer.name;
+      })
+    : [];
+
+  const [selectedReq, setSelectedReq] = useState(() => customerOrders[0] || null);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [isSettlementOpen, setIsSettlementOpen] = useState(false);
-  const allTechnicians = getTechnicians();
+
+  useEffect(() => {
+    if (customerOrders.length > 0) {
+      if (!selectedReq || !customerOrders.find(o => o.id === selectedReq.id)) {
+        setSelectedReq(customerOrders[0]);
+      }
+    } else {
+      setSelectedReq(null);
+    }
+  }, [matchRequests, customer]);
+
+  // 1. If not logged in as a customer: Show Security Login Gate
+  if (!customer) {
+    return (
+      <div className="px-4 py-20 text-center animate-fadeIn space-y-4">
+        <div className="w-16 h-16 rounded-3xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center mx-auto text-cyan-400 shadow-xl shadow-cyan-500/10">
+          <Lock className="w-8 h-8" />
+        </div>
+        <div>
+          <h3 className="text-lg font-black text-white">로그인이 필요합니다</h3>
+          <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto leading-relaxed">
+            고객님의 개인정보 보호를 위해 실시간 시공 진행 상태 및 주문 내역은 로그인 후 본인의 내역만 조회하실 수 있습니다.
+          </p>
+        </div>
+        <button
+          onClick={onOpenCustomerAuth}
+          className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs shadow-lg shadow-cyan-500/25 transition-all hover:scale-105 active:scale-95"
+        >
+          고객 로그인 / 간편 회원가입
+        </button>
+      </div>
+    );
+  }
 
   const handleSwitchTech = (techId, techName) => {
     if (!selectedReq) return;
     if (window.confirm(`[${techName}] 프로님으로 기술자를 변경 및 확정하시겠습니까? (플랫폼 정찰가 동일 적용)`)) {
       switchMatchedTechnician(selectedReq.id, techId);
-      confetti({
-        particleCount: 100,
-        spread: 80,
-        origin: { y: 0.6 }
-      });
+      confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 } });
       if (onRefresh) onRefresh();
       alert(`🎉 [${techName}] 프로님과의 매칭이 확정되었습니다!`);
     }
+  };
+
+  const handleCancelOrder = (reqId) => {
+    if (window.confirm('이 시공 의뢰를 취소하시겠습니까?')) {
+      deleteMatchRequest(reqId);
+      if (onRefresh) onRefresh();
+      alert('시공 의뢰가 취소되었습니다.');
+    }
+  };
+
+  const handleStepClick = (stepKey) => {
+    if (!selectedReq) return;
+    if (selectedReq.status === stepKey) return;
+
+    updateMatchStatus(selectedReq.id, stepKey);
+
+    if (stepKey === 'COMPLETED') {
+      confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 } });
+    }
+
+    setSelectedReq(prev => ({
+      ...prev,
+      status: stepKey
+    }));
+
+    if (onRefresh) onRefresh();
   };
 
   const currentStepIdx = selectedReq ? STATUS_STEPS.findIndex(s => s.key === selectedReq.status) : 0;
@@ -43,22 +112,29 @@ export const MobileOrdersTab = ({ matchRequests, onRefresh }) => {
   return (
     <div className="pb-24 space-y-4 animate-fadeIn">
       
-      {/* 1. Header */}
-      <div className="px-4 pt-1">
-        <h3 className="text-lg font-black text-white">주문 및 시공 현황</h3>
-        <p className="text-xs text-slate-400 mt-0.5">배달 현황처럼 실시간 출장 시공 상태를 확인하고 기사를 관리하세요.</p>
+      {/* 1. Header with Customer Name Badge */}
+      <div className="px-4 pt-1 flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-black text-white">내 주문 및 시공 현황</h3>
+          <p className="text-xs text-slate-400 mt-0.5">
+            <strong className="text-cyan-300 font-bold">{customer.name}</strong> 고객님의 진행 중인 시공 내역입니다.
+          </p>
+        </div>
+        <span className="text-[10px] px-2.5 py-1 rounded-full bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30">
+          총 {customerOrders.length}건
+        </span>
       </div>
 
-      {/* 2. Order Selector Pills (if multiple orders) */}
-      {matchRequests.length > 0 && (
+      {/* 2. Order Selector Pills (if multiple orders for this customer) */}
+      {customerOrders.length > 1 && (
         <div className="px-4 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-          {matchRequests.map(req => (
+          {customerOrders.map(req => (
             <button
               key={req.id}
               onClick={() => setSelectedReq(req)}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
                 selectedReq?.id === req.id
-                  ? 'bg-cyan-500 text-slate-950 shadow-md'
+                  ? 'bg-cyan-500 text-slate-950 shadow-md font-black'
                   : 'bg-slate-900 text-slate-400 border border-white/5'
               }`}
             >
@@ -92,79 +168,86 @@ export const MobileOrdersTab = ({ matchRequests, onRefresh }) => {
 
               <div className="flex justify-between relative z-10">
                 {STATUS_STEPS.map((s, idx) => {
-                  const isPassed = idx <= currentStepIdx;
+                  const isPassed = idx < currentStepIdx;
                   const isCur = idx === currentStepIdx;
 
                   return (
-                    <div key={s.key} className="flex flex-col items-center">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                    <button
+                      key={s.key}
+                      type="button"
+                      onClick={() => handleStepClick(s.key)}
+                      className="flex flex-col items-center group focus:outline-none transition-all"
+                      title={`클릭하여 '${s.label}' 상태로 변경`}
+                    >
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold transition-all shadow-md group-hover:scale-110 ${
                         isCur 
-                          ? 'bg-cyan-500 text-slate-950 ring-4 ring-cyan-500/20' 
-                          : (isPassed ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-500')
+                          ? 'bg-cyan-400 text-slate-950 ring-4 ring-cyan-500/30 font-black scale-110' 
+                          : (isPassed ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-500 hover:text-white')
                       }`}>
                         {isPassed ? '✓' : idx + 1}
                       </div>
-                      <span className={`text-[10px] font-bold mt-1.5 ${
-                        isCur ? 'text-cyan-400' : (isPassed ? 'text-slate-300' : 'text-slate-600')
-                      }`}>
+                      <span className={`text-[10px] mt-1 font-medium ${isCur ? 'text-cyan-300 font-bold' : (isPassed ? 'text-slate-300' : 'text-slate-600')}`}>
                         {s.label}
                       </span>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
             </div>
+
+            <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-400">
+              <span>{STATUS_STEPS[Math.max(0, currentStepIdx)]?.desc}</span>
+              <span className="text-[10px] text-cyan-400 font-medium shrink-0 ml-2">터치하여 상태 변경</span>
+            </div>
           </div>
 
-          {/* 4. Order Information Box */}
-          <div className="glass-card p-4 rounded-2xl border border-white/10 space-y-3 text-xs">
-            <div className="flex justify-between items-baseline border-b border-white/10 pb-2.5">
+          {/* 4. Order Information Card */}
+          <div className="glass-card p-4 rounded-2xl border border-white/10 space-y-3">
+            <div className="flex items-start justify-between">
               <div>
-                <h4 className="font-black text-white text-sm">{selectedReq.carModel}</h4>
-                <p className="text-cyan-300 font-semibold mt-0.5">{selectedReq.serviceName}</p>
+                <span className="text-[10px] px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-bold">
+                  {selectedReq.serviceName}
+                </span>
+                <h4 className="text-base font-extrabold text-white mt-1">
+                  {selectedReq.carModel}
+                </h4>
+                <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
+                  <MapPin className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                  <span>{selectedReq.location}</span>
+                </p>
               </div>
+
               <div className="text-right">
-                <span className="text-[10px] text-slate-400 block">표준 정찰가</span>
-                <span className="text-base font-black text-emerald-400">{standardPrice.toLocaleString()}원</span>
+                <span className="text-[10px] text-slate-400 block">정찰제 확정가</span>
+                <span className="text-base font-black text-emerald-400">
+                  {standardPrice.toLocaleString()}원
+                </span>
               </div>
             </div>
 
-            <div className="space-y-1.5 text-slate-300 text-[11px]">
-              <div className="flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                <span>출장지: {selectedReq.location}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                <span>희망일시: <strong className="text-white">{selectedReq.preferredDate} ({selectedReq.preferredTime})</strong></span>
-              </div>
-            </div>
-
-            {/* Current Matched Technician Card */}
-            <div className="mt-3 p-3 rounded-xl bg-gradient-to-r from-emerald-950/40 via-cyan-950/30 to-slate-900 border border-emerald-500/40 space-y-2">
+            {/* Matched Technician Details */}
+            <div className="p-3 rounded-xl bg-slate-900/80 border border-white/5 space-y-2">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-cyan-400" />
                   <div>
-                    <span className="text-[10px] text-emerald-300 font-bold bg-emerald-500/20 px-1.5 py-0.2 rounded">
-                      현재 배정된 담당 기사
-                    </span>
-                    <h5 className="font-extrabold text-white text-xs mt-0.5">
+                    <span className="text-[10px] text-slate-400 block">담당 배정 디테일러</span>
+                    <h5 className="font-extrabold text-white text-xs">
                       {selectedReq.matchedTechName || '최단거리 기사 배정 대기'}
                     </h5>
                   </div>
                 </div>
-                <span className="text-[10px] text-emerald-400 font-bold">오버차지 0원</span>
+                <span className="text-[10px] text-emerald-400 font-bold">오버차지 0원 보증</span>
               </div>
 
               {/* Action Buttons: Payment & Settlement */}
               <div className="pt-2 border-t border-white/10 flex flex-wrap items-center gap-2">
                 <button
                   onClick={() => setIsSettlementOpen(true)}
-                  className="flex-1 py-2 px-2.5 rounded-xl bg-slate-800 text-cyan-300 text-[10px] font-bold border border-cyan-500/20 flex items-center justify-center gap-1"
+                  className="flex-1 py-2 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 text-[10px] font-bold border border-cyan-500/20 flex items-center justify-center gap-1"
                 >
                   <DollarSign className="w-3 h-3 text-cyan-400" />
-                  <span>정산서 (수수료 10% / 3.3% 세무)</span>
+                  <span>정산/영수증</span>
                 </button>
 
                 {selectedReq.isPaid ? (
@@ -173,22 +256,29 @@ export const MobileOrdersTab = ({ matchRequests, onRefresh }) => {
                     className="flex-1 py-2 px-2.5 rounded-xl bg-emerald-500 text-slate-950 text-[11px] font-black flex items-center justify-center gap-1 shadow-md shadow-emerald-500/20"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>결제완료 (영수증)</span>
+                    <span>결제완료 (전자영수증)</span>
                   </button>
                 ) : (
                   <button
                     onClick={() => setIsPaymentOpen(true)}
-                    className="flex-1 py-2 px-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 text-[11px] font-black flex items-center justify-center gap-1 shadow-md shadow-emerald-500/25 active:scale-95"
+                    className="flex-1 py-2 px-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 text-[11px] font-black flex items-center justify-center gap-1 shadow-md shadow-emerald-500/25 active:scale-95"
                   >
                     <CreditCard className="w-3.5 h-3.5" />
                     <span>안심 결제하기</span>
                   </button>
                 )}
+
+                <button
+                  onClick={() => handleCancelOrder(selectedReq.id)}
+                  className="py-2 px-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-[10px] font-bold border border-rose-500/30 transition-colors"
+                >
+                  의뢰 취소
+                </button>
               </div>
             </div>
           </div>
 
-          {/* 5. Real-time Technician Proposal Comparison & Selection Feed */}
+          {/* 5. Real-time Technician Proposal Feed */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h4 className="text-xs font-extrabold text-white flex items-center gap-1.5">
@@ -264,7 +354,7 @@ export const MobileOrdersTab = ({ matchRequests, onRefresh }) => {
       ) : (
         <div className="px-4 py-16 text-center glass-card rounded-2xl border border-white/10 text-slate-400 text-xs">
           <Car className="w-10 h-10 text-slate-600 mx-auto mb-2" />
-          <p className="font-bold text-slate-300">현재 등록된 시공 의뢰가 없습니다.</p>
+          <p className="font-bold text-slate-300">[{customer.name}] 고객님의 진행 중인 시공 의뢰가 없습니다.</p>
           <p className="text-[11px] text-slate-500 mt-1">홈에서 원하는 패키지를 선택해 간편 의뢰를 신청해 보세요.</p>
         </div>
       )}
@@ -276,6 +366,13 @@ export const MobileOrdersTab = ({ matchRequests, onRefresh }) => {
         request={selectedReq}
         onPaymentSuccess={(reqId, receipt) => {
           updateMatchPayment(reqId, receipt);
+          setSelectedReq(prev => prev ? ({
+            ...prev,
+            isPaid: true,
+            paidAt: new Date().toISOString(),
+            paymentReceipt: receipt,
+            status: 'COMPLETED'
+          }) : prev);
           if (onRefresh) onRefresh();
         }}
       />

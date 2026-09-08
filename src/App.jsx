@@ -42,8 +42,18 @@ export function App() {
     const handleResize = () => {
       setIsMobileDevice(window.innerWidth <= 768);
     };
+    
+    const handleStorageUpdate = () => {
+      refreshData();
+      setLoggedInCustomer(getLoggedInCustomer());
+    };
+
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener('storage', handleStorageUpdate);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('storage', handleStorageUpdate);
+    };
   }, []);
 
   const refreshData = () => {

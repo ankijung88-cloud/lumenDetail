@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Briefcase, Send, Clock, MapPin, Car, Sparkles, CheckCircle2, 
   AlertCircle, DollarSign, Filter, Search, Zap, Building2, User,
   Calendar, Check, X, ShieldCheck, TrendingUp, Phone, ChevronRight,
   FileText, ArrowLeft, RefreshCw, Award, LogOut, Printer, Lock,
-  KeyRound, UserCheck, ShieldAlert
+  KeyRound, UserCheck, ShieldAlert, Upload, Camera
 } from 'lucide-react';
 import { 
   submitTechnicianBid, updateMatchStatus, getTechnicians, 
@@ -53,7 +53,8 @@ export const PartnerPortal = ({
     baseLocation: '',
     region: '',
     specialties: '',
-    introduction: ''
+    introduction: '',
+    avatar: ''
   });
 
   useEffect(() => {
@@ -66,7 +67,8 @@ export const PartnerPortal = ({
         baseLocation: current.baseLocation || '',
         region: current.region || '',
         specialties: current.specialties ? current.specialties.join(', ') : '',
-        introduction: current.introduction || ''
+        introduction: current.introduction || '',
+        avatar: current.avatar || ''
       });
     }
   }, [technicians]);
@@ -106,6 +108,49 @@ export const PartnerPortal = ({
     alert('기사 파트너 계정에서 완전히 로그아웃되었습니다. (자동로그인이 해제되었습니다)');
   };
 
+  // Profile Avatar Upload Handler
+  const handleProfilePhotoChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('이미지 파일만 업로드할 수 있습니다.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxDim = 400;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxDim) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          }
+        } else {
+          if (height > maxDim) {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        setProfileForm(prev => ({ ...prev, avatar: dataUrl }));
+      };
+    };
+    reader.readAsDataURL(file);
+  };
+
   // Save Profile Changes
   const handleSaveProfile = (e) => {
     e.preventDefault();
@@ -117,14 +162,15 @@ export const PartnerPortal = ({
       baseLocation: profileForm.baseLocation,
       region: profileForm.region,
       specialties: profileForm.specialties.split(',').map(s => s.trim()),
-      introduction: profileForm.introduction
+      introduction: profileForm.introduction,
+      avatar: profileForm.avatar || loggedInTech.avatar
     });
     
     if (onRefreshData) onRefreshData();
     const refreshed = updated.find(t => t.id === loggedInTech.id);
     if (refreshed) setLoggedInTech(refreshed);
     setIsEditingProfile(false);
-    alert('프로필 및 보안 PIN 설정이 성공적으로 저장되었습니다.');
+    alert('프로필 및 사진 설정이 성공적으로 저장되었습니다.');
   };
 
   // ==================== AUTH GATE: If Not Logged In ====================
@@ -175,7 +221,7 @@ export const PartnerPortal = ({
                   type="text"
                   value={loginPhone}
                   onChange={(e) => setLoginPhone(e.target.value)}
-                  placeholder="예: 010-8472-1928 또는 김태진"
+                  placeholder="예: 010-1234-5678 또는 기사 성함"
                   className="w-full pl-9 pr-3 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-emerald-500"
                   required
                 />
@@ -219,37 +265,43 @@ export const PartnerPortal = ({
             </button>
           </form>
 
-          {/* 1-Click Demo Profiles for Evaluation */}
+          {/* 1-Click Fast Login for Registered Partners */}
           <div className="mt-6 pt-5 border-t border-white/10">
             <span className="text-[11px] text-slate-400 font-bold block mb-2 text-center">
-              ⚡ 빠른 체험용 원클릭 파트너 로그인 (권한 분리 테스트)
+              ⚡ 등록된 기사 파트너 빠른 로그인 (원클릭)
             </span>
-            <div className="grid grid-cols-3 gap-2">
-              {technicians.slice(0, 3).map(tech => (
-                <button
-                  key={tech.id}
-                  onClick={() => handleFastDemoLogin(tech)}
-                  className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/10 hover:border-emerald-500/40 transition-all flex flex-col items-center text-center group"
-                >
-                  <img 
-                    src={tech.avatar} 
-                    alt={tech.name} 
-                    className="w-8 h-8 rounded-full object-cover border border-emerald-400/50 mb-1 group-hover:scale-105 transition-transform" 
-                  />
-                  <span className="text-xs font-bold text-white block">{tech.name} 프로</span>
-                  <span className="text-[10px] text-emerald-400 block">{tech.region?.split('/')[0]}</span>
-                </button>
-              ))}
-            </div>
+            {technicians && technicians.length > 0 ? (
+              <div className="grid grid-cols-3 gap-2">
+                {technicians.slice(0, 3).map(tech => (
+                  <button
+                    key={tech.id}
+                    onClick={() => handleFastDemoLogin(tech)}
+                    className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/10 hover:border-emerald-500/40 transition-all flex flex-col items-center text-center group"
+                  >
+                    <img 
+                      src={tech.avatar} 
+                      alt={tech.name} 
+                      className="w-8 h-8 rounded-full object-cover border border-emerald-400/50 mb-1 group-hover:scale-105 transition-transform" 
+                    />
+                    <span className="text-xs font-bold text-white block truncate w-full">{tech.name}</span>
+                    <span className="text-[10px] text-emerald-400 block truncate w-full">{tech.region?.split('/')[0]}</span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="p-3 rounded-xl bg-slate-900/60 border border-white/5 text-center text-slate-400 text-xs">
+                현재 등록된 기사가 없습니다.<br />아래 버튼으로 첫 번째 파트너 기사를 등록하세요.
+              </div>
+            )}
           </div>
 
           {/* Partner Registration Trigger */}
           <div className="mt-5 text-center">
             <button
               onClick={() => setIsRegisterOpen(true)}
-              className="text-xs text-cyan-300 hover:text-cyan-200 underline"
+              className="text-xs text-cyan-300 hover:text-cyan-200 underline font-semibold"
             >
-              아직 파트너 기사로 등록되지 않으셨나요? [기사 지원 신청]
+              신규 파트너 기사 등록 신청 [간편 지원]
             </button>
           </div>
         </div>
@@ -877,6 +929,28 @@ export const PartnerPortal = ({
                 </div>
               ) : (
                 <form onSubmit={handleSaveProfile} className="space-y-4 text-xs bg-slate-900/60 p-5 rounded-2xl border border-cyan-500/30">
+                  {/* Photo Edit */}
+                  <div className="flex items-center gap-4 p-3 bg-slate-950/80 rounded-xl border border-white/5">
+                    <img 
+                      src={profileForm.avatar || loggedInTech.avatar} 
+                      alt={loggedInTech.name} 
+                      className="w-16 h-16 rounded-2xl object-cover border-2 border-emerald-400"
+                    />
+                    <div className="space-y-1.5">
+                      <label className="block text-slate-300 font-bold">프로필 사진 변경</label>
+                      <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs cursor-pointer transition-all shadow-md shadow-emerald-500/20">
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>내 기기에서 사진 직접 업로드</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleProfilePhotoChange}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-slate-300 font-bold mb-1">휴대폰 번호 (로그인 ID)</label>

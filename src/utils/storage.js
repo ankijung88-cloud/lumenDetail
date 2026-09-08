@@ -11,182 +11,41 @@ const ADMIN_SESSION_KEY = 'lumen_polish_admin_session';
 const DEFAULT_ADMIN_PW = '1234';
 
 // ==================== 초기 샘플 중개 의뢰 & 매칭 데이터 ====================
-const INITIAL_MATCH_REQUESTS = [
-  {
-    id: 'REQ-20260901-101',
-    createdAt: '2026-09-01T10:30:00.000Z',
-    customerName: '김민준',
-    phone: '010-3849-2918',
-    carModel: '제네시스 G80 (2024년형)',
-    carColor: '우유니 화이트',
-    serviceName: '3스텝 광택 + 9H 유리막 코팅',
-    location: '서울 강남구 역삼동 741-2 지하 2층 주차장 B구역',
-    travelZone: 'zone3',
-    preferredDate: '2026-09-04',
-    preferredTime: '10:00',
-    notes: '본넷에 고양이 발톱 스크래치와 자동세차 기스가 심합니다. 220V 콘센트 가까이 있습니다.',
-    hasOutlet: true,
-    isIndoor: true,
-    budget: 490000,
-    isStandardPrice: true, // 플랫폼 제도화 표준 정찰제 적용
-    status: 'MATCHED', // OPEN | BIDDING | MATCHED | IN_PROGRESS | COMPLETED | CANCELLED
-    targetTechId: null,
-    targetTechName: null,
-    closestTechId: 'TECH-002',
-    matchedTechId: 'TECH-002',
-    matchedTechName: '박성호 마스터',
-    matchedPrice: 490000,
-    adminMemo: '고객 위치(강남) 기반 최단거리 박성호 마스터 1순위 자동 매칭 확정.',
-    bids: [
-      {
-        bidId: 'BID-001',
-        techId: 'TECH-002',
-        techName: '박성호 마스터',
-        techAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-        techRating: 4.95,
-        bidPrice: 490000,
-        isClosest: true,
-        distanceText: '출장 예상거리 ~4.2km (최단거리 1순위)',
-        estimatedHours: '약 5시간',
-        message: '고객님 댁과 가장 가까운 강남 거점 마스터입니다. 제도화된 표준 정찰가로 안전 시공해 드립니다. (전면 발수 무료 서비스)',
-        createdAt: '2026-09-01T10:35:00.000Z',
-        isAccepted: true
-      },
-      {
-        bidId: 'BID-002',
-        techId: 'TECH-001',
-        techName: '김태진 마스터',
-        techAvatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80',
-        techRating: 4.98,
-        bidPrice: 490000,
-        isClosest: false,
-        distanceText: '출장 예상거리 ~18km',
-        estimatedHours: '약 5.5시간',
-        message: '도막 측정 기반 수성 듀얼 폴리싱 9년차 마스터입니다. 표준 정찰가로 완벽 시공을 약속드립니다.',
-        createdAt: '2026-09-01T10:45:00.000Z',
-        isAccepted: false
-      }
-    ]
-  },
-  {
-    id: 'REQ-20260902-102',
-    createdAt: '2026-09-02T14:15:00.000Z',
-    customerName: '이서연',
-    phone: '010-9182-4411',
-    carModel: 'BMW 520d (소피스토 그레이)',
-    carColor: '다크 그레이',
-    serviceName: 'VIP 올인원 풀케어 패키지',
-    location: '경기 성남시 분당구 정자동 파크뷰 지하 1층',
-    travelZone: 'zone3',
-    preferredDate: '2026-09-05',
-    preferredTime: '13:00',
-    notes: '실내 가죽시트 얼룩 제거 및 전체 발수코팅 부탁드립니다.',
-    hasOutlet: true,
-    isIndoor: true,
-    budget: 750000,
-    isStandardPrice: true,
-    status: 'BIDDING',
-    targetTechId: null,
-    targetTechName: null,
-    closestTechId: 'TECH-002',
-    matchedTechId: 'TECH-002',
-    matchedTechName: '박성호 마스터 (최단거리 자동추천)',
-    matchedPrice: 750000,
-    adminMemo: '최단거리 기사 자동 연결됨. 고객 직접 변경 가능.',
-    bids: [
-      {
-        bidId: 'BID-003',
-        techId: 'TECH-002',
-        techName: '박성호 마스터',
-        techAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-        techRating: 4.95,
-        bidPrice: 750000,
-        isClosest: true,
-        distanceText: '출장 예상거리 ~8.5km (최단거리 1순위)',
-        estimatedHours: '약 6시간',
-        message: '분당/판교 전담 시공팀입니다. 표준 정찰가 고정으로 완벽 복원해 드립니다.',
-        createdAt: '2026-09-02T14:20:00.000Z',
-        isAccepted: true
-      },
-      {
-        bidId: 'BID-004',
-        techId: 'TECH-003',
-        techName: '이진우 스페셜리스트',
-        techAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
-        techRating: 4.92,
-        bidPrice: 750000,
-        isClosest: false,
-        distanceText: '출장 예상거리 ~14km',
-        estimatedHours: '약 6시간',
-        message: '150도 고온 살균 스팀 및 가죽 코팅 장비를 보유하고 있어 실내외 완벽 복원이 가능합니다.',
-        createdAt: '2026-09-02T14:30:00.000Z',
-        isAccepted: false
-      }
-    ]
-  },
-  {
-    id: 'REQ-20260903-103',
-    createdAt: '2026-09-03T09:00:00.000Z',
-    customerName: '박준혁',
-    phone: '010-5512-8874',
-    carModel: '아반떼 N 라인',
-    carColor: '사이버 그레이',
-    serviceName: '본넷(후드) 집중 수성 광택 & 케어',
-    location: '인천 서구 청라동 제일풍경채 지하 주차장',
-    travelZone: 'zone1',
-    preferredDate: '2026-09-06',
-    preferredTime: '14:00',
-    notes: '워터스팟과 잔기스가 심해 본넷만 집중적으로 시공받고 싶습니다.',
-    hasOutlet: true,
-    isIndoor: true,
-    budget: 40000,
-    isStandardPrice: true,
-    status: 'MATCHED',
-    targetTechId: null,
-    targetTechName: null,
-    closestTechId: 'TECH-001',
-    matchedTechId: 'TECH-001',
-    matchedTechName: '김태진 마스터',
-    matchedPrice: 40000,
-    adminMemo: '청라 거점 김태진 마스터 최단거리 자동 매칭 완료.',
-    bids: [
-      {
-        bidId: 'BID-005',
-        techId: 'TECH-001',
-        techName: '김태진 마스터',
-        techAvatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80',
-        techRating: 4.98,
-        bidPrice: 40000,
-        isClosest: true,
-        distanceText: '출장 예상거리 ~2.1km (인천 청라 거점 최단거리)',
-        estimatedHours: '약 1.5시간',
-        message: '청라국제도시 전담 1급 마스터입니다. 본넷 집중 케어 표준 정찰가로 깨끗하게 복원해 드립니다.',
-        createdAt: '2026-09-03T09:05:00.000Z',
-        isAccepted: true
-      }
-    ]
-  }
-];
+const INITIAL_MATCH_REQUESTS = [];
 
 // ==================== 기술자(디테일러) 파트너 관리 ====================
 export const getTechnicians = () => {
   try {
     const raw = localStorage.getItem(TECHNICIANS_KEY);
     if (!raw) {
-      localStorage.setItem(TECHNICIANS_KEY, JSON.stringify(INITIAL_TECHNICIANS));
-      return INITIAL_TECHNICIANS;
+      localStorage.setItem(TECHNICIANS_KEY, JSON.stringify([]));
+      return [];
     }
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    
+    // 이전 더미 데이터(TECH-001~004 및 초기 테스트 이름) 자동 정리
+    const cleaned = parsed.filter(t => 
+      !['TECH-001', 'TECH-002', 'TECH-003', 'TECH-004'].includes(t.id) &&
+      !['김태진', '박성호', '이진우', '최원영'].includes(t.name)
+    );
+    if (cleaned.length !== parsed.length) {
+      localStorage.setItem(TECHNICIANS_KEY, JSON.stringify(cleaned));
+    }
+    return cleaned;
   } catch (e) {
     console.error('Failed to get technicians', e);
-    return INITIAL_TECHNICIANS;
+    return [];
   }
 };
 
 export const saveTechnician = (techData) => {
   const current = getTechnicians();
+  const phoneDigits = (techData.phone || '').replace(/\D/g, '');
+  const last4 = phoneDigits.slice(-4) || '1234';
+
   const newTech = {
-    id: `TECH-${String(current.length + 1).padStart(3, '0')}`,
+    id: `TECH-${Date.now().toString().slice(-6)}`,
     badge: '인증 파트너',
     verified: true,
     rating: 5.0,
@@ -195,8 +54,15 @@ export const saveTechnician = (techData) => {
     status: 'ACTIVE',
     acceptingOrders: true,
     portfolio: [],
-    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80',
-    coverImage: 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=800&q=80',
+    avatar: techData.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80',
+    coverImage: techData.coverImage || 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=800&q=80',
+    pin: techData.pin || last4,
+    experienceYears: Number(techData.experienceYears) || 1,
+    minPrice: Number(techData.minPrice) || 200000,
+    activeZones: Array.isArray(techData.activeZones) && techData.activeZones.length > 0 ? techData.activeZones : ['수도권 전지역'],
+    specialties: Array.isArray(techData.specialties) && techData.specialties.length > 0 ? techData.specialties : ['수성 듀얼 광택', '9H 세라믹 코팅'],
+    equipment: Array.isArray(techData.equipment) && techData.equipment.length > 0 ? techData.equipment : ['수성 전용 듀얼 광택기', '도막 측정기'],
+    baseLocation: techData.baseLocation || techData.region || '수도권',
     ...techData
   };
   const updated = [newTech, ...current];
@@ -218,9 +84,82 @@ export const deleteTechnician = (id) => {
   return updated;
 };
 
-// ==================== 고객 전용 로그인 & 자동로그인 관리 ====================
+// ==================== 고객 데이터 & 자동로그인 관리 ====================
+const CUSTOMERS_KEY = 'lumen_polish_customers';
 const CUSTOMER_SESSION_KEY = 'lumen_polish_cust_session';
 const CUSTOMER_REMEMBER_KEY = 'lumen_polish_cust_remember';
+
+const INITIAL_CUSTOMERS = [
+  {
+    id: 'CUST-001',
+    name: '김민준',
+    phone: '010-3849-2918',
+    carModel: '제네시스 G80 (우유니 화이트, 2023년식)',
+    defaultLocation: '인천 서구 청라국제도시 커낼로 123',
+    couponsCount: 2,
+    role: 'VIP'
+  },
+  {
+    id: 'CUST-002',
+    name: '이서연',
+    phone: '010-9182-4411',
+    carModel: 'BMW 520d (카본 블랙, 2022년식)',
+    defaultLocation: '인천 송도국제도시 센트럴로 456',
+    couponsCount: 1,
+    role: '우수'
+  },
+  {
+    id: 'CUST-003',
+    name: '박도현',
+    phone: '010-4421-9981',
+    carModel: '아반떼 N (퍼포먼스 블루, 2024년식)',
+    defaultLocation: '서울 강남구 역삼동 테헤란로 789',
+    couponsCount: 3,
+    role: 'VIP'
+  }
+];
+
+export const getCustomers = () => {
+  try {
+    const raw = localStorage.getItem(CUSTOMERS_KEY);
+    if (!raw) {
+      localStorage.setItem(CUSTOMERS_KEY, JSON.stringify(INITIAL_CUSTOMERS));
+      return INITIAL_CUSTOMERS;
+    }
+    return JSON.parse(raw);
+  } catch (e) {
+    return INITIAL_CUSTOMERS;
+  }
+};
+
+export const findOrCreateCustomer = (name, phone, additionalInfo = {}) => {
+  const currentList = getCustomers();
+  const cleanPhone = phone.trim().replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+  const digitsOnly = cleanPhone.replace(/\D/g, '');
+
+  const existing = currentList.find(c => (c.phone || '').replace(/\D/g, '') === digitsOnly);
+  if (existing) {
+    const updatedCustomer = { ...existing, name: name.trim() || existing.name, ...additionalInfo };
+    const updatedList = currentList.map(c => c.id === existing.id ? updatedCustomer : c);
+    localStorage.setItem(CUSTOMERS_KEY, JSON.stringify(updatedList));
+    return updatedCustomer;
+  }
+
+  const newCust = {
+    id: `CUST-${Date.now().toString().slice(-4)}`,
+    name: name.trim() || '고객님',
+    phone: cleanPhone,
+    carModel: additionalInfo.carModel || '제네시스 G80 (우유니 화이트)',
+    defaultLocation: additionalInfo.defaultLocation || '인천 서구 청라동 루멘아파트',
+    couponsCount: 2,
+    role: '일반회원',
+    createdAt: new Date().toISOString()
+  };
+
+  const updated = [newCust, ...currentList];
+  localStorage.setItem(CUSTOMERS_KEY, JSON.stringify(updated));
+  return newCust;
+};
 
 export const getLoggedInCustomer = () => {
   try {
@@ -241,13 +180,8 @@ export const getLoggedInCustomer = () => {
   }
 };
 
-export const loginCustomer = (name, phone, rememberMe = false) => {
-  const cleanPhone = phone.trim().replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
-  const customer = {
-    name: name.trim() || '고객님',
-    phone: cleanPhone,
-    loggedInAt: new Date().toISOString()
-  };
+export const loginCustomer = (name, phone, rememberMe = false, additionalInfo = {}) => {
+  const customer = findOrCreateCustomer(name, phone, additionalInfo);
 
   // Always store in current session
   sessionStorage.setItem(CUSTOMER_SESSION_KEY, JSON.stringify(customer));
@@ -260,6 +194,18 @@ export const loginCustomer = (name, phone, rememberMe = false) => {
   }
 
   return customer;
+};
+
+export const updateCustomerProfile = (updatedInfo) => {
+  const current = getLoggedInCustomer();
+  if (!current) return null;
+  const merged = { ...current, ...updatedInfo };
+  findOrCreateCustomer(merged.name, merged.phone, merged);
+  sessionStorage.setItem(CUSTOMER_SESSION_KEY, JSON.stringify(merged));
+  if (localStorage.getItem(CUSTOMER_REMEMBER_KEY)) {
+    localStorage.setItem(CUSTOMER_REMEMBER_KEY, JSON.stringify(merged));
+  }
+  return merged;
 };
 
 export const logoutCustomer = () => {
@@ -367,11 +313,11 @@ export const saveMatchRequest = (requestData) => {
 
   // 1. 고객 위치/권역 기준 가장 가까운 기술자 목록 계산
   const proximityTechs = getTechniciansByProximity(requestData.travelZone, requestData.location, technicians);
-  const closestTech = proximityTechs[0] || technicians[0];
+  const closestTech = proximityTechs[0] || technicians[0] || null;
   
   // 지정 기사가 있으면 지정 기사 우선, 없으면 최단거리 기사 자동 배정
   const targetTech = requestData.targetTechId 
-    ? technicians.find(t => t.id === requestData.targetTechId) 
+    ? (technicians.find(t => t.id === requestData.targetTechId) || closestTech)
     : closestTech;
 
   // 2. 제도화된 표준 정찰가 고정 (오버차지 방지)
@@ -392,7 +338,7 @@ export const saveMatchRequest = (requestData) => {
       ? `고객님 주소지와 가장 인접한 전담 마스터입니다. 플랫폼 제도화 표준 정찰가(${standardPrice.toLocaleString()}원)로 과다 청구 없이 완벽 시공해 드립니다.` 
       : `표준 작업 공정 및 정찰 가격 준수 시공을 보증합니다.`,
     createdAt: new Date().toISOString(),
-    isAccepted: tech.id === targetTech.id
+    isAccepted: targetTech ? tech.id === targetTech.id : idx === 0
   }));
 
   const newRequest = {
@@ -400,13 +346,13 @@ export const saveMatchRequest = (requestData) => {
     createdAt: new Date().toISOString(),
     status: 'BIDDING',
     isStandardPrice: true,
-    adminMemo: requestData.targetTechId 
-      ? `고객 직접 지정: ${targetTech.name} 프로` 
-      : `최단거리 1순위 자동 추천: ${closestTech.name} 프로 (${closestTech.region})`,
+    adminMemo: targetTech 
+      ? (requestData.targetTechId ? `고객 직접 지정: ${targetTech.name} 프로` : `최단거리 1순위 자동 추천: ${targetTech.name} 프로 (${targetTech.region || ''})`)
+      : '신규 의뢰 접수 완료 (파트너 기사 배정 대기)',
     bids: generatedBids,
-    closestTechId: closestTech.id,
-    matchedTechId: targetTech.id,
-    matchedTechName: targetTech.name,
+    closestTechId: closestTech ? closestTech.id : null,
+    matchedTechId: targetTech ? targetTech.id : null,
+    matchedTechName: targetTech ? `${targetTech.name} 프로` : '배정 대기중',
     matchedPrice: standardPrice,
     budget: standardPrice,
     ...requestData,
@@ -429,7 +375,7 @@ export const saveMatchRequest = (requestData) => {
     notes: newRequest.notes,
     estimatedPrice: standardPrice,
     status: '접수대기',
-    adminMemo: `[표준정찰가] 매칭기사: ${targetTech.name}`
+    adminMemo: targetTech ? `[표준정찰가] 매칭기사: ${targetTech.name}` : '[표준정찰가] 신규 의뢰 접수'
   });
 
   return newRequest;
@@ -522,6 +468,27 @@ export const updateMatchStatus = (requestId, newStatus) => {
   const current = getMatchRequests();
   const updated = current.map(req => req.id === requestId ? { ...req, status: newStatus } : req);
   localStorage.setItem(MATCH_REQUESTS_KEY, JSON.stringify(updated));
+
+  // Sync to bookings
+  try {
+    const statusMap = {
+      'OPEN': '접수대기',
+      'BIDDING': '접수대기',
+      'MATCHED': '확정',
+      'IN_PROGRESS': '시공중',
+      'COMPLETED': '완료'
+    };
+    const rawBookings = localStorage.getItem(BOOKINGS_KEY);
+    if (rawBookings) {
+      const parsedBookings = JSON.parse(rawBookings);
+      const updatedBookings = parsedBookings.map(b => b.id === requestId ? { ...b, status: statusMap[newStatus] || b.status } : b);
+      localStorage.setItem(BOOKINGS_KEY, JSON.stringify(updatedBookings));
+    }
+  } catch (e) {
+    console.warn('Booking sync failed', e);
+  }
+
+  window.dispatchEvent(new Event('storage'));
   return updated;
 };
 
@@ -689,6 +656,26 @@ export const saveGoogleWebhookUrl = (url) => {
 
 // ==================== 명함 프로필 정보 ====================
 export const getCardProfile = () => {
+  const loggedInTech = getLoggedInTechnician();
+  if (loggedInTech) {
+    return {
+      shopName: `${loggedInTech.name} 마스터 디테일러`,
+      englishName: 'LUMEN PRO CERTIFIED DETAIL',
+      ownerName: `${loggedInTech.name} 프로`,
+      title: loggedInTech.badge || '수도권 출장 광택 & 코팅 전문가',
+      phone: loggedInTech.phone || '010-0000-0000',
+      email: 'lumenpro@gmail.com',
+      location: loggedInTech.region ? `${loggedInTech.region} (${(loggedInTech.activeZones || []).join(', ')})` : '수도권 전지역 출장',
+      services: (loggedInTech.specialties || ['수성 듀얼 광택', '9H 세라믹 코팅']).join(' · '),
+      instagram: '@lumen_detailing',
+      bankAccount: '국민은행 123456-04-123456 (루멘)',
+      qrType: 'url',
+      qrCustomText: window.location.origin,
+      theme: 'carbon-dark',
+      accentTag: loggedInTech.introduction || '검증된 1:1 맞춤 출장 디테일링 전문가 매칭'
+    };
+  }
+
   const saved = localStorage.getItem(CARD_PROFILE_KEY);
   if (saved) {
     try {
@@ -700,9 +687,9 @@ export const getCardProfile = () => {
   return {
     shopName: '루멘 프로 매치',
     englishName: 'LUMEN PRO MATCH & DETAILING',
-    ownerName: '김태진 마스터 디테일러',
-    title: '수도권 수성 듀얼 광택 & 유리막 코팅 전문가',
-    phone: '010-8472-1928',
+    ownerName: '루멘 공인 마스터 디테일러',
+    title: '수도권 수성 듀얼 광택 & 유리막 코팅 전문가 매칭',
+    phone: '1588-0000',
     email: 'lumenpro@gmail.com',
     location: '수도권 전지역 출장 (인천/서울/경기)',
     services: '수성듀얼광택 · 9H유리막코팅 · 실내크리닝 · 유막제거',

@@ -14,18 +14,21 @@ export const TechnicianExplorer = ({ technicians, onRequestToTech, onOpenRegiste
   const [sortBy, setSortBy] = useState('rating'); // 'rating' | 'jobs' | 'reviews'
 
   const filteredTechnicians = useMemo(() => {
-    return technicians.filter(tech => {
-      const matchRegion = selectedRegion === '전체 지역' || tech.region.includes(selectedRegion.replace('전체 지역', '')) || tech.activeZones.some(z => z.includes(selectedRegion.split('/')[0]));
-      const matchSpecialty = selectedSpecialty === '전체' || tech.specialties.includes(selectedSpecialty);
+    return (technicians || []).filter(tech => {
+      const matchRegion = selectedRegion === '전체 지역' || 
+        (tech.region && tech.region.includes(selectedRegion.replace('전체 지역', ''))) || 
+        (tech.activeZones && tech.activeZones.some(z => z.includes(selectedRegion.split('/')[0])));
+      const matchSpecialty = selectedSpecialty === '전체' || 
+        (tech.specialties && tech.specialties.includes(selectedSpecialty));
       const matchSearch = searchQuery === '' || 
-        tech.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tech.region.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tech.specialties.some(s => s.toLowerCase().includes(searchQuery.toLowerCase()));
+        (tech.name && tech.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (tech.region && tech.region.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (tech.specialties && tech.specialties.some(s => s.toLowerCase().includes(searchQuery.toLowerCase())));
       return matchRegion && matchSpecialty && matchSearch;
     }).sort((a, b) => {
-      if (sortBy === 'rating') return b.rating - a.rating;
-      if (sortBy === 'jobs') return b.completedJobs - a.completedJobs;
-      if (sortBy === 'reviews') return b.reviewCount - a.reviewCount;
+      if (sortBy === 'rating') return (b.rating || 5.0) - (a.rating || 5.0);
+      if (sortBy === 'jobs') return (b.completedJobs || 0) - (a.completedJobs || 0);
+      if (sortBy === 'reviews') return (b.reviewCount || 0) - (a.reviewCount || 0);
       return 0;
     });
   }, [technicians, selectedRegion, selectedSpecialty, searchQuery, sortBy]);
@@ -222,13 +225,30 @@ export const TechnicianExplorer = ({ technicians, onRequestToTech, onOpenRegiste
         ))}
       </div>
 
-      {filteredTechnicians.length === 0 && (
+      {technicians.length === 0 ? (
+        <div className="text-center py-16 px-6 glass-card rounded-3xl border border-cyan-500/20 bg-gradient-to-b from-slate-900/90 to-[#0c121e]">
+          <div className="w-16 h-16 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center mx-auto mb-4 text-cyan-400">
+            <Award className="w-8 h-8" />
+          </div>
+          <h3 className="text-lg sm:text-xl font-bold text-white">등록된 기사 파트너를 직접 등록해보세요</h3>
+          <p className="text-xs sm:text-sm text-slate-400 mt-2 max-w-md mx-auto">
+            현재 등록된 더미 기사 데이터가 모두 제거되었습니다. 아래 버튼을 눌러 실제 기사 정보를 등록하시면 실시간으로 탐색 및 매칭에 반영됩니다.
+          </p>
+          <button
+            onClick={onOpenRegisterModal}
+            className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-cyan-500/30 transition-all hover:scale-105 active:scale-95"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>첫 번째 파트너 기사 직접 등록하기</span>
+          </button>
+        </div>
+      ) : filteredTechnicians.length === 0 ? (
         <div className="text-center py-16 glass-card rounded-2xl border border-white/10">
           <Search className="w-10 h-10 text-slate-600 mx-auto mb-3" />
           <p className="text-slate-300 font-semibold">조건에 맞는 디테일러 프로를 찾지 못했습니다.</p>
           <p className="text-xs text-slate-500 mt-1">지역 또는 시공 분야 필터를 변경해 보세요.</p>
         </div>
-      )}
+      ) : null}
 
       {/* Partner Registration Banner */}
       <div className="mt-14 glass-card rounded-2xl border border-cyan-500/30 p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 bg-gradient-to-r from-cyan-950/40 via-blue-950/30 to-slate-900/60">

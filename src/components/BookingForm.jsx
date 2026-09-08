@@ -18,18 +18,6 @@ const ZONE_FEES = {
   zone4: { id: 'zone4', name: '4권역 (경기 외곽/평택/이천 및 기타 장거리)', fee: 50000, text: '상담 후 협의' }
 };
 
-const DEFAULT_FALLBACK_TECH = {
-  id: 'TECH-001',
-  name: '김태진',
-  phone: '010-8821-4920',
-  region: '인천/서부권',
-  baseLocation: '인천 서구 청라국제도시',
-  badge: '마스터 디테일러',
-  rating: 4.98,
-  reviewCount: 142,
-  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'
-};
-
 export const BookingForm = ({ preselectedService, preselectedPrice, targetTech, onClearTargetTech, onOpenTracker }) => {
   const [technicians, setTechnicians] = useState(() => getTechnicians());
   const [selectedTechId, setSelectedTechId] = useState(targetTech?.id || 'AUTO_CLOSEST');
@@ -61,9 +49,7 @@ export const BookingForm = ({ preselectedService, preselectedPrice, targetTech, 
 
   useEffect(() => {
     const loaded = getTechnicians();
-    if (loaded && loaded.length > 0) {
-      setTechnicians(loaded);
-    }
+    setTechnicians(loaded || []);
   }, []);
 
   useEffect(() => {
@@ -102,9 +88,9 @@ export const BookingForm = ({ preselectedService, preselectedPrice, targetTech, 
     });
   }, [preselectedService, preselectedPrice]);
 
-  // Calculate closest technician for live preview with safe fallbacks
-  const closestTechnicians = getTechniciansByProximity(formData.travelZone, formData.location, technicians.length > 0 ? technicians : [DEFAULT_FALLBACK_TECH]);
-  const primaryClosestTech = closestTechnicians[0] || technicians[0] || DEFAULT_FALLBACK_TECH;
+  // Calculate closest technician for live preview with safe dynamic matching
+  const closestTechnicians = getTechniciansByProximity(formData.travelZone, formData.location, technicians);
+  const primaryClosestTech = closestTechnicians[0] || technicians[0] || null;
   const activeAssignedTech = selectedTechId === 'AUTO_CLOSEST' 
     ? primaryClosestTech 
     : (technicians.find(t => t.id === selectedTechId) || primaryClosestTech);
@@ -164,6 +150,8 @@ export const BookingForm = ({ preselectedService, preselectedPrice, targetTech, 
       const finalTech = activeAssignedTech;
       const finalName = custName || formData.customerName;
       const finalPhone = custPhone || formData.phone;
+      const finalTechName = finalTech ? `${finalTech.name} 프로` : '기사 배정 대기중';
+      const finalTechAvatar = finalTech?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80';
 
       // 1. 중개 의뢰 데이터 로컬스토리지 저장 (표준 정찰가 + 최단거리/선택 기사 연결)
       const newRequest = saveMatchRequest({
@@ -182,8 +170,10 @@ export const BookingForm = ({ preselectedService, preselectedPrice, targetTech, 
         isIndoor: formData.isIndoor,
         budget: formData.estimatedPrice,
         estimatedPrice: formData.estimatedPrice,
-        targetTechId: selectedTechId === 'AUTO_CLOSEST' ? null : finalTech.id,
-        targetTechName: selectedTechId === 'AUTO_CLOSEST' ? `${finalTech.name} 프로 (최단거리 자동추천)` : `${finalTech.name} 프로 (고객직접선택)`
+        targetTechId: finalTech?.id || null,
+        targetTechName: finalTech 
+          ? (selectedTechId === 'AUTO_CLOSEST' ? `${finalTech.name} 프로 (최단거리 자동추천)` : `${finalTech.name} 프로 (고객직접선택)`)
+          : '최단거리 기사 배정 대기'
       });
 
       // 2. 구글 스프레드시트 웹훅 전송 시도
@@ -193,7 +183,7 @@ export const BookingForm = ({ preselectedService, preselectedPrice, targetTech, 
           customerName: finalName,
           phone: finalPhone,
           id: newRequest.id,
-          targetTech: finalTech.name,
+          targetTech: finalTech?.name || '배정 대기',
           estimatedPrice: formData.estimatedPrice
         });
       } catch (err) {
@@ -210,11 +200,14 @@ export const BookingForm = ({ preselectedService, preselectedPrice, targetTech, 
       setSubmitResult({
         success: true,
         requestId: newRequest.id,
-        matchedTechName: finalTech.name,
-        matchedTechAvatar: finalTech.avatar,
+        matchedTechName: finalTech?.name || '최단거리 기사 배정 대기',
+        matchedTechAvatar: finalTechAvatar,
         isClosest: selectedTechId === 'AUTO_CLOSEST',
         finalPrice: formData.estimatedPrice
       });
+
+      // Storage event dispatch to notify all listeners
+      window.dispatchEvent(new Event('storage'));
 
     } catch (err) {
       console.error(err);
@@ -521,7 +514,11 @@ export const BookingForm = ({ preselectedService, preselectedPrice, targetTech, 
                   </div>
                   <p className="text-xs font-extrabold text-white mt-1">📍 고객 위치 최단거리 기사</p>
                   <p className="text-[11px] text-slate-300 mt-0.5">
-                    현재 1순위: <strong>{primaryClosestTech?.name || '김태진'} 프로</strong> ({primaryClosestTech?.region || '인천/서부권'})
+                    {primaryClosestTech ? (
+                      <>현재 1순위: <strong>{primaryClosestTech.name} 프로</strong> ({primaryClosestTech.region || primaryClosestTech.baseLocation})</>
+                    ) : (
+                      <>접수 후 최단거리 인증 기사 1순위 자동 매칭</>
+                    )}
                   </p>
                 </button>
 
@@ -537,13 +534,13 @@ export const BookingForm = ({ preselectedService, preselectedPrice, targetTech, 
                     }`}
                   >
                     <img src={tech.avatar} alt={tech.name} className="w-9 h-9 rounded-lg object-cover border border-cyan-400 shrink-0" />
-                    <div>
+                    <div className="overflow-hidden">
                       <div className="flex items-center gap-1">
-                        <span className="text-xs font-bold text-white">{tech.name}</span>
-                        <span className="text-[10px] text-amber-400">★{tech.rating}</span>
+                        <span className="text-xs font-bold text-white truncate">{tech.name}</span>
+                        <span className="text-[10px] text-amber-400">★{tech.rating || 5.0}</span>
                       </div>
-                      <p className="text-[10px] text-slate-400 truncate">{tech.region}</p>
-                      <p className="text-[10px] text-cyan-300 font-semibold">{tech.badge}</p>
+                      <p className="text-[10px] text-slate-400 truncate">{tech.baseLocation || tech.region}</p>
+                      <p className="text-[10px] text-cyan-300 font-semibold">{tech.badge || '인증 프로'}</p>
                     </div>
                   </button>
                 ))}
@@ -552,14 +549,29 @@ export const BookingForm = ({ preselectedService, preselectedPrice, targetTech, 
               {/* Connected Tech Summary Banner */}
               <div className="bg-slate-900/80 p-3 rounded-xl border border-white/5 flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2.5">
-                  <img src={activeAssignedTech?.avatar || DEFAULT_FALLBACK_TECH.avatar} alt={activeAssignedTech?.name || '디테일러'} className="w-8 h-8 rounded-full object-cover border border-cyan-500" />
-                  <div>
-                    <span className="text-slate-400">매칭 예정 기술자: </span>
-                    <strong className="text-white">{activeAssignedTech?.name || '김태진'} 프로</strong>
-                    <span className="text-slate-400 ml-1">({activeAssignedTech?.baseLocation || activeAssignedTech?.region || '인천 청라 거점'})</span>
-                  </div>
+                  {activeAssignedTech ? (
+                    <>
+                      <img src={activeAssignedTech.avatar} alt={activeAssignedTech.name} className="w-8 h-8 rounded-full object-cover border border-cyan-500" />
+                      <div>
+                        <span className="text-slate-400">매칭 예정 기술자: </span>
+                        <strong className="text-white">{activeAssignedTech.name} 프로</strong>
+                        <span className="text-slate-400 ml-1">({activeAssignedTech.baseLocation || activeAssignedTech.region})</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center font-bold text-xs">
+                        🛡️
+                      </div>
+                      <div>
+                        <span className="text-slate-400">매칭 상태: </span>
+                        <strong className="text-white">실시간 최적 기사 자동 배정</strong>
+                        <span className="text-slate-400 ml-1">(인접 권역 기사 우선 연결)</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <span className="text-emerald-400 font-bold text-[11px]">
+                <span className="text-emerald-400 font-bold text-[11px] shrink-0">
                   🛡️ 오버차지 0원 보증
                 </span>
               </div>

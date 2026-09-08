@@ -9,15 +9,15 @@ export const MobileTechniciansTab = ({ technicians, onSelectTechForBooking }) =>
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('proximity'); // 'proximity' | 'rating' | 'jobs'
 
-  const filtered = technicians.filter(tech => {
-    const matchRegion = selectedRegion === 'ALL' || tech.region.includes(selectedRegion);
+  const filtered = (technicians || []).filter(tech => {
+    const matchRegion = selectedRegion === 'ALL' || (tech.region && tech.region.includes(selectedRegion));
     const matchSearch = searchQuery === '' || 
-      tech.name.includes(searchQuery) ||
-      tech.region.includes(searchQuery) ||
-      tech.specialties?.some(s => s.includes(searchQuery));
+      (tech.name && tech.name.includes(searchQuery)) ||
+      (tech.region && tech.region.includes(searchQuery)) ||
+      (tech.specialties && tech.specialties.some(s => s.includes(searchQuery)));
     return matchRegion && matchSearch;
   }).sort((a, b) => {
-    if (sortBy === 'rating') return b.rating - a.rating;
+    if (sortBy === 'rating') return (b.rating || 5.0) - (a.rating || 5.0);
     if (sortBy === 'jobs') return (b.completedJobs || 0) - (a.completedJobs || 0);
     return 0; // proximity default
   });
@@ -106,9 +106,9 @@ export const MobileTechniciansTab = ({ technicians, onSelectTechForBooking }) =>
                     <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-1">
                       <span className="text-amber-400 font-bold flex items-center gap-0.5">
                         <Star className="w-3 h-3 fill-amber-400" />
-                        {tech.rating}
+                        {tech.rating || 5.0}
                       </span>
-                      <span>({tech.reviewCount || 120}개 리뷰)</span>
+                      <span>({tech.reviewCount || 0}개 리뷰)</span>
                       <span>• 경력 {tech.experienceYears}년</span>
                     </div>
 
@@ -136,9 +136,11 @@ export const MobileTechniciansTab = ({ technicians, onSelectTechForBooking }) =>
               </div>
 
               {/* Intro quote */}
-              <p className="text-[11px] text-slate-300 bg-slate-950/60 p-2.5 rounded-xl border border-white/5 leading-relaxed">
-                "{tech.introduction}"
-              </p>
+              {tech.introduction && (
+                <p className="text-[11px] text-slate-300 bg-slate-950/60 p-2.5 rounded-xl border border-white/5 leading-relaxed">
+                  "{tech.introduction}"
+                </p>
+              )}
 
               {/* Regulated Price Guarantee Banner */}
               <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[11px]">
@@ -153,8 +155,10 @@ export const MobileTechniciansTab = ({ technicians, onSelectTechForBooking }) =>
         })}
 
         {filtered.length === 0 && (
-          <div className="text-center py-12 glass-card rounded-2xl border border-white/10 text-slate-400 text-xs">
-            조건에 맞는 기술자가 없습니다. 검색어를 변경해 보세요.
+          <div className="text-center py-12 glass-card rounded-2xl border border-white/10 text-slate-400 text-xs px-4">
+            {technicians && technicians.length > 0
+              ? '조건에 맞는 기술자가 없습니다. 검색어를 변경해 보세요.'
+              : '현재 등록된 기사가 없습니다. 신규 파트너 기사를 등록하면 이곳에 실시간 표시됩니다.'}
           </div>
         )}
       </div>

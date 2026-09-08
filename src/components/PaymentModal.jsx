@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, CreditCard, ShieldCheck, CheckCircle2, Lock, 
-  Smartphone, Building, Sparkles, Printer, ArrowRight
+  Smartphone, Building, Sparkles, Printer, ArrowRight, FileText
 } from 'lucide-react';
 import { calculateSettlement } from '../utils/settlement';
 import confetti from 'canvas-confetti';
@@ -12,9 +12,31 @@ export const PaymentModal = ({ isOpen, onClose, request, onPaymentSuccess }) => 
   const [isPaid, setIsPaid] = useState(false);
   const [receiptData, setReceiptData] = useState(null);
 
+  // Sync state whenever request or modal open changes
+  useEffect(() => {
+    if (request && isOpen) {
+      if (request.isPaid) {
+        setIsPaid(true);
+        setReceiptData(request.paymentReceipt || {
+          receiptNo: `RC-${(request.id || '').replace(/\D/g, '') || Date.now()}`,
+          paidAt: request.paidAt ? new Date(request.paidAt).toLocaleString('ko-KR') : new Date().toLocaleString('ko-KR'),
+          amount: Number(request.matchedPrice || request.budget || request.estimatedPrice || 343000),
+          method: '신용/체크카드 (안심결제)',
+          carModel: request.carModel,
+          serviceName: request.serviceName,
+          customerName: request.customerName,
+          techName: request.matchedTechName || '루멘 인증 전담 마스터'
+        });
+      } else {
+        setIsPaid(false);
+        setReceiptData(null);
+      }
+    }
+  }, [request, isOpen]);
+
   if (!isOpen || !request) return null;
 
-  const totalAmount = Number(request.matchedPrice || request.budget || request.estimatedPrice || 350000);
+  const totalAmount = Number(request.matchedPrice || request.budget || request.estimatedPrice || 343000);
   const settlement = calculateSettlement(totalAmount);
 
   const handleProcessPayment = (e) => {
@@ -33,7 +55,7 @@ export const PaymentModal = ({ isOpen, onClose, request, onPaymentSuccess }) => 
         carModel: request.carModel,
         serviceName: request.serviceName,
         customerName: request.customerName,
-        techName: request.matchedTechName || '루멘 전담 마스터'
+        techName: request.matchedTechName || '루멘 인증 전담 마스터'
       };
 
       setReceiptData(receipt);
@@ -47,7 +69,7 @@ export const PaymentModal = ({ isOpen, onClose, request, onPaymentSuccess }) => 
       if (onPaymentSuccess) {
         onPaymentSuccess(request.id, receipt);
       }
-    }, 1200);
+    }, 1000);
   };
 
   const handlePrint = () => {
@@ -75,7 +97,7 @@ export const PaymentModal = ({ isOpen, onClose, request, onPaymentSuccess }) => 
                 <span>플랫폼 안심 에스크로 결제</span>
               </div>
               <h3 className="text-xl sm:text-2xl font-black text-white">
-                출장 시공 대금 결제
+                출장 시공 대금 결제 진행
               </h3>
               <p className="text-xs sm:text-sm text-slate-300 mt-1">
                 시공 퀄리티 검수 완료 후 안심 결제를 진행해 주세요.
@@ -191,7 +213,7 @@ export const PaymentModal = ({ isOpen, onClose, request, onPaymentSuccess }) => 
                 <button
                   type="submit"
                   disabled={isProcessing}
-                  className="flex-2 py-3.5 px-6 rounded-xl bg-gradient-to-r from-cyan-500 via-cyan-400 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-cyan-500/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="flex-2 py-3.5 px-6 rounded-xl bg-gradient-to-r from-cyan-500 via-cyan-400 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-cyan-500/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
                 >
                   {isProcessing ? (
                     <span>안심 결제 승인 중...</span>
@@ -208,49 +230,57 @@ export const PaymentModal = ({ isOpen, onClose, request, onPaymentSuccess }) => 
           </div>
         ) : (
           /* Receipt Screen */
-          <div className="py-4 space-y-6 animate-fadeIn">
+          <div className="py-2 space-y-6 animate-fadeIn">
             <div className="text-center space-y-2">
-              <div className="w-14 h-14 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto border border-emerald-400">
+              <div className="w-14 h-14 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto border-2 border-emerald-400 shadow-lg shadow-emerald-500/20">
                 <CheckCircle2 className="w-8 h-8" />
               </div>
-              <h3 className="text-xl font-black text-white">결제가 완료되었습니다!</h3>
-              <p className="text-xs text-slate-400">전자 영수증이 정상 발급되었습니다.</p>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold">
+                <FileText className="w-3.5 h-3.5" />
+                <span>결제 완료 · 전자 영수증</span>
+              </div>
+              <h3 className="text-xl sm:text-2xl font-black text-white">결제가 완료되었습니다!</h3>
+              <p className="text-xs text-slate-400">정상 승인된 전자 영수증 내역입니다.</p>
             </div>
 
             {/* Receipt Box */}
-            <div className="bg-slate-950 p-5 rounded-2xl border border-dashed border-slate-700 space-y-3 font-mono text-xs text-slate-300">
+            <div className="bg-slate-950 p-5 rounded-2xl border border-dashed border-cyan-500/40 space-y-3 font-mono text-xs text-slate-300 shadow-inner">
               <div className="text-center pb-3 border-b border-dashed border-slate-800">
-                <p className="font-extrabold text-white text-sm tracking-wider font-sans">LUMEN PRO MATCH 영수증</p>
-                <p className="text-[10px] text-slate-500 mt-0.5">승인번호: {receiptData?.receiptNo}</p>
+                <p className="font-extrabold text-white text-base tracking-wider font-sans">LUMEN PRO MATCH 영수증</p>
+                <p className="text-[10px] text-cyan-400 mt-0.5">승인번호: {receiptData?.receiptNo || `RC-${Date.now()}`}</p>
               </div>
 
-              <div className="space-y-1.5 text-[11px]">
+              <div className="space-y-2 text-[12px]">
                 <div className="flex justify-between">
                   <span className="text-slate-500 font-sans">결제일시</span>
-                  <span>{receiptData?.paidAt}</span>
+                  <span className="text-slate-200">{receiptData?.paidAt || new Date().toLocaleString('ko-KR')}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500 font-sans">결제수단</span>
-                  <span className="text-cyan-400">{receiptData?.method}</span>
+                  <span className="text-cyan-400 font-bold">{receiptData?.method || '신용/체크카드 (안심결제)'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500 font-sans">시공차량</span>
-                  <span className="text-white">{receiptData?.carModel}</span>
+                  <span className="text-white font-semibold">{receiptData?.carModel || request.carModel}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500 font-sans">시공항목</span>
-                  <span className="text-white">{receiptData?.serviceName}</span>
+                  <span className="text-cyan-300 font-semibold">{receiptData?.serviceName || request.serviceName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500 font-sans">고객성함</span>
+                  <span className="text-white font-semibold">{receiptData?.customerName || request.customerName}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500 font-sans">담당기술자</span>
-                  <span>{receiptData?.techName}</span>
+                  <span className="text-emerald-400 font-semibold">{receiptData?.techName || request.matchedTechName || '루멘 인증 마스터'}</span>
                 </div>
               </div>
 
               <div className="pt-3 border-t border-dashed border-slate-800 flex justify-between items-baseline font-sans">
-                <span className="font-bold text-white text-sm">승인 금액</span>
-                <span className="text-xl font-black text-emerald-400">
-                  {receiptData?.amount.toLocaleString()}원
+                <span className="font-bold text-slate-300 text-sm">승인 금액 (표준정찰가)</span>
+                <span className="text-2xl font-black text-emerald-400">
+                  {Number(receiptData?.amount || totalAmount).toLocaleString()}원
                 </span>
               </div>
             </div>
@@ -258,15 +288,17 @@ export const PaymentModal = ({ isOpen, onClose, request, onPaymentSuccess }) => 
             {/* Receipt Actions */}
             <div className="flex items-center gap-3">
               <button
+                type="button"
                 onClick={handlePrint}
-                className="flex-1 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center justify-center gap-1.5 border border-white/10"
+                className="flex-1 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center justify-center gap-1.5 border border-white/10 transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
-                <Printer className="w-3.5 h-3.5 text-cyan-400" />
+                <Printer className="w-4 h-4 text-cyan-400" />
                 <span>영수증 인쇄/저장</span>
               </button>
               <button
+                type="button"
                 onClick={onClose}
-                className="flex-1 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs shadow-lg shadow-cyan-500/20"
+                className="flex-1 py-3.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-cyan-500/25 transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
                 확인 완료
               </button>

@@ -46,7 +46,7 @@ export const MobileQuickBookingSheet = ({ isOpen, onClose, preselectedTech, onBo
 
   const allTechs = getTechnicians();
   const closestTechs = getTechniciansByProximity(selectedZone, location, allTechs);
-  const matchedTech = preselectedTech || closestTechs[0] || allTechs[0];
+  const matchedTech = preselectedTech || closestTechs[0] || allTechs[0] || null;
 
   const zoneFee = (selectedService.price >= 200000 || selectedZone === 'zone1') ? 0 : (ZONE_OPTIONS.find(z => z.id === selectedZone)?.fee || 0);
   const totalPrice = selectedService.price + zoneFee;
@@ -70,8 +70,8 @@ export const MobileQuickBookingSheet = ({ isOpen, onClose, preselectedTech, onBo
         preferredTime,
         budget: totalPrice,
         estimatedPrice: totalPrice,
-        targetTechId: matchedTech.id,
-        targetTechName: `${matchedTech.name} 프로`,
+        targetTechId: matchedTech?.id || null,
+        targetTechName: matchedTech ? `${matchedTech.name} 프로` : null,
         hasOutlet: true,
         isIndoor: true,
         notes: '모바일 간편 의뢰 접수'
@@ -85,7 +85,7 @@ export const MobileQuickBookingSheet = ({ isOpen, onClose, preselectedTech, onBo
 
       if (onBookingComplete) onBookingComplete(newReq);
       onClose();
-      alert(`🎉 [${selectedService.name}] 출장 시공 의뢰가 접수되었습니다!\n담당 기사 [${matchedTech.name} 프로]님과 1순위로 자동 매칭되었습니다.`);
+      alert(`🎉 [${selectedService.name}] 출장 시공 의뢰가 접수되었습니다!${matchedTech ? `\n담당 기사 [${matchedTech.name} 프로]님과 1순위로 자동 매칭되었습니다.` : '\n접수 확인 후 최단거리 파트너 기사가 즉시 배정됩니다.'}`);
     } catch (err) {
       console.error(err);
       alert('주문 접수 중 오류가 발생했습니다.');
@@ -304,22 +304,30 @@ export const MobileQuickBookingSheet = ({ isOpen, onClose, preselectedTech, onBo
                 <span>고객님 위치 기준 1순위 최단거리 기사 자동 연결</span>
               </div>
 
-              <div className="flex items-center gap-3">
-                <img 
-                  src={matchedTech.avatar} 
-                  alt={matchedTech.name} 
-                  className="w-12 h-12 rounded-xl object-cover border-2 border-cyan-400"
-                />
-                <div>
-                  <h4 className="font-extrabold text-white text-sm">{matchedTech.name} 프로</h4>
-                  <p className="text-[11px] text-slate-300">거점: {matchedTech.baseLocation} (경력 {matchedTech.experienceYears}년)</p>
-                  <p className="text-[10px] text-amber-400 font-bold">★ {matchedTech.rating} (후기 {matchedTech.reviewCount}개)</p>
+              {matchedTech ? (
+                <div className="flex items-center gap-3">
+                  <img 
+                    src={matchedTech.avatar} 
+                    alt={matchedTech.name} 
+                    className="w-12 h-12 rounded-xl object-cover border-2 border-cyan-400"
+                  />
+                  <div>
+                    <h4 className="font-extrabold text-white text-sm">{matchedTech.name} 프로</h4>
+                    <p className="text-[11px] text-slate-300">거점: {matchedTech.baseLocation || matchedTech.region} (경력 {matchedTech.experienceYears}년)</p>
+                    <p className="text-[10px] text-amber-400 font-bold">★ {matchedTech.rating || 5.0} (후기 {matchedTech.reviewCount || 0}개)</p>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="p-3 rounded-xl bg-slate-900/60 border border-white/5 text-slate-300 text-xs">
+                  현재 등록된 검증 디테일러가 대기 중입니다. 의뢰 접수 즉시 고객님 위치 기준 최단거리 전담 기사가 1차 배정됩니다.
+                </div>
+              )}
 
-              <p className="text-[11px] text-slate-300 bg-slate-900/70 p-2.5 rounded-xl border border-white/5">
-                💬 "{matchedTech.introduction}"
-              </p>
+              {matchedTech && (
+                <p className="text-[11px] text-slate-300 bg-slate-900/70 p-2.5 rounded-xl border border-white/5">
+                  💬 "{matchedTech.introduction}"
+                </p>
+              )}
             </div>
 
             {/* Price Summary */}

@@ -62,13 +62,7 @@ export const MobileHomeTab = ({
   onGoToOrders
 }) => {
   const activeOrders = matchRequests.filter(r => r.status !== 'COMPLETED' && r.status !== 'CANCELLED');
-  const closestTech = technicians[0] || {
-    name: '김태진',
-    badge: '마스터 디테일러',
-    rating: 4.98,
-    baseLocation: '인천 서구 청라국제도시',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'
-  };
+  const closestTech = technicians && technicians.length > 0 ? technicians[0] : null;
 
   return (
     <div className="pb-24 space-y-5 animate-fadeIn">
@@ -98,24 +92,22 @@ export const MobileHomeTab = ({
               <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
               <div>
                 <span className="text-[10px] text-emerald-300 font-bold bg-emerald-500/20 px-1.5 py-0.2 rounded">
-                  실시간 진행중 의뢰 {activeOrders.length}건
+                  실시간 진행 중
                 </span>
-                <p className="text-white font-black mt-0.5 truncate max-w-[210px]">
-                  {activeOrders[0].carModel} ({activeOrders[0].matchedTechName || '기사 배정중'})
-                </p>
+                <p className="text-white font-black mt-0.5">{activeOrders[0].serviceName}</p>
               </div>
             </div>
-            <span className="text-[11px] text-cyan-300 font-bold flex items-center gap-0.5">
+            <span className="text-xs text-emerald-400 font-bold flex items-center gap-0.5">
               조회 <ChevronRight className="w-3.5 h-3.5" />
             </span>
           </div>
         </div>
       )}
 
-      {/* 3. Event Promotion Banner */}
+      {/* 3. Main Hero Promotion Banner */}
       <div className="px-4">
-        <div className="relative overflow-hidden rounded-2xl p-4 bg-gradient-to-r from-cyan-950 via-slate-900 to-emerald-950 border border-cyan-500/30 shadow-lg">
-          <div className="relative z-10 flex items-center justify-between">
+        <div className="p-4 rounded-3xl bg-gradient-to-br from-[#0c1322] via-[#090e1a] to-[#06080f] border border-cyan-500/30 relative overflow-hidden shadow-xl">
+          <div className="relative z-10 flex items-center justify-between gap-3">
             <div>
               <span className="text-[10px] font-black text-cyan-300 bg-cyan-500/20 px-2 py-0.5 rounded-full border border-cyan-500/30">
                 LUMEN PRO 특별 혜택
@@ -174,42 +166,57 @@ export const MobileHomeTab = ({
           </button>
         </div>
 
-        <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-900 to-[#0c121e] border border-cyan-500/30 space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <img 
-                src={closestTech.avatar} 
-                alt={closestTech.name} 
-                className="w-12 h-12 rounded-xl object-cover border-2 border-cyan-400 shadow-md"
-              />
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <h5 className="text-sm font-black text-white">{closestTech.name} 프로</h5>
-                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 font-bold">
-                    📍 1순위
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-400 mt-0.5">거점: {closestTech.baseLocation || '인천 청라'}</p>
-                <div className="flex items-center gap-1 text-amber-400 text-[10px] font-bold mt-0.5">
-                  <Star className="w-3 h-3 fill-amber-400" />
-                  <span>{closestTech.rating || 4.98}</span>
-                  <span className="text-slate-500">({closestTech.reviewCount || 140}개 후기)</span>
+        {closestTech ? (
+          <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-900 to-[#0c121e] border border-cyan-500/30 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <img 
+                  src={closestTech.avatar} 
+                  alt={closestTech.name} 
+                  className="w-12 h-12 rounded-xl object-cover border-2 border-cyan-400 shadow-md"
+                />
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <h5 className="text-sm font-black text-white">{closestTech.name} 프로</h5>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 font-bold">
+                      📍 1순위
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-0.5">거점: {closestTech.baseLocation || closestTech.region}</p>
+                  <div className="flex items-center gap-1 text-amber-400 text-[10px] font-bold mt-0.5">
+                    <Star className="w-3 h-3 fill-amber-400" />
+                    <span>{closestTech.rating || 5.0}</span>
+                    <span className="text-slate-500">({closestTech.reviewCount || 0}개 후기)</span>
+                  </div>
                 </div>
               </div>
+
+              <button
+                onClick={onOpenQuickBooking}
+                className="px-3.5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs shadow-md shadow-cyan-500/20 active:scale-95 transition-all"
+              >
+                1:1 매칭
+              </button>
             </div>
 
+            {closestTech.introduction && (
+              <p className="text-[11px] text-slate-300 bg-slate-950/60 p-2.5 rounded-xl border border-white/5">
+                💬 "{closestTech.introduction}"
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="p-4 rounded-2xl bg-slate-900/80 border border-white/10 text-center space-y-2">
+            <p className="text-xs font-bold text-slate-200">1급 디테일러 매칭 준비 완료</p>
+            <p className="text-[11px] text-slate-400">간편 견적을 접수하시면 고객님 계신 곳과 가장 가까운 검증 기사가 즉시 배정됩니다.</p>
             <button
               onClick={onOpenQuickBooking}
-              className="px-3.5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs shadow-md shadow-cyan-500/20 active:scale-95 transition-all"
+              className="mt-1 px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-black"
             >
-              1:1 매칭
+              간편 견적 요청하기
             </button>
           </div>
-
-          <p className="text-[11px] text-slate-300 bg-slate-950/60 p-2.5 rounded-xl border border-white/5">
-            💬 "수성 듀얼 광택 & 9H 유리막 코팅 전문! 전면 유리 유막제거 무료 서비스 함께 시공해 드립니다."
-          </p>
-        </div>
+        )}
       </div>
 
       {/* 6. Popular Packages List */}
@@ -228,8 +235,8 @@ export const MobileHomeTab = ({
             >
               <img 
                 src={pkg.image} 
-                alt={pkg.title}
-                className="w-24 h-24 rounded-xl object-cover shrink-0 border border-white/10"
+                alt={pkg.title} 
+                className="w-24 h-24 rounded-xl object-cover shrink-0 border border-white/10" 
               />
               <div className="flex-grow flex flex-col justify-between">
                 <div>

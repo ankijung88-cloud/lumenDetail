@@ -193,6 +193,7 @@ export const MobileApp = ({
             <MobileOrdersTab
               matchRequests={matchRequests}
               onRefresh={onRefreshData}
+              onOpenCustomerAuth={onOpenCustomerAuth}
             />
           )}
 
