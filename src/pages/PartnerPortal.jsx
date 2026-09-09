@@ -9,7 +9,7 @@ import {
 import { 
   submitTechnicianBid, updateMatchStatus, getTechnicians, 
   getLoggedInTechnician, getLoggedInTechId, setLoggedInTechnician,
-  loginTechnician, logoutTechnician, updateTechnician
+  loginTechnician, logoutTechnician, updateTechnician, saveCustomHub
 } from '../utils/storage';
 import { calculateSettlement } from '../utils/settlement';
 import { SettlementModal } from '../components/SettlementModal';
@@ -186,13 +186,16 @@ export const PartnerPortal = ({
       ? profileForm.equipment.split(',').map(s => s.trim()).filter(Boolean)
       : (profileForm.equipment || []);
 
+    const baseLoc = profileForm.baseLocation.trim() || loggedInTech.baseLocation;
+    const techName = profileForm.name.trim() || loggedInTech.name;
+
     const updated = updateTechnician(loggedInTech.id, {
-      name: profileForm.name.trim() || loggedInTech.name,
+      name: techName,
       phone: profileForm.phone.trim() || loggedInTech.phone,
       pin: profileForm.pin.trim() || loggedInTech.pin || '1234',
       badge: profileForm.badge.trim() || loggedInTech.badge,
       experienceYears: Number(profileForm.experienceYears) || loggedInTech.experienceYears || 5,
-      baseLocation: profileForm.baseLocation.trim() || loggedInTech.baseLocation,
+      baseLocation: baseLoc,
       region: profileForm.region.trim() || loggedInTech.region,
       activeZones: activeZonesArr.length > 0 ? activeZonesArr : loggedInTech.activeZones,
       specialties: specialtiesArr.length > 0 ? specialtiesArr : loggedInTech.specialties,
@@ -202,6 +205,17 @@ export const PartnerPortal = ({
       avatar: profileForm.avatar || loggedInTech.avatar || DEFAULT_AVATAR
     });
     
+    // 기사 거점을 가격표 출장 거점 드롭다운에도 즉시 동기화
+    if (baseLoc) {
+      saveCustomHub({
+        name: `${baseLoc} (${techName} 프로)`,
+        shortName: baseLoc,
+        address: baseLoc,
+        technicianName: `${techName} 프로`,
+        regionGroup: profileForm.region || '기사 등록 거점'
+      });
+    }
+
     if (onRefreshData) onRefreshData();
     const refreshed = updated.find(t => t.id === loggedInTech.id);
     if (refreshed) {
@@ -209,7 +223,7 @@ export const PartnerPortal = ({
       initProfileForm(refreshed);
     }
     setIsEditingProfile(false);
-    alert('기사 프로필 정보가 성공적으로 업데이트되었습니다.');
+    alert(`기사 프로필 및 활동 거점[${baseLoc}]이 성공적으로 업데이트되었습니다.\n(고객 가격표 출장 거점 드롭메뉴에도 실시간 반영되었습니다)`);
   };
 
   // ==================== AUTH GATE: If Not Logged In ====================

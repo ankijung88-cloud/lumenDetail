@@ -1,5 +1,6 @@
 // 로컬 스토리지 데이터 관리 유틸리티 (중개 플랫폼 확장)
 import { INITIAL_TECHNICIANS, getTechniciansByProximity } from '../data/techniciansData';
+import { DEFAULT_HUBS, generateHubZones } from '../data/hubsData';
 
 const BOOKINGS_KEY = 'lumen_polish_bookings';
 const TECHNICIANS_KEY = 'lumen_polish_technicians';
@@ -8,6 +9,8 @@ const GOOGLE_WEBHOOK_KEY = 'lumen_polish_google_webhook';
 const CARD_PROFILE_KEY = 'lumen_polish_card_profile';
 const ADMIN_PW_KEY = 'lumen_polish_admin_pw';
 const ADMIN_SESSION_KEY = 'lumen_polish_admin_session';
+const CUSTOM_HUBS_KEY = 'lumen_polish_custom_hubs';
+const SELECTED_HUB_KEY = 'lumen_polish_selected_hub_id';
 const DEFAULT_ADMIN_PW = '1234';
 
 // ==================== 초기 샘플 중개 의뢰 & 매칭 데이터 ====================
@@ -752,3 +755,104 @@ export const setAdminAuthenticated = (isAuth) => {
     console.error(e);
   }
 };
+
+// ==================== 거점 (전국 주요 도시 & 기사 등록 거점) 관리 ====================
+
+export const getCustomHubs = () => {
+  try {
+    const raw = localStorage.getItem(CUSTOM_HUBS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    console.error('Failed to get custom hubs', e);
+    return [];
+  }
+};
+
+export const saveCustomHub = (hubData) => {
+  const current = getCustomHubs();
+  const hubId = hubData.id || `hub-custom-${Date.now()}`;
+  const zones = hubData.zones && hubData.zones.length === 5 
+    ? hubData.zones 
+    : generateHubZones(hubData.name || hubData.shortName, hubData.address, hubData.technicianName);
+
+  const newHub = {
+    id: hubId,
+    name: hubData.name.trim(),
+    shortName: (hubData.shortName || hubData.name).trim(),
+    regionGroup: hubData.regionGroup || '기사 등록 거점',
+    address: (hubData.address || hubData.name).trim(),
+    technicianName: hubData.technicianName ? hubData.technicianName.trim() : '인증 파트너 프로',
+    isCustom: true,
+    createdAt: new Date().toISOString(),
+    zones
+  };
+
+  const existingIdx = current.findIndex(h => h.id === hubId || h.name === newHub.name);
+  let updated;
+  if (existingIdx >= 0) {
+    updated = current.map((h, i) => i === existingIdx ? { ...h, ...newHub } : h);
+  } else {
+    updated = [newHub, ...current];
+  }
+
+  localStorage.setItem(CUSTOM_HUBS_KEY, JSON.stringify(updated));
+  window.dispatchEvent(new CustomEvent('travel-hubs-updated', { detail: newHub }));
+  return newHub;
+};
+
+export const deleteCustomHub = (hubId) => {
+  const current = getCustomHubs();
+  const updated = current.filter(h => h.id !== hubId);
+  localStorage.setItem(CUSTOM_HUBS_KEY, JSON.stringify(updated));
+  window.dispatchEvent(new CustomEvent('travel-hubs-updated'));
+  return updated;
+};
+
+/**
+ * 기본 마스터 거점 + 기사가 등록한 커스텀 거점 + 등록된 기사들의 baseLocation을 자동 통합하여 반환
+ */
+export const getTravelHubs = () => {
+  const defaults = DEFAULT_HUBS || [];
+  const custom = getCustomHubs();
+  const technicians = getTechnicians();
+
+  // 기사들의 baseLocation 중 아직 거점으로 등록되지 않은 것들을 자동 동적 거점으로 생성
+  const techGeneratedHubs = [];
+  technicians.forEach(tech => {
+    if (!tech.baseLocation) return;
+    const base = tech.baseLocation.trim();
+    if (!base) return;
+
+    // 이미 기본 또는 커스텀 거점에 유사한 이름이 있는지 확인
+    const exists = defaults.some(d => d.name.includes(base) || d.shortName.includes(base) || base.includes(d.shortName)) ||
+                   custom.some(c => c.name.includes(base) || c.shortName.includes(base) || base.includes(c.shortName)) ||
+                   techGeneratedHubs.some(g => g.name === base);
+
+    if (!exists) {
+      techGeneratedHubs.push({
+        id: `hub-tech-${tech.id}`,
+        name: `${base} (${tech.name} 프로 거점)`,
+        shortName: base,
+        regionGroup: '기사 등록 거점',
+        address: base,
+        technicianName: `${tech.name} ${tech.badge || '프로'}`,
+        isTechHub: true,
+        zones: generateHubZones(base, base, tech.name)
+      });
+    }
+  });
+
+  return [...custom, ...techGeneratedHubs, ...defaults];
+};
+
+export const getSelectedHubId = () => {
+  return localStorage.getItem(SELECTED_HUB_KEY) || 'hub-incheon-cheongna';
+};
+
+export const setSelectedHubId = (hubId) => {
+  localStorage.setItem(SELECTED_HUB_KEY, hubId);
+  window.dispatchEvent(new CustomEvent('travel-hub-selected', { detail: hubId }));
+};
+

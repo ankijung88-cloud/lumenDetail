@@ -4,7 +4,7 @@ import {
   Wrench, FileText, CheckCircle2, Award, Camera, Lock,
   Upload, Image as ImageIcon, Trash2, RefreshCw
 } from 'lucide-react';
-import { saveTechnician } from '../utils/storage';
+import { saveTechnician, saveCustomHub } from '../utils/storage';
 import confetti from 'canvas-confetti';
 
 const AVATAR_PRESETS = [
@@ -130,13 +130,14 @@ export const TechnicianRegisterModal = ({ isOpen, onClose, onRegistered }) => {
       const phoneDigits = formData.phone.replace(/\D/g, '');
       const last4 = phoneDigits.slice(-4) || '1234';
 
+      const baseLoc = formData.baseLocation.trim() || formData.region;
       const newTech = saveTechnician({
         name: formData.name.trim(),
         phone: formData.phone.trim(),
         pin: formData.pin.trim() || last4,
         experienceYears: Number(formData.experienceYears) || 3,
         region: formData.region,
-        baseLocation: formData.baseLocation.trim() || formData.region,
+        baseLocation: baseLoc,
         activeZones: activeZones.length > 0 ? activeZones : [formData.region],
         specialties: specialties.length > 0 ? specialties : ['수성 듀얼 광택', '유리막 코팅'],
         equipment: equipment.length > 0 ? equipment : ['수성 전용 듀얼 광택기', '도막 측정기'],
@@ -150,13 +151,24 @@ export const TechnicianRegisterModal = ({ isOpen, onClose, onRegistered }) => {
         completedJobs: 0
       });
 
+      // 기사 거점을 가격표 출장 거점 드롭메뉴에도 즉시 동기화
+      if (baseLoc) {
+        saveCustomHub({
+          name: `${baseLoc} (${formData.name.trim()} 프로)`,
+          shortName: baseLoc,
+          address: baseLoc,
+          technicianName: `${formData.name.trim()} 프로`,
+          regionGroup: formData.region || '기사 등록 거점'
+        });
+      }
+
       confetti({
         particleCount: 120,
         spread: 80,
         origin: { y: 0.5 }
       });
 
-      alert(`🎉 [${formData.name}] 프로님! 파트너 등록이 정상 완료되었습니다.\n• 로그인 계정: ${formData.phone} (또는 ${formData.name})\n• 로그인 PIN: ${formData.pin.trim() || last4}\n\n등록된 프로필 사진 및 정보가 고객 기사 탐색 및 실시간 매칭에 즉시 반영됩니다.`);
+      alert(`🎉 [${formData.name}] 프로님! 파트너 등록이 정상 완료되었습니다.\n• 활동 거점: ${baseLoc} (출장비 가격표 드롭메뉴에 자동 추가됨)\n• 로그인 계정: ${formData.phone} (또는 ${formData.name})\n• 로그인 PIN: ${formData.pin.trim() || last4}\n\n등록된 프로필과 거점이 고객 가격표 및 실시간 매칭에 즉시 반영됩니다.`);
       
       if (onRegistered) onRegistered(newTech);
       onClose();
