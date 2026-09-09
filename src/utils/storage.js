@@ -18,6 +18,10 @@ export const getTechnicians = () => {
   try {
     const raw = localStorage.getItem(TECHNICIANS_KEY);
     if (!raw) {
+      if (INITIAL_TECHNICIANS && INITIAL_TECHNICIANS.length > 0) {
+        localStorage.setItem(TECHNICIANS_KEY, JSON.stringify(INITIAL_TECHNICIANS));
+        return INITIAL_TECHNICIANS;
+      }
       localStorage.setItem(TECHNICIANS_KEY, JSON.stringify([]));
       return [];
     }
@@ -29,13 +33,20 @@ export const getTechnicians = () => {
       !['TECH-001', 'TECH-002', 'TECH-003', 'TECH-004'].includes(t.id) &&
       !['김태진', '박성호', '이진우', '최원영'].includes(t.name)
     );
+
+    // 저장된 목록이 비어있고 INITIAL_TECHNICIANS가 정의되어 있다면 기본값으로 동기화
+    if (cleaned.length === 0 && INITIAL_TECHNICIANS && INITIAL_TECHNICIANS.length > 0) {
+      localStorage.setItem(TECHNICIANS_KEY, JSON.stringify(INITIAL_TECHNICIANS));
+      return INITIAL_TECHNICIANS;
+    }
+
     if (cleaned.length !== parsed.length) {
       localStorage.setItem(TECHNICIANS_KEY, JSON.stringify(cleaned));
     }
     return cleaned;
   } catch (e) {
     console.error('Failed to get technicians', e);
-    return [];
+    return INITIAL_TECHNICIANS || [];
   }
 };
 

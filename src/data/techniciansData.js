@@ -1,6 +1,22 @@
 // 검증된 전문 디테일러(기술자) 파트너 마스터 데이터 (실제 등록 데이터 기반)
 
-export const INITIAL_TECHNICIANS = [];
+export const INITIAL_TECHNICIANS = [ {
+    id: 'TECH-MASTER-001',
+    name: '안기정',
+    phone: '010-7246-7211',
+    pin: '7211',
+    badge: '출장전문 디테일러',
+    region: '인천/서부권',
+    baseLocation: '인천 청라',
+    activeZones: ['인천 전지역', '수도권 일부지역', '서울 일부지역'],
+    specialties: ['수성 듀얼 광택', '9H 세라믹 코팅'],
+    equipment: ['싱글 및 듀얼 광택기', '도막 측정기'],
+    introduction: '수성 광택 전문입니다.',
+    minPrice: 100000,
+    rating: 5.0,
+    reviewCount: 38,
+    completedJobs: 142
+  }];
 
 export const SPECIALTY_CATEGORIES = [
   '전체',
