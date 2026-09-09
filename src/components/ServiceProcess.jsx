@@ -88,50 +88,56 @@ export const ServiceProcess = ({ onSelectService, onFindTechnician }) => {
                   {service.shortDesc}
                 </p>
 
-                {/* Integrated Standard Price & Travel Fee Box with Modal Trigger Buttons */}
-                <div className="p-4 rounded-2xl bg-slate-900/90 border border-white/10 mb-5 space-y-3">
+                {/* Integrated Standard Price & Travel Fee Box with Aligned Structure */}
+                <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-900/90 border border-white/10 mb-5 space-y-2.5">
                   
-                  {/* Price Row + Modal Button */}
-                  <div className="flex items-center justify-between flex-wrap gap-2">
-                    <div className="flex items-center gap-1.5">
-                      <Tag className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-                      <span className="text-xs font-bold text-slate-200">표준 정찰 시공가</span>
-                    </div>
-                    <div className="flex items-center gap-2">
+                  {/* Row 1: Price */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5 shrink-0">
+                        <Tag className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                        <span>정찰 시공가</span>
+                      </span>
                       {service.discountBadge && (
-                        <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30">
+                        <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30 shrink-0">
                           {service.discountBadge}
                         </span>
                       )}
-                      <span className="text-sm sm:text-base font-black text-cyan-300 font-mono">
+                      <span className="text-xs sm:text-sm font-black text-cyan-300 font-mono truncate">
                         {service.standardPrice || '정찰제'}
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedServiceForModal(service)}
-                        className="px-2 py-1 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 hover:text-white text-[11px] font-bold border border-cyan-500/30 flex items-center gap-0.5 transition-all"
-                        title="차종별 세부 정찰가 확인"
-                      >
-                        <span>차종별 금액 상세</span>
-                        <ChevronRight className="w-3 h-3" />
-                      </button>
                     </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setSelectedServiceForModal(service)}
+                      className="px-2.5 py-1 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 hover:text-white text-[11px] font-bold border border-cyan-500/30 flex items-center justify-center gap-1 transition-all shrink-0 min-w-[95px]"
+                      title="차종별 세부 정찰가 확인"
+                    >
+                      <span>차종별 금액</span>
+                      <ChevronRight className="w-3 h-3" />
+                    </button>
                   </div>
 
-                  {/* Travel Fee Row + Modal Button */}
-                  <div className="pt-2.5 border-t border-white/5 flex items-center justify-between flex-wrap gap-2 text-xs">
-                    <div className="flex items-center gap-1 text-slate-300">
-                      <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                      <span className="font-medium">출장비 안내:</span>
-                      <span className="text-emerald-300 font-semibold ml-1">1권역 0원 무료</span>
+                  {/* Row 2: Travel Fee */}
+                  <div className="pt-2 border-t border-white/5 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5 shrink-0">
+                        <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        <span>출장비</span>
+                      </span>
+                      <span className="text-xs text-emerald-300 font-semibold truncate">
+                        1권역 0원 무료 (수도권 정찰제)
+                      </span>
                     </div>
+
                     <button
                       type="button"
                       onClick={() => setIsTravelFeeModalOpen(true)}
-                      className="px-2 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 hover:text-white text-[11px] font-bold border border-emerald-500/30 flex items-center gap-0.5 transition-all"
+                      className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 hover:text-white text-[11px] font-bold border border-emerald-500/30 flex items-center justify-center gap-1 transition-all shrink-0 min-w-[95px]"
                       title="권역별 출장비 확인"
                     >
-                      <span>권역별 출장비 상세</span>
+                      <span>권역별 안내</span>
                       <ChevronRight className="w-3 h-3" />
                     </button>
                   </div>
