@@ -56,6 +56,11 @@ export const LandingPage = ({
 
 
 
+      {/* 2. Pricing & Vehicle Category Table (Standard Price & Travel Fee) */}
+      <PriceTable 
+        onSelectPackage={(pkgName, price) => scrollToBooking(pkgName, price)}
+      />
+
       {/* 3. Professional Services & 6-Step Process */}
       <ServiceProcess 
         onFindTechnician={(svc) => {
@@ -77,11 +82,6 @@ export const LandingPage = ({
 
       {/* 5. Interactive Before / After Transformation Slider */}
       <BeforeAfterSlider />
-
-      {/* 6. Pricing & Vehicle Category Table */}
-      <PriceTable 
-        onSelectPackage={(pkgName, price) => scrollToBooking(pkgName, price)}
-      />
 
       {/* 7. Online Reservation & Google Sheet Sync Form */}
       <BookingForm 
