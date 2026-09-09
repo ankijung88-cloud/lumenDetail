@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { PRICING_DATA } from '../data/servicesData';
 import { Check, Sparkles, ShieldCheck, HelpCircle, ArrowRight, MapPin, Flame, Tag, Car, Navigation, Calculator } from 'lucide-react';
 
-export const PriceTable = ({ onSelectPackage }) => {
+export const PriceTable = ({ onSelectPackage, onSelectSingleService }) => {
   const [selectedCategory, setSelectedCategory] = useState('mid');
   const [selectedZoneIndex, setSelectedZoneIndex] = useState(0); // 0: 1권역, 1: 2권역, 2: 3권역, 3: 4권역
 
@@ -296,13 +296,27 @@ export const PriceTable = ({ onSelectPackage }) => {
           {PRICING_DATA.singleServices.map((single, idx) => (
             <div 
               key={idx} 
-              className="p-3.5 rounded-xl bg-slate-900/80 border border-white/10 hover:border-rose-500/40 flex items-center justify-between transition-all group"
+              onClick={() => {
+                if (onSelectSingleService) {
+                  onSelectSingleService(single.id);
+                } else {
+                  const el = document.getElementById(`service-${single.id}`) || document.getElementById('services');
+                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+              }}
+              className="p-3.5 rounded-xl bg-slate-900/80 border border-white/10 hover:border-cyan-400 hover:bg-slate-800/90 hover:scale-[1.01] flex items-center justify-between transition-all group cursor-pointer shadow-sm hover:shadow-cyan-500/15"
+              title="클릭 시 맞춤형 부분케어 솔루션 상세 안내로 이동"
             >
               <div className="space-y-0.5">
-                <span className="text-xs sm:text-sm text-slate-200 font-semibold group-hover:text-white transition-colors block">
-                  {single.name}
-                </span>
-                <span className="text-[10px] text-slate-500">소요시간 약 40분~1시간</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs sm:text-sm text-slate-200 font-semibold group-hover:text-cyan-300 transition-colors">
+                    {single.name}
+                  </span>
+                  <span className="text-[10px] text-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity font-bold">
+                    상세보기 →
+                  </span>
+                </div>
+                <span className="text-[10px] text-slate-500">소요시간 약 40분~1시간 · 클릭 시 상세 설명</span>
               </div>
               
               <div className="flex items-center gap-2 shrink-0 ml-2">

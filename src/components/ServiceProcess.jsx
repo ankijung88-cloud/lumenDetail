@@ -18,7 +18,7 @@ const iconMap = {
   CheckCircle2: CheckCircle2,
 };
 
-export const ServiceProcess = ({ onSelectService, onFindTechnician }) => {
+export const ServiceProcess = ({ onSelectService, onFindTechnician, highlightedServiceId }) => {
   // Modal States
   const [selectedServiceForModal, setSelectedServiceForModal] = useState(null);
   const [isTravelFeeModalOpen, setIsTravelFeeModalOpen] = useState(false);
@@ -57,10 +57,16 @@ export const ServiceProcess = ({ onSelectService, onFindTechnician }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-28">
         {SERVICES.map((service) => {
           const IconComponent = iconMap[service.icon] || Sparkles;
+          const isHighlighted = highlightedServiceId === service.id;
           return (
             <div 
               key={service.id}
-              className={`glass-card p-6 sm:p-8 rounded-3xl border transition-all duration-300 relative group overflow-hidden ${service.borderColor} hover:border-cyan-400/60 hover:-translate-y-1 flex flex-col justify-between`}
+              id={`service-${service.id}`}
+              className={`glass-card p-6 sm:p-8 rounded-3xl border transition-all duration-500 relative group overflow-hidden flex flex-col justify-between ${
+                isHighlighted
+                  ? 'border-cyan-400 ring-2 ring-cyan-400 shadow-2xl shadow-cyan-500/50 bg-slate-900/95 scale-[1.02] -translate-y-2 z-20 animate-pulse'
+                  : `${service.borderColor} hover:border-cyan-400/60 hover:-translate-y-1`
+              }`}
             >
               {/* Top Accent Gradient */}
               <div className={`absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r ${service.bgGradient}`} />

@@ -25,6 +25,24 @@ export const LandingPage = ({
 }) => {
   const [selectedService, setSelectedService] = useState('');
   const [selectedPrice, setSelectedPrice] = useState(0);
+  const [highlightedServiceId, setHighlightedServiceId] = useState(null);
+
+  const handleSelectSingleServiceFromPrice = (serviceId) => {
+    setHighlightedServiceId(serviceId);
+    
+    // Smooth scroll to the corresponding service card in ServiceProcess
+    setTimeout(() => {
+      const el = document.getElementById(`service-${serviceId}`) || document.getElementById('services');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 50);
+
+    // Automatically remove highlight glow after 3.5 seconds
+    setTimeout(() => {
+      setHighlightedServiceId(null);
+    }, 3500);
+  };
 
   const scrollToBooking = (serviceName = '', price = 0) => {
     if (serviceName) {
@@ -59,10 +77,12 @@ export const LandingPage = ({
       {/* 2. Pricing & Vehicle Category Table (Standard Price & Travel Fee) */}
       <PriceTable 
         onSelectPackage={(pkgName, price) => scrollToBooking(pkgName, price)}
+        onSelectSingleService={handleSelectSingleServiceFromPrice}
       />
 
       {/* 3. Professional Services & 6-Step Process */}
       <ServiceProcess 
+        highlightedServiceId={highlightedServiceId}
         onFindTechnician={(svc) => {
           const el = document.getElementById('technicians');
           if (el) el.scrollIntoView({ behavior: 'smooth' });

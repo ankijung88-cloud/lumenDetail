@@ -137,6 +137,33 @@ export const SERVICES = [
     borderColor: 'border-purple-500/30'
   },
   {
+    id: 'glass_water',
+    title: '전면 유리 유막제거 + 초발수 코팅',
+    shortDesc: '우천 시 시야를 가리는 찌든 유막과 물때를 딥 샌딩/클리닝하고, 시속 60km 이상에서 빗물이 튕겨나가는 초발수 보호막을 시공합니다.',
+    badge: '우천 안전 필수',
+    icon: 'Droplets',
+    duration: '약 40분~1시간 소요',
+    originalPrice: '60,000 ~ 90,000원',
+    standardPrice: '30,000 ~ 45,000원',
+    discountBadge: '50% 정찰특가',
+    travelFeeInfo: '1권역(인천/부천/김포) 출장비 0원 무료 · 2~4권역 거리정찰제',
+    categoryPrices: [
+      { catId: 'compact', name: '경차 / 소형', example: '모닝, 레이, 아반떼, 캐스퍼', original: 60000, price: 30000, discount: '50% OFF' },
+      { catId: 'mid', name: '준중형 / 중형', example: '쏘나타, K5, G70, BMW 3/5시리즈', original: 70000, price: 35000, discount: '50% OFF' },
+      { catId: 'large_suv', name: '대형 / 준대형 / 중형SUV', example: '그랜저, G80, 싼타페, 쏘렌토', original: 80000, price: 40000, discount: '50% OFF' },
+      { catId: 'van_large', name: '대형SUV / RV / 수입대형', example: '카니발, GV80, 팰리세이드, S클래스', original: 90000, price: 45000, discount: '50% OFF' }
+    ],
+    features: [
+      '유리 전용 산화세륨 산화 피막 및 찌든 유막 정밀 제거',
+      '와이퍼 떨림/소음 방지 및 깨끗한 우천 시야 확보',
+      '전문가용 불소계 초발수 코팅제 도포 및 버핑 마감',
+      '지속기간 6~12개월 고내구성 발수 비딩 보호막 형성'
+    ],
+    bgGradient: 'from-sky-500/20 to-blue-600/10',
+    accentColor: 'text-sky-400',
+    borderColor: 'border-sky-500/30'
+  },
+  {
     id: 'semi_polish',
     title: '2스텝 세미광택 (도장보호 & 광택 케어)',
     shortDesc: '클리어층의 연마(컷팅) 손실을 최소화하고, 싱글+듀얼 2단계 조합으로 얕은 스월마크를 정돈하여 맑고 깊은 본래의 광택감을 극대화합니다.',
@@ -329,12 +356,12 @@ export const PRICING_DATA = {
     }
   ],
   singleServices: [
-    { name: '본넷(후드) 집중 수성 광택 (단품)', originalPrice: '8만 ~ 13만원', priceRange: '4만 ~ 6.5만원', discount: '50% OFF' },
-    { name: '도어(문짝 1판) 흠집 & 스월 케어', originalPrice: '5만 ~ 9만원', priceRange: '2.5만 ~ 4.5만원', discount: '50% OFF' },
-    { name: '앞/뒤 범퍼(1개소) 코너 쓸림 광택', originalPrice: '7만 ~ 12만원', priceRange: '3.5만 ~ 6만원', discount: '50% OFF' },
-    { name: '앞/뒤 휀다(1판) 및 필러 집중 케어', originalPrice: '5만 ~ 8만원', priceRange: '2.5만 ~ 4만원', discount: '50% OFF' },
-    { name: '트렁크 리드 / 루프 상판 집중 케어', originalPrice: '7만 ~ 12만원', priceRange: '3.5만 ~ 6만원', discount: '50% OFF' },
-    { name: '전면 유리 유막제거 + 초발수 코팅', originalPrice: '6만 ~ 9만원', priceRange: '3만 ~ 4.5만원', discount: '50% OFF' }
+    { id: 'bonnet', name: '본넷(후드) 집중 수성 광택 (단품)', originalPrice: '8만 ~ 13만원', priceRange: '4만 ~ 6.5만원', discount: '50% OFF' },
+    { id: 'door', name: '도어(문짝 1판) 흠집 & 스월 케어', originalPrice: '5만 ~ 9만원', priceRange: '2.5만 ~ 4.5만원', discount: '50% OFF' },
+    { id: 'bumper', name: '앞/뒤 범퍼(1개소) 코너 쓸림 광택', originalPrice: '7만 ~ 12만원', priceRange: '3.5만 ~ 6만원', discount: '50% OFF' },
+    { id: 'fender', name: '앞/뒤 휀다(1판) 및 필러 집중 케어', originalPrice: '5만 ~ 8만원', priceRange: '2.5만 ~ 4만원', discount: '50% OFF' },
+    { id: 'trunk_roof', name: '트렁크 리드 / 루프 상판 집중 케어', originalPrice: '7만 ~ 12만원', priceRange: '3.5만 ~ 6만원', discount: '50% OFF' },
+    { id: 'glass_water', name: '전면 유리 유막제거 + 초발수 코팅', originalPrice: '6만 ~ 9만원', priceRange: '3만 ~ 4.5만원', discount: '50% OFF' }
   ],
   travelZones: {
     hub: '인천 청라국제도시',
