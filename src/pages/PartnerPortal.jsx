@@ -46,30 +46,48 @@ export const PartnerPortal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Profile Edit State
+  const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80';
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({
+    name: '',
     phone: '',
     pin: '',
+    badge: '',
+    experienceYears: 5,
+    minPrice: 100000,
     baseLocation: '',
     region: '',
+    activeZones: '',
     specialties: '',
+    equipment: '',
     introduction: '',
-    avatar: ''
+    avatar: DEFAULT_AVATAR
   });
+
+  const initProfileForm = (tech) => {
+    if (!tech) return;
+    setProfileForm({
+      name: tech.name || '',
+      phone: tech.phone || '',
+      pin: tech.pin || tech.password || '1234',
+      badge: tech.badge || '출장전문 디테일러',
+      experienceYears: tech.experienceYears ?? 5,
+      minPrice: tech.minPrice || 100000,
+      baseLocation: tech.baseLocation || '',
+      region: tech.region || '인천/서부권',
+      activeZones: Array.isArray(tech.activeZones) ? tech.activeZones.join(', ') : (tech.activeZones || ''),
+      specialties: Array.isArray(tech.specialties) ? tech.specialties.join(', ') : (tech.specialties || ''),
+      equipment: Array.isArray(tech.equipment) ? tech.equipment.join(', ') : (tech.equipment || ''),
+      introduction: tech.introduction || '',
+      avatar: tech.avatar || DEFAULT_AVATAR
+    });
+  };
 
   useEffect(() => {
     const current = getLoggedInTechnician();
     if (current) {
       setLoggedInTech(current);
-      setProfileForm({
-        phone: current.phone || '',
-        pin: current.pin || current.password || '1234',
-        baseLocation: current.baseLocation || '',
-        region: current.region || '',
-        specialties: current.specialties ? current.specialties.join(', ') : '',
-        introduction: current.introduction || '',
-        avatar: current.avatar || ''
-      });
+      initProfileForm(current);
     }
   }, [technicians]);
 
@@ -85,6 +103,7 @@ export const PartnerPortal = ({
     const res = loginTechnician(loginPhone, loginPin, rememberMe);
     if (res.success) {
       setLoggedInTech(res.tech);
+      initProfileForm(res.tech);
       setLoginPhone('');
       setLoginPin('');
       confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
@@ -97,6 +116,7 @@ export const PartnerPortal = ({
   const handleFastDemoLogin = (tech) => {
     setLoggedInTechnician(tech.id, rememberMe);
     setLoggedInTech(tech);
+    initProfileForm(tech);
     setLoginError('');
     confetti({ particleCount: 60, spread: 50, origin: { y: 0.6 } });
   };
@@ -156,21 +176,40 @@ export const PartnerPortal = ({
     e.preventDefault();
     if (!loggedInTech) return;
     
+    const activeZonesArr = typeof profileForm.activeZones === 'string' 
+      ? profileForm.activeZones.split(',').map(s => s.trim()).filter(Boolean)
+      : (profileForm.activeZones || []);
+    const specialtiesArr = typeof profileForm.specialties === 'string'
+      ? profileForm.specialties.split(',').map(s => s.trim()).filter(Boolean)
+      : (profileForm.specialties || []);
+    const equipmentArr = typeof profileForm.equipment === 'string'
+      ? profileForm.equipment.split(',').map(s => s.trim()).filter(Boolean)
+      : (profileForm.equipment || []);
+
     const updated = updateTechnician(loggedInTech.id, {
-      phone: profileForm.phone,
-      pin: profileForm.pin,
-      baseLocation: profileForm.baseLocation,
-      region: profileForm.region,
-      specialties: profileForm.specialties.split(',').map(s => s.trim()),
-      introduction: profileForm.introduction,
-      avatar: profileForm.avatar || loggedInTech.avatar
+      name: profileForm.name.trim() || loggedInTech.name,
+      phone: profileForm.phone.trim() || loggedInTech.phone,
+      pin: profileForm.pin.trim() || loggedInTech.pin || '1234',
+      badge: profileForm.badge.trim() || loggedInTech.badge,
+      experienceYears: Number(profileForm.experienceYears) || loggedInTech.experienceYears || 5,
+      baseLocation: profileForm.baseLocation.trim() || loggedInTech.baseLocation,
+      region: profileForm.region.trim() || loggedInTech.region,
+      activeZones: activeZonesArr.length > 0 ? activeZonesArr : loggedInTech.activeZones,
+      specialties: specialtiesArr.length > 0 ? specialtiesArr : loggedInTech.specialties,
+      equipment: equipmentArr.length > 0 ? equipmentArr : loggedInTech.equipment,
+      minPrice: Number(profileForm.minPrice) || loggedInTech.minPrice || 100000,
+      introduction: profileForm.introduction.trim() || loggedInTech.introduction,
+      avatar: profileForm.avatar || loggedInTech.avatar || DEFAULT_AVATAR
     });
     
     if (onRefreshData) onRefreshData();
     const refreshed = updated.find(t => t.id === loggedInTech.id);
-    if (refreshed) setLoggedInTech(refreshed);
+    if (refreshed) {
+      setLoggedInTech(refreshed);
+      initProfileForm(refreshed);
+    }
     setIsEditingProfile(false);
-    alert('프로필 및 사진 설정이 성공적으로 저장되었습니다.');
+    alert('기사 프로필 정보가 성공적으로 업데이트되었습니다.');
   };
 
   // ==================== AUTH GATE: If Not Logged In ====================
@@ -877,80 +916,142 @@ export const PartnerPortal = ({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-5">
                 <div className="flex items-center gap-4">
                   <img 
-                    src={loggedInTech.avatar} 
+                    src={loggedInTech.avatar || DEFAULT_AVATAR} 
                     alt={loggedInTech.name} 
-                    className="w-16 h-16 rounded-2xl object-cover border-2 border-emerald-400 shadow-lg"
+                    onError={(e) => { e.currentTarget.src = DEFAULT_AVATAR; }}
+                    className="w-16 h-16 rounded-2xl object-cover border-2 border-emerald-400 shadow-lg bg-slate-800"
                   />
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="text-xl font-black text-white">{loggedInTech.name} 프로</h3>
                       <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40">
-                        {loggedInTech.badge || '마스터 디테일러'}
+                        {loggedInTech.badge || '출장전문 디테일러'}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-400 mt-1">{loggedInTech.phone} | 경력 {loggedInTech.experienceYears}년차</p>
+                    <p className="text-xs text-slate-400 mt-1">{loggedInTech.phone} | 경력 {loggedInTech.experienceYears ?? 5}년차</p>
                   </div>
                 </div>
 
                 <button
-                  onClick={() => setIsEditingProfile(!isEditingProfile)}
-                  className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-cyan-300 border border-cyan-500/30 self-start sm:self-auto"
+                  onClick={() => {
+                    if (!isEditingProfile) initProfileForm(loggedInTech);
+                    setIsEditingProfile(!isEditingProfile);
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-cyan-300 border border-cyan-500/30 self-start sm:self-auto transition-all"
                 >
-                  {isEditingProfile ? '취소' : '프로필 & PIN 수정'}
+                  {isEditingProfile ? '수정 취소' : '프로필 & PIN 수정'}
                 </button>
               </div>
 
               {!isEditingProfile ? (
                 <div className="space-y-3 text-xs bg-slate-900/60 p-5 rounded-2xl border border-white/5">
                   <div className="flex justify-between py-1 border-b border-white/5">
+                    <span className="text-slate-400 font-bold">기사명 / 대표자</span>
+                    <strong className="text-white">{loggedInTech.name} 프로</strong>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-white/5">
+                    <span className="text-slate-400 font-bold">대표 칭호 / 배지</span>
+                    <span className="text-emerald-400 font-semibold">{loggedInTech.badge || '출장전문 디테일러'}</span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-white/5">
                     <span className="text-slate-400 font-bold">활동 거점 주소</span>
-                    <strong className="text-white">{loggedInTech.baseLocation || '인천 서구 청라국제도시'}</strong>
+                    <strong className="text-white">{loggedInTech.baseLocation || '인천 청라'}</strong>
                   </div>
                   <div className="flex justify-between py-1 border-b border-white/5">
                     <span className="text-slate-400 font-bold">활동 권역 (Zone)</span>
-                    <span className="text-cyan-300 font-semibold">{loggedInTech.region}</span>
+                    <span className="text-cyan-300 font-semibold">{loggedInTech.region || '인천/서부권'}</span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-white/5">
+                    <span className="text-slate-400 font-bold">세부 활동 가능 지역</span>
+                    <span className="text-slate-200">{Array.isArray(loggedInTech.activeZones) ? loggedInTech.activeZones.join(', ') : (loggedInTech.activeZones || '수도권 전지역')}</span>
                   </div>
                   <div className="flex justify-between py-1 border-b border-white/5">
                     <span className="text-slate-400 font-bold">전문 시공 분야</span>
-                    <span className="text-slate-200">{loggedInTech.specialties?.join(', ')}</span>
+                    <span className="text-slate-200">{Array.isArray(loggedInTech.specialties) ? loggedInTech.specialties.join(', ') : (loggedInTech.specialties || '수성 듀얼 광택, 9H 세라믹 코팅')}</span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-white/5">
+                    <span className="text-slate-400 font-bold">보유 전문 장비</span>
+                    <span className="text-slate-300">{Array.isArray(loggedInTech.equipment) ? loggedInTech.equipment.join(', ') : (loggedInTech.equipment || '싱글 및 듀얼 광택기, 도막 측정기')}</span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-white/5">
+                    <span className="text-slate-400 font-bold">기본 시작 견적가</span>
+                    <span className="text-amber-300 font-bold">{(loggedInTech.minPrice || 100000).toLocaleString()}원~</span>
                   </div>
                   <div className="flex justify-between py-1 border-b border-white/5">
                     <span className="text-slate-400 font-bold">고객 평점 / 리뷰</span>
-                    <span className="text-amber-400 font-bold">★ {loggedInTech.rating} ({loggedInTech.reviewCount}건)</span>
+                    <span className="text-amber-400 font-bold">★ {loggedInTech.rating || 5.0} ({loggedInTech.reviewCount || 0}건 / 완료 {loggedInTech.completedJobs || 0}건)</span>
                   </div>
                   <div className="flex justify-between py-1 border-b border-white/5">
                     <span className="text-slate-400 font-bold">보안 PIN (로그인용)</span>
-                    <span className="text-emerald-400 font-mono font-bold">•••• (설정됨)</span>
+                    <span className="text-emerald-400 font-mono font-bold">•••• (설정됨: {loggedInTech.pin || loggedInTech.password || '7211'})</span>
                   </div>
                   <div className="pt-2">
                     <span className="text-slate-400 font-bold block mb-1">한줄 소개</span>
-                    <p className="text-slate-300 leading-relaxed">{loggedInTech.introduction}</p>
+                    <p className="text-slate-300 leading-relaxed">{loggedInTech.introduction || '수성 광택 전문입니다.'}</p>
                   </div>
                 </div>
               ) : (
                 <form onSubmit={handleSaveProfile} className="space-y-4 text-xs bg-slate-900/60 p-5 rounded-2xl border border-cyan-500/30">
                   {/* Photo Edit */}
-                  <div className="flex items-center gap-4 p-3 bg-slate-950/80 rounded-xl border border-white/5">
+                  <div className="flex items-center gap-4 p-3.5 bg-slate-950/80 rounded-xl border border-white/5">
                     <img 
-                      src={profileForm.avatar || loggedInTech.avatar} 
-                      alt={loggedInTech.name} 
-                      className="w-16 h-16 rounded-2xl object-cover border-2 border-emerald-400"
+                      src={profileForm.avatar || DEFAULT_AVATAR} 
+                      alt={profileForm.name || '프로필 사진'} 
+                      onError={(e) => { e.currentTarget.src = DEFAULT_AVATAR; }}
+                      className="w-16 h-16 rounded-2xl object-cover border-2 border-emerald-400 bg-slate-800 shrink-0"
                     />
-                    <div className="space-y-1.5">
+                    <div className="space-y-1.5 flex-1">
                       <label className="block text-slate-300 font-bold">프로필 사진 변경</label>
-                      <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs cursor-pointer transition-all shadow-md shadow-emerald-500/20">
-                        <Upload className="w-3.5 h-3.5" />
-                        <span>내 기기에서 사진 직접 업로드</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleProfilePhotoChange}
-                          className="hidden"
-                        />
-                      </label>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs cursor-pointer transition-all shadow-md shadow-emerald-500/20">
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>내 기기에서 사진 직접 업로드</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleProfilePhotoChange}
+                            className="hidden"
+                          />
+                        </label>
+                        {profileForm.avatar !== DEFAULT_AVATAR && (
+                          <button
+                            type="button"
+                            onClick={() => setProfileForm(prev => ({ ...prev, avatar: DEFAULT_AVATAR }))}
+                            className="px-2.5 py-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white text-[11px]"
+                          >
+                            기본 사진으로 리셋
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
 
+                  {/* Name & Badge */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-slate-300 font-bold mb-1">기사 성함 / 대표자명</label>
+                      <input
+                        type="text"
+                        value={profileForm.name}
+                        onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
+                        placeholder="예: 안기정"
+                        className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-emerald-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-300 font-bold mb-1">대표 칭호 / 배지</label>
+                      <input
+                        type="text"
+                        value={profileForm.badge}
+                        onChange={(e) => setProfileForm({ ...profileForm, badge: e.target.value })}
+                        placeholder="예: 출장전문 디테일러, 1급 공인 마스터"
+                        className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Phone & PIN */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-slate-300 font-bold mb-1">휴대폰 번호 (로그인 ID)</label>
@@ -958,6 +1059,7 @@ export const PartnerPortal = ({
                         type="text"
                         value={profileForm.phone}
                         onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                        placeholder="010-0000-0000"
                         className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-emerald-500"
                         required
                       />
@@ -965,16 +1067,42 @@ export const PartnerPortal = ({
                     <div>
                       <label className="block text-slate-300 font-bold mb-1">로그인 비밀번호 / PIN</label>
                       <input
-                        type="password"
+                        type="text"
                         value={profileForm.pin}
                         onChange={(e) => setProfileForm({ ...profileForm, pin: e.target.value })}
-                        placeholder="새 비밀번호 입력"
-                        className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-emerald-500"
+                        placeholder="새 비밀번호 또는 4자리 PIN"
+                        className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-emerald-500 font-mono"
                         required
                       />
                     </div>
                   </div>
 
+                  {/* Experience & Price */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-slate-300 font-bold mb-1">시공 경력 (년차)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="50"
+                        value={profileForm.experienceYears}
+                        onChange={(e) => setProfileForm({ ...profileForm, experienceYears: e.target.value })}
+                        className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-300 font-bold mb-1">기본 시작 견적가 (원)</label>
+                      <input
+                        type="number"
+                        step="10000"
+                        value={profileForm.minPrice}
+                        onChange={(e) => setProfileForm({ ...profileForm, minPrice: e.target.value })}
+                        className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Location & Region */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-slate-300 font-bold mb-1">활동 거점 주소</label>
@@ -982,38 +1110,71 @@ export const PartnerPortal = ({
                         type="text"
                         value={profileForm.baseLocation}
                         onChange={(e) => setProfileForm({ ...profileForm, baseLocation: e.target.value })}
+                        placeholder="예: 인천 청라 / 송도"
                         className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-emerald-500"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-slate-300 font-bold mb-1">활동 권역</label>
-                      <input
-                        type="text"
+                      <label className="block text-slate-300 font-bold mb-1">활동 권역 (대표 Zone)</label>
+                      <select
                         value={profileForm.region}
                         onChange={(e) => setProfileForm({ ...profileForm, region: e.target.value })}
                         className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-emerald-500"
-                        required
-                      />
+                      >
+                        <option value="인천/서부권">인천/서부권</option>
+                        <option value="서울/강남권">서울/강남권</option>
+                        <option value="경기/남부권">경기/남부권</option>
+                        <option value="경기/북부권">경기/북부권</option>
+                        <option value="수도권 전지역">수도권 전지역</option>
+                      </select>
                     </div>
                   </div>
 
+                  {/* Active Zones */}
+                  <div>
+                    <label className="block text-slate-300 font-bold mb-1">세부 출장 가능 구역 (쉼표로 구분)</label>
+                    <input
+                      type="text"
+                      value={profileForm.activeZones}
+                      onChange={(e) => setProfileForm({ ...profileForm, activeZones: e.target.value })}
+                      placeholder="예: 인천 전지역, 수도권 일부지역, 서울 일부지역"
+                      className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+
+                  {/* Specialties */}
                   <div>
                     <label className="block text-slate-300 font-bold mb-1">전문 시공 분야 (쉼표로 구분)</label>
                     <input
                       type="text"
                       value={profileForm.specialties}
                       onChange={(e) => setProfileForm({ ...profileForm, specialties: e.target.value })}
+                      placeholder="예: 수성 듀얼 광택, 9H 세라믹 코팅, 실내스팀"
                       className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-emerald-500"
                     />
                   </div>
 
+                  {/* Equipment */}
                   <div>
-                    <label className="block text-slate-300 font-bold mb-1">소개글</label>
+                    <label className="block text-slate-300 font-bold mb-1">보유 전문 장비 (쉼표로 구분)</label>
+                    <input
+                      type="text"
+                      value={profileForm.equipment}
+                      onChange={(e) => setProfileForm({ ...profileForm, equipment: e.target.value })}
+                      placeholder="예: 싱글 및 듀얼 광택기, 도막 측정기, 열경화 램프"
+                      className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+
+                  {/* Introduction */}
+                  <div>
+                    <label className="block text-slate-300 font-bold mb-1">한줄 소개글</label>
                     <textarea
                       rows="3"
                       value={profileForm.introduction}
                       onChange={(e) => setProfileForm({ ...profileForm, introduction: e.target.value })}
+                      placeholder="고객에게 보여질 전문성 및 소개 문구를 입력해주세요."
                       className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-emerald-500"
                     />
                   </div>
@@ -1021,14 +1182,17 @@ export const PartnerPortal = ({
                   <div className="pt-2 flex justify-end gap-2">
                     <button
                       type="button"
-                      onClick={() => setIsEditingProfile(false)}
-                      className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-bold"
+                      onClick={() => {
+                        initProfileForm(loggedInTech);
+                        setIsEditingProfile(false);
+                      }}
+                      className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold transition-colors"
                     >
                       취소
                     </button>
                     <button
                       type="submit"
-                      className="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black shadow-md shadow-emerald-500/25"
+                      className="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black shadow-md shadow-emerald-500/25 transition-all hover:scale-105"
                     >
                       변경사항 저장
                     </button>

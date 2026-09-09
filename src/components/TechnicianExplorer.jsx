@@ -154,9 +154,10 @@ export const TechnicianExplorer = ({ technicians, onRequestToTech, onOpenRegiste
               <div className="flex items-end justify-between mb-3">
                 <div className="relative">
                   <img 
-                    src={tech.avatar} 
+                    src={tech.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'} 
                     alt={tech.name}
-                    className="w-16 h-16 rounded-2xl object-cover border-2 border-cyan-500/50 shadow-lg" 
+                    onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'; }}
+                    className="w-16 h-16 rounded-2xl object-cover border-2 border-cyan-500/50 shadow-lg bg-slate-800" 
                   />
                   <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-cyan-500 text-slate-950 flex items-center justify-center text-[10px] font-black">
                     ✓
