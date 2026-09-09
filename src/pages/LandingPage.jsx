@@ -103,7 +103,16 @@ export const LandingPage = ({
         </div>
       </section>
 
-      {/* 3. Verified Technicians Section Preview */}
+      {/* 3. Professional Services & 6-Step Process */}
+      <ServiceProcess 
+        onFindTechnician={(svc) => {
+          const el = document.getElementById('technicians');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }}
+        onSelectService={(svc) => scrollToBooking(svc)}
+      />
+
+      {/* 4. Verified Technicians Section */}
       <TechnicianExplorer 
         technicians={technicians}
         onRequestToTech={(tech) => {
@@ -111,15 +120,6 @@ export const LandingPage = ({
           scrollToBooking();
         }}
         onOpenRegisterModal={onOpenRegisterModal}
-      />
-
-      {/* 4. Professional Services & 6-Step Process */}
-      <ServiceProcess 
-        onFindTechnician={(svc) => {
-          const el = document.getElementById('technicians');
-          if (el) el.scrollIntoView({ behavior: 'smooth' });
-        }}
-        onSelectService={(svc) => scrollToBooking(svc)}
       />
 
       {/* 5. Interactive Before / After Transformation Slider */}
