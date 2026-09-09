@@ -1,6 +1,6 @@
 import React from 'react';
 import { SERVICES, WORK_PROCESS } from '../data/servicesData';
-import { Sparkles, ShieldCheck, Car, Droplets, Search, Wrench, Layers, Shield, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Sparkles, ShieldCheck, Car, Droplets, Search, Wrench, Layers, Shield, CheckCircle2, ArrowRight, MapPin, Tag, Users } from 'lucide-react';
 
 const iconMap = {
   Sparkles: Sparkles,
@@ -14,7 +14,18 @@ const iconMap = {
   CheckCircle2: CheckCircle2,
 };
 
-export const ServiceProcess = ({ onSelectService }) => {
+export const ServiceProcess = ({ onSelectService, onFindTechnician }) => {
+  const handleAction = (serviceTitle) => {
+    if (onFindTechnician) {
+      onFindTechnician(serviceTitle);
+    } else if (onSelectService) {
+      onSelectService(serviceTitle);
+    } else {
+      const el = document.getElementById('technicians');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <section id="services" className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative">
       
@@ -28,7 +39,7 @@ export const ServiceProcess = ({ onSelectService }) => {
         </h2>
         <p className="text-slate-400 text-sm sm:text-base leading-relaxed">
           차량 전체 광택이 부담스러우신가요? 본넷, 도어, 범퍼, 휀다, 트렁크 등 흠집이나 스월마크가 심한 특정 부위만 
-          선택하여 합리적인 비용으로 깨끗하게 케어해 드립니다.
+          선택하여 <strong className="text-white font-semibold">정해진 표준 정찰 가격</strong>으로 투명하게 시공받으실 수 있습니다.
         </p>
       </div>
 
@@ -39,48 +50,88 @@ export const ServiceProcess = ({ onSelectService }) => {
           return (
             <div 
               key={service.id}
-              className={`glass-card p-6 sm:p-8 rounded-2xl border transition-all duration-300 relative group overflow-hidden ${service.borderColor} hover:border-cyan-400/60 hover:-translate-y-1`}
+              className={`glass-card p-6 sm:p-8 rounded-3xl border transition-all duration-300 relative group overflow-hidden ${service.borderColor} hover:border-cyan-400/60 hover:-translate-y-1 flex flex-col justify-between`}
             >
               {/* Top Accent Gradient */}
-              <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${service.bgGradient}`} />
+              <div className={`absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r ${service.bgGradient}`} />
 
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className={`p-3 rounded-xl bg-slate-900/80 border border-white/10 ${service.accentColor}`}>
-                    <IconComponent className="w-6 h-6" />
+              <div>
+                {/* Header */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-3 rounded-2xl bg-slate-900/90 border border-white/10 ${service.accentColor}`}>
+                      <IconComponent className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-cyan-300 border border-cyan-500/20">
+                        {service.badge}
+                      </span>
+                      <h3 className="text-lg sm:text-xl font-bold text-white mt-1">{service.title}</h3>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-800 text-cyan-300 border border-cyan-500/20">
-                      {service.badge}
+                  <span className="text-xs text-slate-400 bg-slate-900/80 px-2.5 py-1 rounded-lg border border-white/5 shrink-0">
+                    {service.duration}
+                  </span>
+                </div>
+
+                <p className="text-slate-300 text-xs sm:text-sm mb-5 leading-relaxed">
+                  {service.shortDesc}
+                </p>
+
+                {/* Integrated Standard Price & Travel Fee Box */}
+                <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-900/90 border border-white/10 mb-5 space-y-2">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                      <Tag className="w-3.5 h-3.5 text-rose-400" />
+                      <span>표준 정찰 시공가</span>
                     </span>
-                    <h3 className="text-xl font-bold text-white mt-1">{service.title}</h3>
+                    <div className="flex items-center gap-2">
+                      {service.originalPrice && (
+                        <span className="text-[11px] text-slate-500 line-through font-mono">
+                          {service.originalPrice}
+                        </span>
+                      )}
+                      {service.discountBadge && (
+                        <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30">
+                          {service.discountBadge}
+                        </span>
+                      )}
+                      <span className="text-sm sm:text-base font-black text-cyan-300 font-mono">
+                        {service.standardPrice || '정찰제'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-400">
+                    <span className="flex items-center gap-1 text-slate-300">
+                      <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span>출장비 안내:</span>
+                    </span>
+                    <span className="text-emerald-300 font-semibold text-right">
+                      {service.travelFeeInfo || '1권역(인천/부천/김포) 0원 무료 · 거리정찰제'}
+                    </span>
                   </div>
                 </div>
-                <span className="text-xs text-slate-400 bg-slate-900/80 px-2.5 py-1 rounded-md border border-white/5 shrink-0">
-                  {service.duration}
-                </span>
+
+                {/* Feature Points */}
+                <div className="space-y-2 mb-6">
+                  {service.features.map((feat, idx) => (
+                    <div key={idx} className="flex items-start gap-2 text-xs text-slate-300">
+                      <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                      <span>{feat}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              <p className="text-slate-300 text-sm mb-6 leading-relaxed">
-                {service.shortDesc}
-              </p>
-
-              {/* Feature Points */}
-              <div className="space-y-2.5 mb-6">
-                {service.features.map((feat, idx) => (
-                  <div key={idx} className="flex items-start gap-2 text-xs sm:text-sm text-slate-300">
-                    <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
-                    <span>{feat}</span>
-                  </div>
-                ))}
-              </div>
-
+              {/* Action Button: Find Technician with Fixed Price */}
               <button
-                onClick={() => onSelectService(service.title)}
-                className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-cyan-500/20 text-cyan-300 text-xs font-bold border border-cyan-500/30 flex items-center justify-center gap-1.5 transition-all group-hover:border-cyan-400"
+                onClick={() => handleAction(service.title)}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-slate-900 to-slate-800 hover:from-cyan-950 hover:to-blue-950 text-cyan-300 hover:text-white text-xs sm:text-sm font-bold border border-cyan-500/40 hover:border-cyan-400 flex items-center justify-center gap-2 transition-all shadow-md group-hover:shadow-cyan-500/10"
               >
-                <span>이 서비스로 견적 문의하기</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <Users className="w-4 h-4 text-cyan-400" />
+                <span>이 정찰가로 전문 기사 찾기</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
           );

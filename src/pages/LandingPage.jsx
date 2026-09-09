@@ -115,6 +115,10 @@ export const LandingPage = ({
 
       {/* 4. Professional Services & 6-Step Process */}
       <ServiceProcess 
+        onFindTechnician={(svc) => {
+          const el = document.getElementById('technicians');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }}
         onSelectService={(svc) => scrollToBooking(svc)}
       />
 
