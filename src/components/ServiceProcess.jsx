@@ -348,10 +348,10 @@ export const ServiceProcess = ({ onSelectService, onFindTechnician, highlightedS
             </div>
 
             {/* Zones Grid */}
-            <div className="space-y-3 mb-6">
+            <div className="space-y-3 mb-5">
               {zones.map((z, idx) => (
                 <div 
-                  key={idx}
+                  key={idx} 
                   className="p-4 rounded-2xl bg-slate-900/90 border border-white/10 space-y-1.5"
                 >
                   <div className="flex items-center justify-between">
@@ -368,6 +368,18 @@ export const ServiceProcess = ({ onSelectService, onFindTechnician, highlightedS
                   </p>
                 </div>
               ))}
+            </div>
+
+            {/* Win-Win Distance-based Policy Explainer Box */}
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-950/40 via-slate-900/80 to-rose-950/40 border border-purple-500/30 mb-5 space-y-1.5 text-xs text-slate-300 leading-relaxed">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                  거리 정찰제 안내
+                </span>
+                <span className="font-bold text-white">4권역 거리 제한 및 초장거리 맞춤 정산</span>
+              </div>
+              <p>• <strong className="text-purple-300">4권역 (경기 외곽)</strong>: 반경 45km ~ 65km 이내 정찰 출장비 50,000원 적용</p>
+              <p>• <strong className="text-rose-300">5권역 (65km 초과 원거리/지방)</strong>: 65km 초과 시 10km당 +10,000원 거리 비례 출장비가 개별 책정되어 기사의 장거리 이동 유류비/시간을 보상하고 고객에게 투명한 견적을 제공합니다.</p>
             </div>
 
             {/* Notes */}

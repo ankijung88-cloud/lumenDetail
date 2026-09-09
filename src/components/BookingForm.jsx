@@ -12,10 +12,11 @@ import {
 } from 'lucide-react';
 
 const ZONE_FEES = {
-  zone1: { id: 'zone1', name: '1권역 (인천 청라/서구/부평/계양/김포남부/부천)', fee: 0, text: '무료 (0원)' },
-  zone2: { id: 'zone2', name: '2권역 (인천 송도/영종/남동, 김포한강, 서울서부/마곡/목동, 일산, 광명)', fee: 15000, text: '+15,000원' },
-  zone3: { id: 'zone3', name: '3권역 (서울 전역(강남/서초/송파 등), 수원, 안양, 화성, 분당, 파주)', fee: 30000, text: '+30,000원' },
-  zone4: { id: 'zone4', name: '4권역 (경기 외곽/평택/이천 및 기타 장거리)', fee: 50000, text: '상담 후 협의' }
+  zone1: { id: 'zone1', name: '1권역 (인천 청라/서구/부평/계양/김포남부/부천 - ~15km)', fee: 0, text: '무료 (0원)' },
+  zone2: { id: 'zone2', name: '2권역 (인천 송도/영종/남동, 김포한강, 서울서부/마곡/목동, 일산, 광명 - ~25km)', fee: 15000, text: '+15,000원' },
+  zone3: { id: 'zone3', name: '3권역 (서울 전역(강남/서초/송파 등), 수원, 안양, 화성, 분당, 파주 - ~45km)', fee: 30000, text: '+30,000원' },
+  zone4: { id: 'zone4', name: '4권역 (경기 외곽/평택/이천/안성/포천 등 - 45km~65km 이내)', fee: 50000, text: '+50,000원' },
+  zone5: { id: 'zone5', name: '5권역 (65km 초과 초장거리/지방 - 거리별 개별책정)', fee: 70000, text: '+70,000원~ (거리별 맞춤)' }
 };
 
 export const BookingForm = ({ preselectedService, preselectedPrice, targetTech, onClearTargetTech, onOpenTracker }) => {
@@ -459,10 +460,11 @@ export const BookingForm = ({ preselectedService, preselectedPrice, targetTech, 
                   onChange={handleChange}
                   className="w-full px-4 py-3 bg-slate-900/80 border border-slate-700 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-cyan-500"
                 >
-                  <option value="zone1">1권역: 인천 서구(청라/루원/검단), 부평, 계양, 김포남부, 부천 (출장비 0원)</option>
-                  <option value="zone2">2권역: 송도, 영종, 남동구, 김포한강, 서울서부(강서/마곡/목동/구로), 일산, 광명 (+15,000원)</option>
-                  <option value="zone3">3권역: 서울 전역(강남/서초/송파/용산 등), 수원, 안양, 성남(분당), 화성, 파주 (+30,000원)</option>
-                  <option value="zone4">4권역: 경기 외곽/평택/이천/안성 및 기타 장거리 (협의)</option>
+                  <option value="zone1">1권역: 인천 서구(청라/루원/검단), 부평, 계양, 김포남부, 부천 (~15km / 무료 0원)</option>
+                  <option value="zone2">2권역: 송도, 영종, 남동구, 김포한강, 서울서부(강서/마곡/목동), 일산, 광명 (~25km / +1.5만원)</option>
+                  <option value="zone3">3권역: 서울 전역(강남/서초/송파/용산 등), 수원, 안양, 성남(분당), 화성, 파주 (~45km / +3.0만원)</option>
+                  <option value="zone4">4권역: 경기 외곽(평택/이천/안성/여주/포천/양평 등 - 45km~65km 한정 / +5.0만원)</option>
+                  <option value="zone5">5권역: 65km 초과 원거리/지방 (65km 초과 10km당 +1만원 거리비례 개별책정 / +7.0만원~)</option>
                 </select>
               </div>
 

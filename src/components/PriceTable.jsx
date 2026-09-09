@@ -14,11 +14,11 @@ export const PriceTable = ({ onSelectPackage, onSelectSingleService }) => {
     return (Number.isInteger(val) ? val.toLocaleString() : val.toFixed(1)) + '만원';
   };
 
-  // Calculate actual travel fee considering promotion (30만원 이상 1·2·3권역 무료 등)
+  // Calculate actual travel fee considering promotion (30만원 이상 1·2·3권역 무료, 40만원 이상 1~4권역 지원 등)
   const calculateEffectiveFee = (servicePrice, zoneIdx) => {
     const baseFee = zones[zoneIdx]?.fee || 0;
     if (zoneIdx === 0) return 0; // 1권역 항상 무료
-    if (servicePrice >= 400000) return 0; // 40만원 이상 전권역 무료 지원
+    if (servicePrice >= 400000 && zoneIdx <= 3) return 0; // 40만원 이상 1~4권역(65km 이내) 전액 무료 지원
     if (servicePrice >= 300000 && zoneIdx <= 2) return 0; // 30만원 이상 1·2·3권역 무료
     return baseFee;
   };
@@ -110,12 +110,12 @@ export const PriceTable = ({ onSelectPackage, onSelectSingleService }) => {
                     selectedZoneIndex === idx
                       ? 'bg-gradient-to-r from-emerald-500/30 to-teal-600/30 border-emerald-400 text-white font-bold shadow-lg shadow-emerald-500/20'
                       : 'bg-slate-900/80 border-white/5 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-                  }`}
+                  } ${idx === 4 ? 'col-span-2' : ''}`}
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-xs sm:text-sm truncate">{z.zone.split('(')[0]}</span>
                     <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold border ${z.badgeColor}`}>
-                      {z.fee === 0 ? '무료' : `+${(z.fee / 10000).toFixed(1)}만`}
+                      {z.fee === 0 ? '무료' : `+${(z.fee / 10000).toFixed(1)}만${idx === 4 ? '~' : ''}`}
                     </span>
                   </div>
                   <p className={`text-[10px] mt-0.5 truncate ${selectedZoneIndex === idx ? 'text-emerald-200' : 'text-slate-500'}`}>
@@ -378,16 +378,16 @@ export const PriceTable = ({ onSelectPackage, onSelectSingleService }) => {
         </div>
 
         {/* Zones Grid with Quick Select */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
           {zones.map((zoneItem, idx) => (
             <div 
               key={idx} 
               onClick={() => setSelectedZoneIndex(idx)}
               className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
                 selectedZoneIndex === idx
-                  ? 'bg-slate-900/95 border-emerald-400/80 shadow-lg shadow-emerald-500/10'
+                  ? 'bg-slate-900/95 border-emerald-400/80 shadow-lg shadow-emerald-500/10 ring-1 ring-emerald-400/50'
                   : 'bg-slate-900/70 border-white/5 hover:border-cyan-500/30'
-              }`}
+              } ${idx === 4 ? 'md:col-span-2 lg:col-span-2' : ''}`}
             >
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -415,6 +415,21 @@ export const PriceTable = ({ onSelectPackage, onSelectSingleService }) => {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Win-Win Distance-based Policy Explainer Box */}
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-950/40 via-slate-900/80 to-rose-950/40 border border-purple-500/30 mb-5 space-y-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-black px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
+              고객 & 기사 상생 거리 정찰제
+            </span>
+            <h4 className="text-xs sm:text-sm font-bold text-white">4권역 거리 제한(45~65km) 및 초장거리 거리별 개별 책정 기준</h4>
+          </div>
+          <p className="text-xs text-slate-300 leading-relaxed">
+            • <strong className="text-purple-300 font-semibold">4권역 (경기 외곽)</strong>: 청라 거점 기준 <strong className="text-white">반경 45km ~ 65km 이내</strong>에 한정하여 정찰 출장비 50,000원이 적용됩니다.<br />
+            • <strong className="text-rose-300 font-semibold">5권역 (65km 초과 초장거리/타지역)</strong>: 65km 초과 시 <strong className="text-cyan-300">10km당 10,000원의 거리 비례 출장비가 개별 책정</strong>됩니다. (예: 75km 이동 시 약 8만원, 85km 이동 시 약 9만원 등 사전 안내)<br />
+            • 장거리 출장 시 기사의 이동 시간과 유류비·톨게이트 비용을 공정하게 보상하고, 고객님께는 현장 부당 요구 없는 투명한 사전 정찰 견적을 제공합니다.
+          </p>
         </div>
 
         {/* Footnote */}
