@@ -54,54 +54,7 @@ export const LandingPage = ({
         onGoToTechnicians={onGoToTechnicians}
       />
 
-      {/* 2. Platform Trust & Matching Guarantee Banner */}
-      <section className="py-12 bg-[#090c14] border-y border-white/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            
-            <div className="flex items-center gap-4 bg-slate-900/50 p-4 rounded-2xl border border-white/5">
-              <div className="w-12 h-12 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center shrink-0">
-                <ShieldCheck className="w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-white">엄격한 기사 검증</h4>
-                <p className="text-xs text-slate-400 mt-0.5">실기 테스트 및 장비 기준 통과</p>
-              </div>
-            </div>
 
-            <div className="flex items-center gap-4 bg-slate-900/50 p-4 rounded-2xl border border-white/5">
-              <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0">
-                <Sparkles className="w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-white">실시간 맞춤 견적</h4>
-                <p className="text-xs text-slate-400 mt-0.5">전문가 제안 확인 & 선택</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4 bg-slate-900/50 p-4 rounded-2xl border border-white/5">
-              <div className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
-                <CheckCircle2 className="w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-white">현장 검수 후 안심 결제</h4>
-                <p className="text-xs text-slate-400 mt-0.5">시공 퀄리티 직접 확인 후 결제</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4 bg-slate-900/50 p-4 rounded-2xl border border-white/5">
-              <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0">
-                <Award className="w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-white">품질 보증 A/S 연계</h4>
-                <p className="text-xs text-slate-400 mt-0.5">시공 후 사후 관리 가이드 제공</p>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
 
       {/* 3. Professional Services & 6-Step Process */}
       <ServiceProcess 
