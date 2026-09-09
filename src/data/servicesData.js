@@ -12,6 +12,12 @@ export const SERVICES = [
     standardPrice: '40,000 ~ 65,000원',
     discountBadge: '50% 정찰특가',
     travelFeeInfo: '1권역(인천/부천/김포) 출장비 0원 무료 · 2~4권역 거리정찰제',
+    categoryPrices: [
+      { catId: 'compact', name: '경차 / 소형', example: '모닝, 레이, 아반떼, 캐스퍼', original: 80000, price: 40000, discount: '50% OFF' },
+      { catId: 'mid', name: '준중형 / 중형', example: '쏘나타, K5, G70, BMW 3/5시리즈', original: 90000, price: 45000, discount: '50% OFF' },
+      { catId: 'large_suv', name: '대형 / 준대형 / 중형SUV', example: '그랜저, G80, 싼타페, 쏘렌토', original: 110000, price: 55000, discount: '50% OFF' },
+      { catId: 'van_large', name: '대형SUV / RV / 수입대형', example: '카니발, GV80, 팰리세이드, S클래스', original: 130000, price: 65000, discount: '50% OFF' }
+    ],
     features: [
       '본넷 전용 수성 듀얼 폴리싱 공정',
       '워터스팟, 낙진, 깊은 스월마크 집중 제거',
@@ -33,6 +39,12 @@ export const SERVICES = [
     standardPrice: '25,000 ~ 45,000원 (판당)',
     discountBadge: '50% 정찰특가',
     travelFeeInfo: '1권역(인천/부천/김포) 출장비 0원 무료 · 2~4권역 거리정찰제',
+    categoryPrices: [
+      { catId: 'compact', name: '경차 / 소형', example: '모닝, 레이, 아반떼, 캐스퍼', original: 50000, price: 25000, discount: '50% OFF' },
+      { catId: 'mid', name: '준중형 / 중형', example: '쏘나타, K5, G70, BMW 3/5시리즈', original: 60000, price: 30000, discount: '50% OFF' },
+      { catId: 'large_suv', name: '대형 / 준대형 / 중형SUV', example: '그랜저, G80, 싼타페, 쏘렌토', original: 70000, price: 35000, discount: '50% OFF' },
+      { catId: 'van_large', name: '대형SUV / RV / 수입대형', example: '카니발, GV80, 팰리세이드, S클래스', original: 90000, price: 45000, discount: '50% OFF' }
+    ],
     features: [
       '도어 패널 스월마크 및 문콕 주변 스크래치 완화',
       '도어컵(손잡이 안쪽) 딥클렌징 & 잔기스 정리',
@@ -54,6 +66,12 @@ export const SERVICES = [
     standardPrice: '35,000 ~ 60,000원 (개소당)',
     discountBadge: '50% 정찰특가',
     travelFeeInfo: '1권역(인천/부천/김포) 출장비 0원 무료 · 2~4권역 거리정찰제',
+    categoryPrices: [
+      { catId: 'compact', name: '경차 / 소형', example: '모닝, 레이, 아반떼, 캐스퍼', original: 70000, price: 35000, discount: '50% OFF' },
+      { catId: 'mid', name: '준중형 / 중형', example: '쏘나타, K5, G70, BMW 3/5시리즈', original: 80000, price: 40000, discount: '50% OFF' },
+      { catId: 'large_suv', name: '대형 / 준대형 / 중형SUV', example: '그랜저, G80, 싼타페, 쏘렌토', original: 100000, price: 50000, discount: '50% OFF' },
+      { catId: 'van_large', name: '대형SUV / RV / 수입대형', example: '카니발, GV80, 팰리세이드, S클래스', original: 120000, price: 60000, discount: '50% OFF' }
+    ],
     features: [
       '주차 쓸림, 미세 페인트 묻음(페인트 클렌징) 제거',
       '벌레 자국, 타르, 아스팔트 고착 오염 딥 샌딩/폴리싱',
@@ -75,6 +93,12 @@ export const SERVICES = [
     standardPrice: '25,000 ~ 40,000원 (판당)',
     discountBadge: '50% 정찰특가',
     travelFeeInfo: '1권역(인천/부천/김포) 출장비 0원 무료 · 2~4권역 거리정찰제',
+    categoryPrices: [
+      { catId: 'compact', name: '경차 / 소형', example: '모닝, 레이, 아반떼, 캐스퍼', original: 50000, price: 25000, discount: '50% OFF' },
+      { catId: 'mid', name: '준중형 / 중형', example: '쏘나타, K5, G70, BMW 3/5시리즈', original: 60000, price: 30000, discount: '50% OFF' },
+      { catId: 'large_suv', name: '대형 / 준대형 / 중형SUV', example: '그랜저, G80, 싼타페, 쏘렌토', original: 70000, price: 35000, discount: '50% OFF' },
+      { catId: 'van_large', name: '대형SUV / RV / 수입대형', example: '카니발, GV80, 팰리세이드, S클래스', original: 80000, price: 40000, discount: '50% OFF' }
+    ],
     features: [
       '앞/뒤 휀다 아치 주변 타르·철분 딥클렌징 전처리',
       '좁은 틈새 및 휀다 엣지 라인 미니 폴리싱',
@@ -96,6 +120,12 @@ export const SERVICES = [
     standardPrice: '35,000 ~ 60,000원 (부위당)',
     discountBadge: '50% 정찰특가',
     travelFeeInfo: '1권역(인천/부천/김포) 출장비 0원 무료 · 2~4권역 거리정찰제',
+    categoryPrices: [
+      { catId: 'compact', name: '경차 / 소형', example: '모닝, 레이, 아반떼, 캐스퍼', original: 70000, price: 35000, discount: '50% OFF' },
+      { catId: 'mid', name: '준중형 / 중형', example: '쏘나타, K5, G70, BMW 3/5시리즈', original: 80000, price: 40000, discount: '50% OFF' },
+      { catId: 'large_suv', name: '대형 / 준대형 / 중형SUV', example: '그랜저, G80, 싼타페, 쏘렌토', original: 100000, price: 50000, discount: '50% OFF' },
+      { catId: 'van_large', name: '대형SUV / RV / 수입대형', example: '카니발, GV80, 팰리세이드, S클래스', original: 120000, price: 60000, discount: '50% OFF' }
+    ],
     features: [
       '트렁크 리드 짐 스크래치 완화 & 테일게이트 광택 케어',
       '루프(천장) 새똥, 나무 수액 파고듦 샌딩 & 폴리싱',
@@ -117,6 +147,12 @@ export const SERVICES = [
     standardPrice: '175,000 ~ 294,000원 (전체)',
     discountBadge: '30% 정찰특가',
     travelFeeInfo: '1권역(인천/부천/김포) 출장비 0원 무료 · 30만원 이상 시 출장비 무료 지원',
+    categoryPrices: [
+      { catId: 'compact', name: '경차 / 소형', example: '모닝, 레이, 아반떼, 캐스퍼', original: 250000, price: 175000, discount: '30% OFF' },
+      { catId: 'mid', name: '준중형 / 중형', example: '쏘나타, K5, G70, BMW 3/5시리즈', original: 300000, price: 210000, discount: '30% OFF' },
+      { catId: 'large_suv', name: '대형 / 준대형 / 중형SUV', example: '그랜저, G80, 싼타페, 쏘렌토', original: 350000, price: 245000, discount: '30% OFF' },
+      { catId: 'van_large', name: '대형SUV / RV / 수입대형', example: '카니발, GV80, 팰리세이드, S클래스', original: 420000, price: 294000, discount: '30% OFF' }
+    ],
     features: [
       '싱글 액션 1차 초벌 + 듀얼 액션 2차 피니쉬 2스텝 공정',
       '클리어층 손실을 최소화하는 비파괴형 안전 연마 기술',
@@ -138,6 +174,12 @@ export const SERVICES = [
     standardPrice: '50,000원~ (복수 부위 조합)',
     discountBadge: '50% 정찰특가',
     travelFeeInfo: '1권역 무료 · 30만원 이상 시 출장비 전액 0원 무료 지원',
+    categoryPrices: [
+      { catId: 'compact', name: '경차 / 소형', example: '모닝, 레이, 아반떼, 캐스퍼', original: 100000, price: 50000, discount: '50% OFF' },
+      { catId: 'mid', name: '준중형 / 중형', example: '쏘나타, K5, G70, BMW 3/5시리즈', original: 120000, price: 60000, discount: '50% OFF' },
+      { catId: 'large_suv', name: '대형 / 준대형 / 중형SUV', example: '그랜저, G80, 싼타페, 쏘렌토', original: 140000, price: 70000, discount: '50% OFF' },
+      { catId: 'van_large', name: '대형SUV / RV / 수입대형', example: '카니발, GV80, 팰리세이드, S클래스', original: 160000, price: 80000, discount: '50% OFF' }
+    ],
     features: [
       '1판(패널) 단위 단독 시공부터 다중 부위 묶음 시공 가능',
       '도장 손상도에 따른 1:1 맞춤형 공정 설계',
