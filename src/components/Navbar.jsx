@@ -108,7 +108,7 @@ export const Navbar = ({
             <button
               onClick={onOpenTracker}
               className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white bg-slate-900/90 hover:bg-slate-800 border border-white/10 flex items-center gap-1.5 transition-all"
-              title="내 의뢰 견적 비교 및 진행상황"
+              title="내 의뢰 견적 확인 및 진행상황"
             >
               <Search className="w-3.5 h-3.5 text-cyan-400" />
               <span>내 의뢰 조회</span>

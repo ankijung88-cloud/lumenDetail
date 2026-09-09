@@ -74,8 +74,8 @@ export const LandingPage = ({
                 <Sparkles className="w-6 h-6" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-white">실시간 비교 견적</h4>
-                <p className="text-xs text-slate-400 mt-0.5">복수 전문가 제안 비교 & 선택</p>
+                <h4 className="text-sm font-bold text-white">실시간 맞춤 견적</h4>
+                <p className="text-xs text-slate-400 mt-0.5">전문가 제안 확인 & 선택</p>
               </div>
             </div>
 

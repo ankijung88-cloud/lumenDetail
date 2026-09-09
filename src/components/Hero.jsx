@@ -34,7 +34,7 @@ export const Hero = ({ onBookClick, onExploreClick, onGoToTechnicians }) => {
         {/* Subtitle */}
         <p className="max-w-2xl mx-auto text-slate-300 text-sm sm:text-base md:text-lg mb-8 sm:mb-10 leading-relaxed font-normal break-keep px-2 sm:px-0">
           샵에 차를 맡기는 번거로움 없이, <strong className="text-cyan-300 font-semibold">실력과 평점이 검증된 기술자</strong>에게 
-          <strong className="text-white font-semibold"> 1:1 수성 듀얼 광택 & 9H 유리막 코팅</strong>을 비교 견적으로 의뢰하세요.
+          <strong className="text-white font-semibold"> 1:1 수성 듀얼 광택 & 9H 유리막 코팅</strong>을 견적으로 의뢰하세요.
         </p>
 
         {/* CTA Button Group */}
@@ -43,7 +43,7 @@ export const Hero = ({ onBookClick, onExploreClick, onGoToTechnicians }) => {
             onClick={onBookClick}
             className="w-full sm:w-auto px-7 sm:px-8 py-3.5 sm:py-4 rounded-xl bg-gradient-to-r from-cyan-500 via-cyan-400 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-sm sm:text-base shadow-xl shadow-cyan-500/30 flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95 group break-keep"
           >
-            <span>실시간 스마트 비교견적 요청</span>
+            <span>실시간 스마트 견적 요청</span>
             <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform shrink-0" />
           </button>
 
@@ -94,7 +94,7 @@ export const Hero = ({ onBookClick, onExploreClick, onGoToTechnicians }) => {
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-xs sm:text-sm font-bold text-white">투명한 비교견적 & 보증</h4>
+              <h4 className="text-xs sm:text-sm font-bold text-white">투명한 견적 & 보증</h4>
               <p className="text-[11px] text-slate-400 mt-0.5">시공 전후 검수 후 안심 정산</p>
             </div>
           </div>
