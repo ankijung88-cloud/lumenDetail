@@ -13,7 +13,7 @@ export const INITIAL_TECHNICIANS = [
     activeZones: ['인천 전지역', '수도권 일부지역', '서울 일부지역'],
     specialties: ['수성 듀얼 광택', '9H 세라믹 코팅'],
     equipment: ['싱글 및 듀얼 광택기', '도막 측정기'],
-    introduction: '1급 수성 광택 및 세라믹 코팅 전문 디테일러입니다.',
+    introduction: '수성 광택 및 세라믹 코팅 전문 디테일러입니다.',
     minPrice: 100000,
     rating: 5.0,
     reviewCount: 38,
